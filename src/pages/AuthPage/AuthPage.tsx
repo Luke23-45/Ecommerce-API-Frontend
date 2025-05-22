@@ -1,48 +1,56 @@
-import React, { useState } from "react";
-import LoginForm from "@/components/auth/LoginForm";
-import RegisterForm from "@/components/auth/RegisterForm";
+// src/pages/auth/AuthPage.tsx
+import React from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
+// Import the authentication form components
+import LoginForm from '@/components/auth/LoginForm';
+import RegisterForm from '@/components/auth/RegisterForm';
+import VerifyOtpForm from '@/components/auth/VerifyOtpForm';
+
+// Import styled components
+import {
+    AuthContainer,
+    AuthTitle,
+    AuthNav,
+    AuthNavLink,
+} from './AuthPage.styled';
+
 function AuthPage() {
-  const [isLoginFormVisible, setIsLoginFormVisible] = useState(true);
+    const location = useLocation();
 
-  const toggleForm = () => {
-    setIsLoginFormVisible(!isLoginFormVisible);
-  };
+    // Define paths for navigation
+    const loginPath = '/auth/login';
+    const registerPath = '/auth/register';
 
-  return (
-    <div
-      style={{
-        maxWidth: "400px",
-        margin: "50px auto",
-        padding: "20px",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-      }}
-    >
-      <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
-        {isLoginFormVisible ? "Login" : "Register"}
-      </h2>
-      {isLoginFormVisible ? <LoginForm /> : <RegisterForm />}{" "}
+    return (
+        <AuthContainer>
+            <AuthTitle>Authentication</AuthTitle>
 
-      <p style={{ textAlign: "center", marginTop: "20px" }}>
-        {isLoginFormVisible
-          ? "Don't have an account?"
-          : "Already have an account?"}
-        <button
-          onClick={toggleForm}
-          style={{
-            background: "none",
-            border: "none",
-            color: "blue",
-            cursor: "pointer",
-            textDecoration: "underline",
-            marginLeft: "5px",
-          }}
-        >
-          {isLoginFormVisible ? "Register here" : "Login here"}
-        </button>
-      </p>
-    </div>
-  );
+            {/* Navigation between forms */}
+            <AuthNav>
+                <AuthNavLink
+                    to="login"
+                    $isActive={location.pathname === loginPath || location.pathname === '/auth'}
+                >
+                    Login
+                </AuthNavLink>
+                <AuthNavLink
+                    to="register"
+                    $isActive={location.pathname === registerPath}
+                >
+                    Register
+                </AuthNavLink>
+            </AuthNav>
+
+            {/* Render the nested Routes */}
+            <Routes>
+                <Route path="login" element={<LoginForm />} />
+                <Route path="register" element={<RegisterForm />} />
+                <Route path="verify" element={<VerifyOtpForm />} />
+                <Route index element={<Navigate to="login" replace />} />
+            </Routes>
+        </AuthContainer>
+    );
 }
 
 export default AuthPage;

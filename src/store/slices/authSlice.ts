@@ -1,44 +1,62 @@
-// src/store/slices/authSlice.ts
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { type User, type AuthTokens } from "@/types/auth";
 
-export interface AuthState {
+import { type User } from "@/types/auth";
+
+interface AuthState {
   isAuthenticated: boolean;
-  accessToken: string | null;
-  refreshToken: string | null;
   user: User | null;
+  loading: boolean;
+  error: string | null;
 }
 
-export const initialState: AuthState = {
+const initialState: AuthState = {
   isAuthenticated: false,
-  accessToken: null,
-  refreshToken: null,
   user: null,
+  loading: false,
+  error: null,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setTokens: (state, action: PayloadAction<AuthTokens>) => {
-      state.accessToken = action.payload.access;
-      state.refreshToken = action.payload.refresh;
-      state.isAuthenticated = true;
-    },
-    setUser: (state, action: PayloadAction<User | null>) => {
-      state.user = action.payload;
-      state.isAuthenticated = action.payload !== null;
+    authRequest(state) {
+      state.loading = true;
+      state.error = null;
     },
 
-    logout: (state) => {
+    setAuthenticated(state, action: PayloadAction<User>) {
+      state.isAuthenticated = true;
+      state.user = action.payload;
+      state.loading = false;
+      state.error = null;
+    },
+
+    logout(state) {
       state.isAuthenticated = false;
-      state.accessToken = null;
-      state.refreshToken = null;
       state.user = null;
+      state.loading = false;
+      state.error = null;
+    },
+
+    authFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+      state.isAuthenticated = false;
+      state.user = null;
+    },
+
+    clearAuthError(state) {
+      state.error = null;
     },
   },
 });
 
-export const { setTokens, setUser, logout } = authSlice.actions;
-
+export const {
+  authRequest,
+  setAuthenticated,
+  logout,
+  authFailure,
+  clearAuthError,
+} = authSlice.actions;
 export default authSlice.reducer;

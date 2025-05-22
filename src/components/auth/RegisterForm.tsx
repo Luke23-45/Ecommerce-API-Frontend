@@ -1,11 +1,23 @@
 import React, { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, type UseMutationResult } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
-import { registerUser } from "@/api/mutations/authMutaton";
-import { type RegisterPayload, type User } from "@/types/auth";
+import { registerUser } from "@/api/auth/authApi";
+
+import { type RegisterPayload, type ApiResponse } from "@/types/auth";
+
+import {
+  StyledForm,
+  FormField,
+  StyledLabel,
+  StyledInput,
+  ErrorMessage,
+  SuccessMessage,
+  SubmitButton,
+} from "./AuthForms";
 
 function RegisterForm() {
-  const [fullName, setFullName] = useState("");
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -14,26 +26,32 @@ function RegisterForm() {
     text: string;
   } | null>(null);
 
-  const registerMutation = useMutation({
-    mutationFn: (userData: RegisterPayload) => registerUser(userData),
-    onSuccess: (data: User) => {
+  const registerMutation: UseMutationResult<
+    ApiResponse<any>,
+    any,
+    RegisterPayload,
+    unknown
+  > = useMutation({
+    mutationFn: (payload: RegisterPayload) => registerUser(payload),
+    onSuccess: (data: ApiResponse<any>) => {
       console.log("Registration successful:", data);
-
       setMessage({
         type: "success",
-        text: "Registration successful! You can now log in.",
+        text:
+          data.message || "Registration successful! Please verify your email.",
       });
 
-      setFullName("");
       setEmail("");
       setPassword("");
+
+      console.log("Navigating to verification page...");
+      navigate("/auth/verify", { state: { email: email } });
     },
     onError: (err: any) => {
       console.error("Registration error:", err);
-
       const errorMessage =
+        err.response?.data?.message ||
         err.response?.data?.email?.[0] ||
-        err.response?.data?.detail ||
         err.message ||
         "An unexpected error occurred during registration.";
       setMessage({ type: "error", text: errorMessage });
@@ -43,93 +61,63 @@ function RegisterForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
-    registerMutation.mutate({ full_name: fullName, email, password });
+
+    const payload: RegisterPayload = {
+      email,
+      password,
+    };
+
+    registerMutation.mutate(payload);
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ display: "flex", flexDirection: "column", gap: "15px" }}
-    >
-      <div>
-        <label
-          htmlFor="full_name"
-          style={{ display: "block", marginBottom: "5px" }}
-        >
-          Full Name:
-        </label>
-        <input
-          id="full_name"
-          type="text"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-          style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
-        />
-      </div>
-      <div>
-        <label
-          htmlFor="register-email"
-          style={{ display: "block", marginBottom: "5px" }}
-        >
-          Email:
-        </label>{" "}
-
-        <input
+    <StyledForm onSubmit={handleSubmit}>
+      {" "}
+      {/* Use StyledForm, remove inline styles */}
+      <h2>Register</h2> {/* Styled by h2 within StyledForm */}
+      {/* Display success or error message */}
+      {message &&
+        (message.type === "success" ? (
+          <SuccessMessage>{message.text}</SuccessMessage>
+        ) : (
+          <ErrorMessage>{message.text}</ErrorMessage>
+        ))}
+      <FormField>
+        {" "}
+        {/* Use FormField */}
+        <StyledLabel htmlFor="register-email">Email:</StyledLabel>{" "}
+        {/* Use StyledLabel */}
+        <StyledInput
           id="register-email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e: any) => setEmail(e.target.value)}
           required
-          style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
-        />
-      </div>
-      <div>
-        <label
-          htmlFor="register-password"
-          style={{ display: "block", marginBottom: "5px" }}
-        >
-          Password:
-        </label>{" "}
-  
-        <input
+          disabled={registerMutation.isPending}
+        />{" "}
+        {/* Use StyledInput */}
+      </FormField>
+      <FormField>
+        {" "}
+        {/* Use FormField */}
+        <StyledLabel htmlFor="register-password">Password:</StyledLabel>{" "}
+        {/* Use StyledLabel */}
+        <StyledInput
           id="register-password"
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e: any) => setPassword(e.target.value)}
           required
-          style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
-        />
-      </div>
-
-
-      {message && (
-        <p
-          style={{
-            color: message.type === "success" ? "green" : "red",
-            textAlign: "center",
-            margin: "0",
-          }}
-        >
-          {message.text}
-        </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={registerMutation.isPending}
-        style={{
-          padding: "10px",
-          background: "#28a745",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-        }}
-      >
+          disabled={registerMutation.isPending}
+        />{" "}
+        {/* Use StyledInput */}
+      </FormField>
+      <SubmitButton type="submit" disabled={registerMutation.isPending}>
+        {" "}
+        {/* Use SubmitButton */}
         {registerMutation.isPending ? "Registering..." : "Register"}
-      </button>
-    </form>
+      </SubmitButton>
+    </StyledForm>
   );
 }
 

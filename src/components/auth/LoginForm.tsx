@@ -1,14 +1,19 @@
 import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  type UseMutationResult,
+} from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import { loginUser } from "@/api/mutations/authMutaton";
-import { fetchUserProfile } from "@/api/queries/authQueries";
-import { setTokens, setUser } from "@/store/slices/authSlice";
+import { loginUser } from "@/api/auth/authApi";
+import { getLoggedInUserProfile } from "@/api/auth/authApi";
+import { setAuthenticated, logout } from "@/store/slices/authSlice";
+
 import {
   type LoginCredentials,
-  type AuthTokens,
+  type LoginResponseData,
   type User,
 } from "@/types/auth";
 
@@ -19,40 +24,55 @@ import {
   StyledInput,
   ErrorMessage,
   SubmitButton,
-} from "./LoginForm.styled";
-import { logout } from "@/store/slices/authSlice";
+} from "./AuthForms";
+
 function LoginForm() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const loginMutation = useMutation({
+  const loginMutation: UseMutationResult<
+    LoginResponseData,
+    any,
+    LoginCredentials,
+    unknown
+  > = useMutation({
     mutationFn: (credentials: LoginCredentials) => loginUser(credentials),
-    onSuccess: async (data: AuthTokens) => {
+    onSuccess: async (data: LoginResponseData) => {
       console.log("Login successful:", data);
-      localStorage.setItem("authTokens", JSON.stringify(data));
-      dispatch(setTokens(data));
-
+      setError(null);
       try {
         const user: User = await queryClient.fetchQuery({
-          queryKey: ["user", "me"],
-          queryFn: fetchUserProfile,
+          queryKey: ["userProfile"],
+          queryFn: getLoggedInUserProfile,
+          staleTime: Infinity,
+          retry: false,
         });
-        console.log("User profile fetched:", user);
-        dispatch(setUser(user));
-        navigate("/tasks", { replace: true });
+
+        console.log("User profile fetched after login:", user);
+
+        if (user) {
+          dispatch(setAuthenticated(user));
+          queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+          queryClient.invalidateQueries({ queryKey: ["sellerProfile"] });
+          console.log("Navigating to home page after login...");
+          navigate("/", { replace: true });
+        } else {
+          console.warn(
+            "Fetch user profile succeeded but returned no user data. Logging out frontend."
+          );
+          dispatch(logout());
+          setError("Login successful, but failed to load profile data.");
+        }
       } catch (profileError: any) {
         console.error(
           "Failed to fetch user profile after login:",
           profileError
         );
-
         dispatch(logout());
-        localStorage.removeItem("authTokens");
         setError(
           "Login successful, but failed to fetch user profile. Please try logging in again."
         );
@@ -61,7 +81,7 @@ function LoginForm() {
     onError: (err: any) => {
       console.error("Login error:", err);
       const errorMessage =
-        err.response?.data?.detail ||
+        err.response?.data?.message ||
         err.message ||
         "An unexpected error occurred during login.";
       setError(errorMessage);
@@ -71,27 +91,28 @@ function LoginForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    loginMutation.mutate({ username: email, password });
+    loginMutation.mutate({ email, password });
   };
 
   return (
     <StyledForm onSubmit={handleSubmit}>
+      <h2>Login</h2>
+      {error && <ErrorMessage>{error}</ErrorMessage>}
       <FormField>
-        <StyledLabel htmlFor="email">Email:</StyledLabel>
+        <StyledLabel htmlFor="login-email">Email:</StyledLabel>
         <StyledInput
-          id="email"
+          id="login-email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e: any) => setEmail(e.target.value)}
           required
           disabled={loginMutation.isPending}
         />
       </FormField>
-
       <FormField>
-        <StyledLabel htmlFor="password">Password:</StyledLabel>
+        <StyledLabel htmlFor="login-password">Password:</StyledLabel>
         <StyledInput
-          id="password"
+          id="login-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -99,8 +120,6 @@ function LoginForm() {
           disabled={loginMutation.isPending}
         />
       </FormField>
-      {error && <ErrorMessage>{error}</ErrorMessage>}
-
       <SubmitButton type="submit" disabled={loginMutation.isPending}>
         {loginMutation.isPending ? "Logging In..." : "Login"}
       </SubmitButton>

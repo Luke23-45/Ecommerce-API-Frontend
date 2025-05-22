@@ -1,64 +1,86 @@
-import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import type { RootState, AppDispatch } from '@/store/types';
-import { useNavigate } from 'react-router-dom';
-import { logout } from '@/store/slices/authSlice';
+import React from "react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { type RootState } from "@/store";
+import { logoutUser } from "@/api/auth/authApi";
+import { logout } from "@/store/slices/authSlice";
 
 import {
   StyledHeader,
-  BrandLink,
-  NavList,
-  NavItem,
+  SiteTitleLink,
+  SiteTitle,
+  Nav,
   NavLink,
-  AuthLinksContainer,
-  AuthButton,
-  AuthLink,
-} from './Header.styled';
+  LogoutButton,
+} from "./Header.styled";
+import { useDispatch } from "react-redux";
+import { useQueryClient } from "@tanstack/react-query";
 
-const Header: React.FC = () => {
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-  const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
+function Header() {
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  );
+  const dispatch = useDispatch();
+
+  const logoutMutation = useMutation({
+    mutationFn: logoutUser,
+    onSuccess: () => {
+      console.log("Logout successful on backend.");
+
+      dispatch(logout());
+
+      queryClient.invalidateQueries({ queryKey: ["user", "me"] });
+    },
+    onError: (err) => {
+      console.error("Logout error:", err);
+
+      dispatch(logout());
+
+      queryClient.invalidateQueries({ queryKey: ["user", "me"] });
+    },
+  });
+
+  const queryClient = useQueryClient();
 
   const handleLogout = () => {
-    console.log('Logging out…');
-    dispatch(logout());
-    localStorage.removeItem('authTokens');
-    navigate('/login');
+    console.log("Attempting to log out...");
+    logoutMutation.mutate();
   };
 
   return (
     <StyledHeader>
+      {/* Site Title linking to home */}
+      <SiteTitleLink to="/">
+        <SiteTitle>E-commerce</SiteTitle> {/* Replace with your site name */}
+      </SiteTitleLink>
 
-      <BrandLink to="/">Task Manager</BrandLink>
-
-
-      <nav>
-        <NavList>
-          <NavItem>
-            <NavLink to="/">Home</NavLink>
-          </NavItem>
-          {isAuthenticated && (
-            <NavItem>
-              <NavLink to="/tasks">Tasks</NavLink>
-            </NavItem>
-          )}
-        </NavList>
-      </nav>
-
-  
-      <AuthLinksContainer>
-        {isAuthenticated ? (
-          <AuthButton onClick={handleLogout}>Logout</AuthButton>
+      {/* Navigation */}
+      <Nav>
+        {/* 21. Conditional rendering based on authentication status */}
+        {!isAuthenticated ? (
+          <>
+            {" "}
+            {/* Fragment for multiple elements */}
+            <NavLink to="/auth/login">Login</NavLink>
+            <NavLink to="/auth/register">Register</NavLink>
+          </>
         ) : (
           <>
-            <AuthLink to="/login">Login</AuthLink>
-          
+            <NavLink to="/profile">Profile</NavLink>{" "}
+            {/* Link to user profile */}
+            {/* 22. Logout Button */}
+            <LogoutButton
+              onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+            >
+              {logoutMutation.isPending ? "Logging Out..." : "Logout"}
+            </LogoutButton>
           </>
         )}
-      </AuthLinksContainer>
+      </Nav>
     </StyledHeader>
   );
-};
+}
 
 export default Header;

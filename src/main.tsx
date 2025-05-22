@@ -1,22 +1,29 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { Provider as ReduxProvider } from 'react-redux';
-import { store } from './store';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { Provider } from "react-redux";
+import { store, setAppDispatch } from "./store";
+import App from "./App";
+import "./index.css";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from './api/queryClient';
-// import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import App from './App.tsx'
-import "./index.css"
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ReduxProvider store={store}>
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+setAppDispatch(store.dispatch);
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <Provider store={store}>
       <QueryClientProvider client={queryClient}>
-
         <App />
-
-
+        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
-    </ReduxProvider>
-  </StrictMode>,
-)
+    </Provider>
+  </React.StrictMode>
+);

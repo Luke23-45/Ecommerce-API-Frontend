@@ -1,25 +1,42 @@
+import React from "react";
+import { useSelector } from "react-redux";
+import { Navigate, Outlet } from "react-router-dom";
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { type RootState } from '@/store/types';
+import { type RootState } from "@/store";
 
-interface ProtectedRouteProps {
-  children: React.ReactElement;
-}
+interface ProtectedRouteProps {}
 
-function ProtectedRoute({ children }: ProtectedRouteProps) {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = () => {
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  );
+  const user = useSelector((state: RootState) => state.auth.user);
+  const authLoading = useSelector((state: RootState) => state.auth.loading);
 
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-
-
-  if (!isAuthenticated) {
-
-    return <Navigate to="/login" replace />;
+  if (authLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "50vh",
+        }}
+      >
+        <p>Loading user session...</p> {/* Or a spinner component */}
+      </div>
+    );
   }
 
+  if (!isAuthenticated) {
+    console.log(
+      "ProtectedRoute: User not authenticated. Redirecting to /auth/login"
+    );
+    return <Navigate to="/auth/login" replace />;
+  }
 
-  return children;
-}
+  console.log("ProtectedRoute: User authenticated. Rendering Outlet.");
+  return <Outlet />;
+};
 
 export default ProtectedRoute;
