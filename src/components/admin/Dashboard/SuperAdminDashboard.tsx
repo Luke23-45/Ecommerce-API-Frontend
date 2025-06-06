@@ -1,192 +1,492 @@
-// src/components/Admin/Dashboard/SuperAdminDashboard.tsx
-import React from 'react';
-import { FaStore, FaChartPie, FaPercent, FaHeadset,FaCog } from 'react-icons/fa'; // Icons for platform insights
+import React from "react";
+import {
+  FaStore,
+  FaChartPie,
+  FaHeadset,
+  FaCog,
+  FaExclamationTriangle,
+  FaListAlt,
+  FaBullhorn,
+} from "react-icons/fa";
+import styled, { type DefaultTheme } from "styled-components";
+
+import heroImg from '@/assets/bgseller.png'
 import {
   DashboardGrid,
   MetricCardsContainer,
   DashboardChartSection,
-  DashboardRecentActivitySection,
-  DashboardQuickInsightsSection,
-} from './Dashboard.styles'; // Styles are reusable
+  DashboardHeroSection,
+  DashboardSidebarSection,
+  DashboardBottomWidgetsContainer,
+  DashboardContentCard,
+} from "./Dashboard.styles";
 
-import MetricCard from './MetricCard/MetricCard';
-import ChartCard from './ChartCard/ChartCard';
-import RecentActivity from './RecentActivity/RecentActivity';
-import DashboardCard from './DashboardCard/DashboardCard'; // Reusable generic dashboard card
-import { AdminButton } from './Common/Common.styles';
-import { rgba } from 'polished'; // For status background colors
+import MetricCard from "./MetricCard/MetricCard";
+import ChartCard from "./ChartCard/ChartCard";
+import RecentActivity from "./RecentActivity/RecentActivity";
+import { AdminButton } from "./Common/Common.styles";
 
-// Dummy data specific to a SUPER ADMIN (Platform-wide metrics)
+import { rgba } from "polished";
+
 const dummySuperAdminMetrics = {
-    platformGrossSales: '$1,850,000',
-    totalUsers: '5,000', // All sellers, vendors, customers
-    liveProducts: '12,500', // Across all vendors/sellers
-    activeVendors: '120',
-    salesTrend: 22.8,
-    userTrend: 15.5,
-    productTrend: 10.2,
-    vendorTrend: 8.0,
+  platformGrossSales: "$1,850,000",
+  salesTrend: 22.8,
+  totalUsers: "5,000",
+  userTrend: 15.5,
+  liveProducts: "12,500",
+  productTrend: -5.0,
+  activeVendors: "120",
+  vendorTrend: 0,
 };
-
 const dummySuperAdminActivity = [
-    { id: 'sa1', name: 'New Vendor (Global Goods)', type: 'Account Created', date: 'Just now', value: null, status: null },
-    { id: 'sa2', name: 'Product Update (All Products)', type: 'Global Inventory Sync', date: '10 mins ago', value: '1.2M updates', status: null },
-    { id: 'sa3', name: 'Platform Sales Review', type: 'Report Generated', date: '30 mins ago', value: '$1.8M', status: null },
-    { id: 'sa4', name: 'User Login (Super Admin)', type: 'Security Alert', date: '1 hr ago', value: null, status: null }, // Example: Security alert
-    { id: 'sa5', name: 'System Maintenance', type: 'Scheduled', date: 'Tomorrow', value: 'Server downtime', status: null },
+  {
+    id: "sa1",
+    name: "New Vendor (Global Goods)",
+    type: "Account Created",
+    date: "Just now",
+    value: null,
+    status: null,
+  },
+  {
+    id: "sa2",
+    name: "Product Update (All Products)",
+    type: "Global Inventory Sync",
+    date: "10 mins ago",
+    value: "1.2M updates",
+    status: null,
+  },
+  {
+    id: "sa3",
+    name: "Platform Sales Review",
+    type: "Report Generated",
+    date: "30 mins ago",
+    value: "$1.8M",
+    status: null,
+  },
+  {
+    id: "sa4",
+    name: "User Login (Super Admin)",
+    type: "Security Alert",
+    date: "1 hr ago",
+    value: null,
+    status: null,
+  },
+  {
+    id: "sa5",
+    name: "System Maintenance",
+    type: "Scheduled",
+    date: "Tomorrow",
+    value: "Server downtime",
+    status: null,
+  },
 ];
-
 const dummyPlatformIssues = [
-    { type: 'High', description: 'Payment gateway API error spikes', status: 'critical', link: '#issues-payment' },
-    { type: 'Medium', description: 'Vendor payout discrepancy (ID: V123)', status: 'warning', link: '#issues-payout' },
-    { type: 'Low', description: 'Customer feedback: slow image loads', status: 'info', link: '#issues-images' },
+  {
+    type: "High",
+    description: "Payment gateway API error spikes",
+    status: "critical",
+    link: "#issues-payment",
+  },
+  {
+    type: "Medium",
+    description: "Vendor payout discrepancy (ID: V123)",
+    status: "warning",
+    link: "#issues-payout",
+  },
+  {
+    type: "Low",
+    description: "Customer feedback: slow image loads",
+    status: "info",
+    link: "#issues-images",
+  },
+];
+const dummyCustomerSupportQueue = [
+  {
+    id: "cs1",
+    customer: "Jane Doe",
+    issue: "Order tracking inquiry",
+    status: "Open",
+    link: "#support-jane",
+  },
+  {
+    id: "cs2",
+    customer: "John Smith",
+    issue: "Product refund request",
+    status: "Pending",
+    link: "#support-john",
+  },
 ];
 
-const dummyCustomerSupportQueue = [
-    { id: 'cs1', customer: 'Jane Doe', issue: 'Order tracking inquiry', status: 'Open', link: '#support-jane' },
-    { id: 'cs2', customer: 'John Smith', issue: 'Product refund request', status: 'Pending', link: '#support-john' },
-];
+const InsightList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: ${({ theme }) => theme.spacing(2.5)} 0;
+    border-bottom: 1px solid ${({ theme }) => theme.colors.adminBorder};
+    font-size: ${({ theme }) => theme.typography.admin.sizes.bodyBase};
+    color: ${({ theme }) => theme.colors.adminText};
+    &:last-child {
+      border-bottom: none;
+    }
+    span:first-child {
+      color: ${({ theme }) => theme.colors.adminTextSecondary};
+    }
+    strong,
+    span[style*="fontWeight: 600"] {
+      font-weight: ${({ theme }) => theme.typography.admin.weights.semiBold};
+      color: ${({ theme }) => theme.colors.adminText};
+    }
+  }
+`;
+
+const AlertListItem = styled.li`
+  padding: ${({ theme }) => theme.spacing(2.5)} 0;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.adminBorder};
+  font-size: ${({ theme }) => theme.typography.admin.sizes.bodyBase};
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .alert-type {
+    font-weight: ${({ theme }) => theme.typography.admin.weights.semiBold};
+    margin-right: ${({ theme }) => theme.spacing(2)};
+  }
+  .alert-link {
+    color: ${({ theme }) => theme.colors.adminText};
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+      color: ${({ theme }) => theme.colors.adminAccent};
+    }
+  }
+  .alert-status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: ${({ theme }) => theme.borderRadius.pill};
+    font-size: ${({ theme }) => theme.typography.admin.sizes.xsmallText};
+    font-weight: ${({ theme }) => theme.typography.admin.weights.bold};
+    margin-left: ${({ theme }) => theme.spacing(2.5)};
+    text-transform: uppercase;
+  }
+`;
 
 const SuperAdminDashboard: React.FC = () => {
+  const navigateTo = (path: string, message?: string) => {
+    console.log(message || `Navigating to: ${path}`);
+  };
+
+  const getAlertColors = (status: string | undefined, theme: DefaultTheme) => {
+    switch (status) {
+      case "critical":
+        return {
+          text: theme.colors.adminStatusError,
+          bg: rgba(theme.colors.adminStatusError, 0.1),
+        };
+      case "warning":
+        return {
+          text: theme.colors.adminStatusWarning,
+          bg: rgba(theme.colors.adminStatusWarning, 0.1),
+        };
+      case "info":
+        return {
+          text: theme.colors.adminStatusInfo,
+          bg: rgba(theme.colors.adminStatusInfo, 0.1),
+        };
+      default:
+        return {
+          text: theme.colors.adminTextMuted,
+          bg: rgba(theme.colors.adminTextMuted, 0.1),
+        };
+    }
+  };
+
   return (
     <DashboardGrid>
+      <DashboardHeroSection
+        style={{
+          gridColumn: "1 / -1",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div>
+          <h1
+            style={{
+              fontSize: "2rem",
+              marginBottom: "10px",
+              color: "#1F2937",
+            }}
+          >
+            Platform Command Center
+          </h1>
+          <p
+            style={{
+              fontSize: "1.1rem",
+              color: "#4B5563",
+              maxWidth: "650px",
+              lineHeight: 1.6,
+            }}
+          >
+            Oversee all operations, manage users, monitor system health, and
+            drive platform growth. Your insights shape Élan's success.
+          </p>
+        </div>
+        {/* <img src={} alt="Platform overview" style={{ maxHeight: '180px', opacity: 0.8 }} /> */}
+        <AdminButton
+          $variant="primary"
+          onClick={() =>
+            navigateTo("/admin/settings/general", "Go to General Settings")
+          }
+        >
+          <FaCog style={{ marginRight: "8px" }} /> Configure Platform
+        </AdminButton>
+      </DashboardHeroSection>
+
       <MetricCardsContainer>
+        {" "}
+        {/* Spans full width */}
         <MetricCard
           title="Platform Gross Sales"
           value={dummySuperAdminMetrics.platformGrossSales}
-          type="sales"
           trendPercentage={dummySuperAdminMetrics.salesTrend}
           trendPeriod="since last quarter"
-          onClick={() => console.log('SuperAdmin: View Global Sales Report')}
+          onClick={() =>
+            navigateTo(
+              "/admin/reports/global-sales",
+              "SuperAdmin: View Global Sales Report"
+            )
+          }
         />
         <MetricCard
           title="Total Registered Users"
           value={dummySuperAdminMetrics.totalUsers}
-          type="customers"
           trendPercentage={dummySuperAdminMetrics.userTrend}
           trendPeriod="since last year"
-          onClick={() => console.log('SuperAdmin: View All Users')}
+          onClick={() =>
+            navigateTo("/admin/users/all", "SuperAdmin: View All Users")
+          }
         />
         <MetricCard
           title="Total Live Products"
           value={dummySuperAdminMetrics.liveProducts}
-          type="products"
           trendPercentage={dummySuperAdminMetrics.productTrend}
           trendPeriod="across all vendors"
-          onClick={() => console.log('SuperAdmin: Manage All Products')}
+          onClick={() =>
+            navigateTo(
+              "/admin/products/manage-all",
+              "SuperAdmin: Manage All Products"
+            )
+          }
         />
         <MetricCard
           title="Active Vendor Stores"
           value={dummySuperAdminMetrics.activeVendors}
-          type="store" // Reusing 'store' icon for vendor stores
           trendPercentage={dummySuperAdminMetrics.vendorTrend}
           trendPeriod="new registrations"
-          onClick={() => console.log('SuperAdmin: Manage Vendors')}
+          onClick={() =>
+            navigateTo("/admin/vendors/manage", "SuperAdmin: Manage Vendors")
+          }
         />
       </MetricCardsContainer>
 
       <DashboardChartSection>
-        <ChartCard title="Global Sales Trend" chartType="line" />
+        {" "}
+        {/* Spans 8 columns */}
+        <ChartCard
+          title="Global Sales Trend (Last 12 Months)"
+          chartType="line"
+        />
       </DashboardChartSection>
 
-      <DashboardRecentActivitySection>
-        <RecentActivity title="Platform Activity Log" activities={dummySuperAdminActivity} />
-      </DashboardRecentActivitySection>
-      
-      {/* Super Admin-Specific Quick Insights/Management Areas */}
-      <DashboardQuickInsightsSection>
-         <DashboardCard title="Key Performance Indicators (KPIs)">
-             {/* Could display overall commission rates, payment gateway health, etc. */}
-             <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.95rem', color: '#333' }}>
-                 <li style={{ padding: '8px 0', borderBottom: '1px dashed #EEE', display: 'flex', justifyContent: 'space-between' }}>
-                     <span>Commission Rate:</span><span style={{ fontWeight: 600 }}>10%</span>
-                 </li>
-                 <li style={{ padding: '8px 0', borderBottom: '1px dashed #EEE', display: 'flex', justifyContent: 'space-between' }}>
-                     <span>Customer Retention:</span><span style={{ fontWeight: 600 }}>65%</span>
-                 </li>
-                 <li style={{ padding: '8px 0', display: 'flex', justifyContent: 'space-between' }}>
-                     <span>Average Order Value:</span><span style={{ fontWeight: 600 }}>$150</span>
-                 </li>
-             </ul>
-             <AdminButton $variant="secondary" style={{ marginTop: '20px' }} onClick={() => console.log('SuperAdmin: View All Platform Metrics')}>
-                 <FaChartPie /> View Platform Metrics
-             </AdminButton>
-         </DashboardCard>
-         
-         <DashboardCard title="Active System Alerts & Issues">
-             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                 {dummyPlatformIssues.length > 0 ? (
-                     dummyPlatformIssues.map(issue => (
-                         <li key={issue.description} style={{ padding: '8px 0', borderBottom: '1px dashed #EEE', fontSize: '0.95rem' }}>
-                             <span style={{
-                                 fontWeight: 600,
-                                 color: issue.status === 'critical' ? 'red' : issue.status === 'warning' ? 'orange' : '#999',
-                                 marginRight: '8px'
-                             }}>{issue.type}:</span>
-                             <a href={issue.link} style={{ color: '#333', textDecoration: 'none' }}>{issue.description}</a>
-                             <span style={{
-                                 display: 'inline-block',
-                                 padding: '3px 8px',
-                                 borderRadius: '4px',
-                                 fontSize: '0.7rem',
-                                 fontWeight: 'bold',
-                                 marginLeft: '10px',
-                                 backgroundColor: issue.status === 'critical' ? rgba('red', 0.1) : issue.status === 'warning' ? rgba('orange', 0.1) : rgba('#999', 0.1),
-                                 color: issue.status === 'critical' ? 'red' : issue.status === 'warning' ? 'orange' : '#999',
-                             }}>{issue.status?.toUpperCase()}</span>
-                         </li>
-                     ))
-                 ) : (
-                     <li style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No active issues.</li>
-                 )}
-             </ul>
-  <AdminButton
-  $variant="danger"
-  onClick={() => console.log('SuperAdmin: Manage All Alerts')}
-  style={{ marginTop: 20 }}
->
-  <FaCog />
-  Manage Alerts
-</AdminButton>
-             <AdminButton $variant="secondary" style={{ marginTop: '10px' }} onClick={() => console.log('SuperAdmin: System Logs')}>
-                 View System Logs
-             </AdminButton>
-         </DashboardCard>
+      <DashboardSidebarSection>
+        {" "}
+        {/* Spans 4 columns */}
+        <DashboardContentCard title="Key Platform Indicators">
+          <InsightList>
+            <li>
+              <span>Commission Rate:</span> <strong>10%</strong>
+            </li>
+            <li>
+              <span>Customer Retention:</span> <strong>65%</strong>
+            </li>
+            <li>
+              <span>Average Order Value:</span> <strong>$150</strong>
+            </li>
+            <li>
+              <span>Support Ticket Resolution:</span> <strong>92%</strong>
+            </li>
+          </InsightList>
+          <AdminButton
+            $variant="secondary"
+            style={{ marginTop: "20px", width: "100%" }}
+            onClick={() =>
+              navigateTo(
+                "/admin/metrics/platform",
+                "SuperAdmin: View All Platform Metrics"
+              )
+            }
+          >
+            <FaChartPie style={{ marginRight: "8px" }} /> View Detailed Metrics
+          </AdminButton>
+        </DashboardContentCard>
+        <DashboardContentCard title="Recent Platform Activity">
+          <RecentActivity
+            activities={dummySuperAdminActivity}
+            itemsToShow={3}
+          />
+          <AdminButton
+            $variant="text"
+            style={{ marginTop: "15px", width: "100%", textAlign: "center" }}
+            onClick={() =>
+              navigateTo(
+                "/admin/logs/activity",
+                "SuperAdmin: View Full Activity Log"
+              )
+            }
+          >
+            View Full Activity Log
+          </AdminButton>
+        </DashboardContentCard>
+      </DashboardSidebarSection>
 
-         <DashboardCard title="Customer Support Queue">
-             <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.95rem' }}>
-                 {dummyCustomerSupportQueue.length > 0 ? (
-                     dummyCustomerSupportQueue.map(ticket => (
-                         <li key={ticket.id} style={{ padding: '8px 0', borderBottom: '1px dashed #EEE', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                             <div>
-                                 <strong>{ticket.customer}:</strong> {ticket.issue}
-                             </div>
-                             <span style={{
-                                 display: 'inline-block',
-                                 padding: '3px 8px',
-                                 borderRadius: '4px',
-                                 fontSize: '0.75rem',
-                                 fontWeight: 'bold',
-                                 backgroundColor: ticket.status === 'Open' ? rgba('red', 0.1) : rgba('orange', 0.1), // Simplified for demo
-                                 color: ticket.status === 'Open' ? 'red' : 'orange',
-                             }}>{ticket.status?.toUpperCase()}</span>
-                         </li>
-                     ))
-                 ) : (
-                     <li style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No pending tickets.</li>
-                 )}
-             </ul>
-             <AdminButton $variant="primary" style={{ marginTop: '20px' }} onClick={() => console.log('SuperAdmin: Go to Support Tickets')}>
-                 <FaHeadset /> View Support Tickets
-             </AdminButton>
-             <AdminButton $variant="secondary" style={{ marginTop: '10px' }} onClick={() => console.log('SuperAdmin: FAQ Management')}>
-                 Manage FAQs
-             </AdminButton>
-         </DashboardCard>
-      </DashboardQuickInsightsSection>
+      <DashboardBottomWidgetsContainer>
+        <DashboardContentCard
+          title="Active System Alerts"
+          style={{ gridColumn: "span 6" }}
+        >
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {dummyPlatformIssues.length > 0 ? (
+              dummyPlatformIssues.map((issue, index, arr) => {
+                const colors = getAlertColors(issue.status, theme);
+                return (
+                  <AlertListItem
+                    key={issue.description}
+                    style={
+                      index === arr.length - 1 ? { borderBottom: "none" } : {}
+                    }
+                  >
+                    <span className="alert-type" style={{ color: colors.text }}>
+                      <FaExclamationTriangle
+                        style={{
+                          marginRight: "6px",
+                          transform: "translateY(1px)",
+                        }}
+                      />{" "}
+                      {issue.type}:
+                    </span>
+                    <a href={issue.link} className="alert-link">
+                      {issue.description}
+                    </a>
+                    {issue.status && (
+                      <span
+                        className="alert-status-badge"
+                        style={{
+                          backgroundColor: colors.bg,
+                          color: colors.text,
+                        }}
+                      >
+                        {issue.status}
+                      </span>
+                    )}
+                  </AlertListItem>
+                );
+              })
+            ) : (
+              <li
+                style={{
+                  textAlign: "center",
+                  color: "#9CA3AF",
+                  padding: "20px 0",
+                }}
+              >
+                No active system issues.
+              </li>
+            )}
+          </ul>
+          <AdminButton
+            $variant="danger"
+            onClick={() =>
+              navigateTo(
+                "/admin/alerts/manage",
+                "SuperAdmin: Manage All Alerts"
+              )
+            }
+            style={{ marginTop: "20px", width: "100%" }}
+          >
+            <FaCog style={{ marginRight: "8px" }} /> Manage System Alerts
+          </AdminButton>
+        </DashboardContentCard>
 
+        <DashboardContentCard
+          title="Customer Support Overview"
+          style={{ gridColumn: "span 6" }}
+        >
+          <InsightList>
+            <li>
+              <span>Open Tickets:</span>{" "}
+              <strong>
+                {
+                  dummyCustomerSupportQueue.filter((t) => t.status === "Open")
+                    .length
+                }
+              </strong>
+            </li>
+            <li>
+              <span>Pending Tickets:</span>{" "}
+              <strong>
+                {
+                  dummyCustomerSupportQueue.filter(
+                    (t) => t.status === "Pending"
+                  ).length
+                }
+              </strong>
+            </li>
+            <li>
+              <span>Avg. Response Time:</span> <strong>2.5 Hrs</strong>
+            </li>
+          </InsightList>
+          <AdminButton
+            $variant="primary"
+            style={{ marginTop: "20px", width: "100%" }}
+            onClick={() =>
+              navigateTo(
+                "/admin/support/tickets",
+                "SuperAdmin: Go to Support Tickets"
+              )
+            }
+          >
+            <FaHeadset style={{ marginRight: "8px" }} /> View Support Queue
+          </AdminButton>
+          <AdminButton
+            $variant="secondary"
+            style={{ marginTop: "10px", width: "100%" }}
+            onClick={() =>
+              navigateTo(
+                "/admin/support/faq/manage",
+                "SuperAdmin: FAQ Management"
+              )
+            }
+          >
+            Manage FAQs
+          </AdminButton>
+        </DashboardContentCard>
+      </DashboardBottomWidgetsContainer>
     </DashboardGrid>
   );
 };
+
+const theme = {
+  colors: {
+    adminStatusError: "#EF4444",
+    adminStatusWarning: "#F59E0B",
+    adminStatusInfo: "#3B82F6",
+    adminTextMuted: "#9CA3AF",
+  },
+} as DefaultTheme;
 
 export default SuperAdminDashboard;

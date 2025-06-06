@@ -1,0 +1,12 @@
+.app-container{
+  display: flex;
+  flex-direction: column; 
+  min-height: 100vh;
+    -webkit-overflow-scrolling: touch;
+}
+
+.app-container::-webkit-scrollbar {
+  display: none; /* Hide the scrollbar entirely */
+  width: 0;      /* Ensure no width is reserved for vertical scrollbar */
+  height: 0;     /* Ensure no height is reserved for horizontal scrollbar */
+}

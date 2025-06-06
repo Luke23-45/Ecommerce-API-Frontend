@@ -10,6 +10,7 @@ import {
   createVendorProfile,
   updateVendorProfile,
   getVendorProfile,
+  updateVendorProfileStatus,
 } from "@/api/vendor/vendorApi";
 
 import { type IVendorProfile } from "@/types/vendor";
@@ -23,11 +24,13 @@ export const vendorKeys = {
 export const useGetVendorProfile = (
   options?: UseQueryOptions<ApiResponse<IVendorProfile>, Error, IVendorProfile>
 ) => {
-  const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
+  const { isAuthenticated, loading: isAuthLoading } = useSelector(
+    (state: RootState) => state.auth
   );
+
   return useQuery<ApiResponse<IVendorProfile>, Error, IVendorProfile>({
     queryKey: vendorKeys.profile(),
+    enabled: isAuthenticated && !isAuthLoading,
     queryFn: async () => {
       const response = await getVendorProfile();
       if (!response.success || !response.data) {
@@ -36,7 +39,6 @@ export const useGetVendorProfile = (
       return response;
     },
     select: (data) => data.data,
-    enabled: isAuthenticated,
     staleTime: 5 * 60 * 100,
     refetchOnWindowFocus: false,
     retry: 1,
@@ -46,8 +48,11 @@ export const useGetVendorProfile = (
 
 export const useCreateVendorProfile = () => {
   const queryClient = useQueryClient();
-
-  return useMutation<ApiResponse<IVendorProfile>, Error, IVendorProfile>({
+  return useMutation<
+    ApiResponse<IVendorProfile>,
+    Error,
+    Partial<IVendorProfile>
+  >({
     mutationFn: createVendorProfile,
     onSuccess: (response) => {
       console.log("Vendor profile created successfully:", response.data);
@@ -61,10 +66,31 @@ export const useCreateVendorProfile = () => {
 
 export const useUpdateVendorProfile = () => {
   const queryClient = useQueryClient();
-  return useMutation<ApiResponse<IVendorProfile>, Error, IVendorProfile>({
+  return useMutation<ApiResponse<IVendorProfile>, Error, any>({
     mutationFn: updateVendorProfile,
     onSuccess: (response) => {
       console.log("Vendor profile updated successfully!", response.data);
+      queryClient.invalidateQueries({ queryKey: vendorKeys.profile() });
+    },
+    onError: (error) => {
+      console.error("Error updating seller profile:", error);
+    },
+  });
+};
+
+export const useVendorProfileStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<IVendorProfile>,
+    Error,
+    {
+      status: string;
+    }
+  >({
+    mutationFn: updateVendorProfileStatus,
+    onSuccess: (response) => {
+      console.log("Seller profile status updated successfully:", response.data);
       queryClient.invalidateQueries({ queryKey: vendorKeys.profile() });
     },
     onError: (error) => {

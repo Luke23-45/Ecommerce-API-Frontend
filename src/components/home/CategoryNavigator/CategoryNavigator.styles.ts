@@ -13,7 +13,7 @@ export const NavigatorContainer = styled.nav`
     flex: 0 0 180px; /* Fixed width for desktop Iconic Navigator */
     
     position: sticky;
-    top: 155px; /* Sticks right below the fixed headers (approx. total fixed header height) */
+    top: 50px; /* Sticks right below the fixed headers (approx. total fixed header height) */
     // REMOVED: bottom: ${(props) => getTheme(props).spacing(8)}; /* This line was preventing indefinite stickiness */
     
     align-self: flex-start; /* Aligns to top of flex container, crucial for its positioning flow */

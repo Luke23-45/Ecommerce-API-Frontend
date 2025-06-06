@@ -3,16 +3,16 @@ import styled from 'styled-components';
 
 export const StyledPreHeader = styled.header`
     background-color: ${(props) => props.theme.colors.primaryNeutral};
-    color: ${(props) => props.theme.colors.textDark};
-    font-size: ${(props) => props.theme.typography.body.sizes.xsmall};
+    color: ${(props) => props.theme.colors.textLight};
+    font-size:11px;
+    font-weight:500 ;
     height: 32px;
     display: flex;
     align-items: center;
     padding: 0 ${(props) => props.theme.containerPadding};
     border-bottom: 1px solid ${(props) => props.theme.colors.lightGray};
     position: relative;
-    z-index: 100; // Above other elements
-
+    z-index: 100; 
     @media (max-width: ${(props) => props.theme.breakpoints.tablet}) {
         justify-content: center;
         height: auto;
@@ -25,6 +25,7 @@ export const PreHeaderContent = styled.div`
     justify-content: space-between;
     align-items: center;
     width: 100%;
+  
     max-width: ${(props) => props.theme.maxWidth};
     margin: 0 auto;
 

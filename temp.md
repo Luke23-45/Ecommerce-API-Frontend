@@ -1,6 +1,8 @@
+
+
+  
 check the sellers exist. if yes, then we would allow to access the update page. 
 C:\Users\Hellx\Documents\Programming\Frontend\nodejs\Product Management\ecommerce_api
-
 
 const disallowedProfileUpdateFields: string[] = [
     '_id',                         
@@ -20,7 +22,7 @@ const disallowedProfileUpdateFields: string[] = [
     'businessRoutingNumber',    
 
 ];
-
+//form
 
 const allowedProfileUpdateFields: (keyof IVendorProfile)[] = [
     'companyAddress',    

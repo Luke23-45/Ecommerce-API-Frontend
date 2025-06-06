@@ -1,8 +1,8 @@
-// src/components/HeroPanorama/HeroPanorama.styles.ts
-import styled, { css, keyframes } from 'styled-components';
-import { darken, rgba } from 'polished'; // Ensure 'polished' is installed
 
-// Keyframes for text animations
+import styled, { css, keyframes } from 'styled-components';
+import { darken, rgba } from 'polished'; 
+
+
 const textSlideUp = keyframes`
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -32,26 +32,26 @@ const scrollArrowBounce = keyframes`
 export const StyledHeroPanorama = styled.section<{ $yOffset: number }>`
     position: relative;
     width: 100%;
-    height: 90vh; /* Increased height for more drama */
-    min-height: 550px; /* Minimum height for smaller screens */
-    overflow: hidden; /* Crucial for parallax and containing visuals */
+    height: 90vh;
+    min-height: 550px;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: ${(props) => props.theme.colors.textLight}; /* Default text color on dark background */
+    color: ${(props) => props.theme.colors.textLight};
 
-    /* Responsive adjustments */
+   
     @media (max-width: ${(props) => props.theme.breakpoints.tablet}) {
         height: 75vh;
         min-height: 450px;
-        align-items: flex-end; /* Text bottom left on mobile */
+        align-items: flex-end;
         justify-content: flex-start;
         padding-bottom: 40px;
         text-align: left;
     }
 `;
 
-// Shared styles for video and image backgrounds
+
 const BackgroundVisuals = css<{ $yOffset: number }>`
     position: absolute;
     top: 0;
@@ -59,21 +59,21 @@ const BackgroundVisuals = css<{ $yOffset: number }>`
     width: 100%;
     height: 100%;
     object-fit: cover;
-    z-index: -2; /* Below content and overlay */
-    filter: brightness(0.7) saturate(1.1); /* Deeper, richer colors */
-    transform: translateY(${props => props.$yOffset * 0.3}px); /* Subtle parallax effect */
-    transition: transform 0s; /* No transition for real-time parallax */
+    z-index: -2;
+    filter: brightness(0.7) saturate(1.1);
+    transform: translateY(${props => props.$yOffset * 0.3}px);
+    transition: transform 0s;
 `;
 
 export const HeroVideo = styled.video`
     ${BackgroundVisuals}
-    opacity: ${props => props.$yOffset === 0 ? 0 : 1}; /* Initial fade in on component mount */
-    transition: opacity 1s ease-out; /* Smooth fade-in once video loads */
+    opacity: ${props => props.$yOffset === 0 ? 0 : 1};
+    transition: opacity 1s ease-out;
 `;
 
 export const HeroImage = styled.img`
     ${BackgroundVisuals}
-    opacity: 1; /* Always visible if video not loaded */
+    opacity: 1;
 `;
 
 export const HeroOverlay = styled.div`
@@ -82,8 +82,8 @@ export const HeroOverlay = styled.div`
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1; /* Above video/image, below content */
-    /* Subtle gradient to enhance vibrancy and text contrast */
+    z-index: -1;
+   
     background: linear-gradient(
         to top,
         ${(props) => rgba(props.theme.colors.textDark, 0.4)} 0%,
@@ -104,23 +104,23 @@ export const HeroOverlay = styled.div`
 
 export const HeroContent = styled.div<{ $yOffset: number }>`
     z-index: 1;
-    max-width: 1100px; /* Increased max width for more expansive text */
+    max-width: 1100px;
     padding: 0 ${(props) => props.theme.containerPadding};
     text-align: center;
-    transform: translateY(${props => props.$yOffset * -0.1}px); /* Subtle opposing parallax for text */
+    transform: translateY(${props => props.$yOffset * -0.1}px);
     transition: transform 0s;
 
-    /* Initial animation for content elements */
+   
     & > * {
         opacity: 0;
         animation: ${textSlideUp} 0.8s ease-out forwards;
-        animation-delay: var(--animation-delay); /* Controlled by JS */
+        animation-delay: var(--animation-delay);
     }
 
     @media (max-width: ${(props) => props.theme.breakpoints.tablet}) {
         text-align: left;
         padding: 0 30px;
-        /* Animation adjustments for mobile */
+       
         & > * {
             animation: ${fadeIn} 0.8s ease-out forwards;
         }
@@ -131,13 +131,13 @@ export const HeroHeadline = styled.h2`
     font-family: ${(props) => props.theme.typography.heading.fontFamily};
     font-size: ${(props) => props.theme.typography.heading.sizes.h1};
     font-weight: ${(props) => props.theme.typography.heading.weights.extraBold};
-    line-height: 1.15; /* Slightly tighter for impact */
+    line-height: 1.15;
     margin-bottom: 25px;
-    color: ${(props) => props.theme.colors.textLight}; /* White text for vibrancy against overlay */
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3); /* Stronger, more artistic shadow */
+    color: ${(props) => props.theme.colors.textLight};
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 
     span {
-        display: block; /* Force new line for each phrase */
+        display: block;
     }
 
     @media (max-width: ${(props) => props.theme.breakpoints.tablet}) {
@@ -152,7 +152,7 @@ export const HeroSubheadline = styled.p`
     font-size: ${(props) => props.theme.typography.body.sizes.large};
     font-weight: ${(props) => props.theme.typography.body.weights.regular};
     margin-bottom: 40px;
-    color: ${(props) => props.theme.colors.textLight}; /* White text */
+    color: ${(props) => props.theme.colors.textLight};
     text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);
 
     @media (max-width: ${(props) => props.theme.breakpoints.tablet}) {
@@ -163,20 +163,20 @@ export const HeroSubheadline = styled.p`
 
 export const HeroCtaButton = styled.a`
     display: inline-block;
-    background-color: ${(props) => props.theme.colors.accent1}; /* Terracotta */
+    background-color: ${(props) => props.theme.colors.accent1};
     color: ${(props) => props.theme.colors.textLight};
-    padding: 20px 45px; /* Larger padding */
-    border-radius: 50px; /* Fully rounded for a softer, inviting look */
+    padding: 20px 45px;
+    border-radius: 50px;
     font-family: ${(props) => props.theme.typography.body.fontFamily};
     font-size: ${(props) => props.theme.typography.body.sizes.base};
     font-weight: ${(props) => props.theme.typography.body.weights.semiBold};
     text-transform: uppercase;
-    letter-spacing: 1.8px; /* More prominent letter spacing */
+    letter-spacing: 1.8px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
     transition: transform 0.3s ease-out, background-color 0.3s ease-out, box-shadow 0.3s ease-out;
 
     &:hover {
-        transform: translateY(-8px); /* More pronounced lift */
+        transform: translateY(-8px);
         background-color: ${props => darken(0.1, props.theme.colors.accent1)};
         box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
     }
@@ -191,34 +191,34 @@ export const HeroCtaButton = styled.a`
         font-size: ${(props) => props.theme.typography.body.sizes.small};
         letter-spacing: 1.2px;
         border-radius: 40px;
-        transform: translateY(0); /* Disable on mobile */
+        transform: translateY(0);
         &:hover {
             transform: translateY(0);
         }
     }
 `;
 
-// Hotspot Reworked for Beauty
+
 export const Hotspot = styled.div<{ $left: number; $top: number; $visible: boolean }>`
     position: absolute;
     left: ${props => props.$left}%;
     top: ${props => props.$top}%;
-    width: 28px; /* Slightly larger */
+    width: 28px;
     height: 28px;
-    background-color: ${(props) => rgba(props.theme.colors.accent1, 0.9)}; /* More opaque terracotta */
+    background-color: ${(props) => rgba(props.theme.colors.accent1, 0.9)};
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid ${(props) => props.theme.colors.textLight}; /* Stronger white border */
+    border: 2px solid ${(props) => props.theme.colors.textLight};
     transform: translate(-50%, -50%);
     transition: transform 0.2s ease-out, background-color 0.2s ease-out;
-    z-index: 5; /* Above content */
-    opacity: 0; /* Hidden by default */
-    animation: ${fadeIn} 0.5s ease-out forwards var(--animation-delay, 0s); /* Fade in with delay */
+    z-index: 5;
+    opacity: 0;
+    animation: ${fadeIn} 0.5s ease-out forwards var(--animation-delay, 0s);
 
-    &::before { /* Inner pulsating ring */
+    &::before {
         content: '';
         position: absolute;
         width: 100%;
@@ -229,40 +229,40 @@ export const Hotspot = styled.div<{ $left: number; $top: number; $visible: boole
     }
 
     &:hover {
-        transform: translate(-50%, -50%) scale(1.1); /* Enlargen on hover */
+        transform: translate(-50%, -50%) scale(1.1);
         background-color: ${props => darken(0.1, rgba(props.theme.colors.accent1, 0.9))};
         &::before {
-            animation-play-state: paused; /* Pause inner pulse */
+            animation-play-state: paused;
         }
     }
 
-    /* Hotspot on active state (for tooltip visibility management) */
+   
     ${props => props.$visible && css`
-        opacity: 1; /* Keep visible when tooltip is open */
+        opacity: 1;
         transform: translate(-50%, -50%) scale(1.1);
         &::before { animation-play-state: paused; }
     `}
 
     @media (max-width: ${(props) => props.theme.breakpoints.tablet}) {
-        display: none; /* Hide hotspots on mobile for cleaner look */
+        display: none;
     }
 `;
 
 export const HotspotTooltip = styled.div<{ $left: number; $top: number; }>`
     position: absolute;
-    background-color: ${(props) => rgba(props.theme.colors.textLight, 0.95)}; /* Semi-transparent white */
-    backdrop-filter: blur(5px); /* Frosted glass effect */
+    background-color: ${(props) => rgba(props.theme.colors.textLight, 0.95)};
+    backdrop-filter: blur(5px);
     color: ${(props) => props.theme.colors.textDark};
     padding: 18px 25px;
-    border-radius: 10px; /* Softer corners */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18); /* Stronger shadow for depth */
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
     min-width: 220px;
     max-width: 300px;
     text-align: left;
     z-index: 10;
-    top: calc(100% + 20px); /* More space from hotspot */
+    top: calc(100% + 20px);
     left: 50%;
-    transform: translateX(-50%) translateY(10px); /* Initial slide down */
+    transform: translateX(-50%) translateY(10px);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease-out, transform 0.3s ease-out;
@@ -270,7 +270,7 @@ export const HotspotTooltip = styled.div<{ $left: number; $top: number; }>`
     ${Hotspot}:hover & {
         opacity: 1;
         visibility: visible;
-        transform: translateX(-50%) translateY(0); /* Slide up on hover */
+        transform: translateX(-50%) translateY(0);
     }
 
     h4 {
@@ -279,7 +279,7 @@ export const HotspotTooltip = styled.div<{ $left: number; $top: number; }>`
         font-weight: ${(props) => props.theme.typography.heading.weights.bold};
         margin-bottom: 8px;
         line-height: 1.3;
-        color: ${(props) => props.theme.colors.accent1}; /* Terracotta for product names */
+        color: ${(props) => props.theme.colors.accent1};
     }
 
     p {
@@ -289,7 +289,7 @@ export const HotspotTooltip = styled.div<{ $left: number; $top: number; }>`
     }
 
     button {
-        background-color: ${(props) => props.theme.colors.accent2}; /* Sage green for Quick Shop */
+        background-color: ${(props) => props.theme.colors.accent2};
         color: ${(props) => props.theme.colors.textLight};
         padding: 10px 18px;
         border-radius: 5px;
@@ -319,8 +319,8 @@ export const ScrollIndicator = styled.div`
     font-weight: ${(props) => props.theme.typography.body.weights.medium};
     letter-spacing: 1px;
     text-transform: uppercase;
-    z-index: 1; /* Above video/overlay */
-    animation: ${fadeIn} 1s ease-out forwards 2s; /* Fade in after hero content */
+    z-index: 1;
+    animation: ${fadeIn} 1s ease-out forwards 2s;
 
     span {
         margin-bottom: 8px;
@@ -329,10 +329,10 @@ export const ScrollIndicator = styled.div`
     svg {
         font-size: 24px;
         animation: ${scrollArrowBounce} 1.5s infinite;
-        color: ${(props) => props.theme.colors.accent1}; /* Terracotta arrow */
+        color: ${(props) => props.theme.colors.accent1};
     }
 
     @media (max-width: ${(props) => props.theme.breakpoints.tablet}) {
-        display: none; /* Hide scroll indicator on mobile */
+        display: none;
     }
 `;

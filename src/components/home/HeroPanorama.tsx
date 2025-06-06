@@ -1,29 +1,29 @@
-// src/components/HeroPanorama/HeroPanorama.tsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
     StyledHeroPanorama,
     HeroVideo,
     HeroImage,
-    HeroOverlay, // New!
+    HeroOverlay, 
     HeroContent,
     HeroHeadline,
     HeroSubheadline,
     HeroCtaButton,
     Hotspot,
     HotspotTooltip,
-    ScrollIndicator, // New!
+    ScrollIndicator, 
 } from './styles/HeroPanorama.styles';
-import heroVideo from '../../assets/video1.mp4'; // Ensure you have this file
-import heroImage from '../../assets/hero-image.png'; // Ensure you have this file (fallback)
-import { FaChevronDown } from 'react-icons/fa'; // New icon for scroll indicator
+import heroVideo from '../../assets/video1.mp4'; 
+import heroImage from '../../assets/hero-image.png'; 
+import { FaChevronDown } from 'react-icons/fa'; 
 
 
 interface HotspotData {
     id: string;
     name: string;
     price: string;
-    left: number; // percentage from left
-    top: number;  // percentage from top
+    left: number; 
+    top: number;  
 }
 
 const dummyHotspots: HotspotData[] = [
@@ -35,23 +35,23 @@ const dummyHotspots: HotspotData[] = [
 const HeroPanorama: React.FC = () => {
     const [videoLoaded, setVideoLoaded] = useState(false);
     const [yOffset, setYOffset] = useState(0);
-    const [activeHotspot, setActiveHotspot] = useState<string | null>(null); // To manage tooltip visibility
+    const [activeHotspot, setActiveHotspot] = useState<string | null>(null); 
 
-    // Handle video load for smooth transition
+    
     const handleVideoLoad = () => {
         setVideoLoaded(true);
     };
 
-    // Parallax scrolling effect
+    
     const handleScroll = () => {
         setYOffset(window.pageYOffset);
     };
 
     useEffect(() => {
         window.addEventListener('scroll', handleScroll);
-        // Clean up event listener
+        
         return () => window.removeEventListener('scroll', handleScroll);
-    }, []); // Empty dependency array means this runs once on mount
+    }, []); 
 
     return (
         <StyledHeroPanorama $yOffset={yOffset}>
@@ -101,7 +101,7 @@ const HeroPanorama: React.FC = () => {
                     $visible={activeHotspot === hotspot.id}
                     onMouseEnter={() => setActiveHotspot(hotspot.id)}
                     onMouseLeave={() => setActiveHotspot(null)}
-                    style={{ '--animation-delay': `${2.5 + index * 0.2}s` } as React.CSSProperties} // Staggered reveal
+                    style={{ '--animation-delay': `${2.5 + index * 0.2}s` } as React.CSSProperties} 
                 >
                     <HotspotTooltip $left={hotspot.left} $top={hotspot.top}>
                         <h4>{hotspot.name}</h4>

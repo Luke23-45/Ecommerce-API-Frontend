@@ -1,73 +1,131 @@
-import React, { useState } from "react";
-import { ThemeProvider } from "styled-components";
-import GlobalStyles from "./components/home/styles/GlobalStyles";
-import { theme } from "./components/home/styles/Theme";
-import AdminLayout from "./components/admin/Layout/Layout";
-import Dashboard from "./components/admin/Dashboard/Dashboard";
-import AdminPage from "./pages/admin/AdminPage";
+import React, { lazy, useEffect, useState } from "react";
+import { Routes, Route, BrowserRouter as Router } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+
+import { type RootState, type AppDispatch } from "@/store";
+import { initializeAuth } from "@/store/thunks/authThunks";
+
+import "./App.css";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { NotificationProvider } from "./contexts/NotificationContext";
-import HomePage from "./pages/HomePage/HomePage";
-import Home from "./pages/Home/Home";
+// Import your modular route components
+import AuthenticatedRoutes from "@/routes/AuthenticatedInedexRoutes";
+import { ThemeProvider } from "styled-components";
+import { theme } from "./components/home/styles/Theme";
+import GlobalStyles from "./components/home/styles/GlobalStyles";
+//public Routes
+const HomePage = lazy(() => import("@/pages/Home/Home"));
+const AuthPage = lazy(() => import("@/pages/AuthPage/AuthPage"));
+import ProductDetailPage from "@/pages/ProductDetail/ProductDetailPage";
+import ProductListingPage from "@/pages/ProductListingPage/ProductListingPage";
+import AdminPage from "@/pages/admin/AdminPage";
+import BecomeAPartnerPage from "./pages/BecomeAPartnerPage/BecomeAPartnerPage";
+import AdminPage_ from "@/pages/admin/index"
+import SenzPage from "./pages/senz/SenzPage";
+import { adminProductListTheme } from "./pages/senz/theme";
+const AppLoadingScreen = () => (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      minHeight: "100vh",
+      fontSize: "1.5em",
+      backgroundColor: "#f0f2f5",
+      color: "#333",
+      flexDirection: "column",
+      gap: "20px",
+    }}
+  >
+    <p>Loading application resources...</p>
+    <div
+      style={{
+        border: "4px solid #f3f3f3",
+        borderTop: "4px solid #3498db",
+        borderRadius: "50%",
+        width: "40px",
+        height: "40px",
+        animation: "spin 1s linear infinite",
+      }}
+    ></div>
+    <style>
+      {`
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        `}
+    </style>
+  </div>
+);
+
 function App() {
-  const renderAdminPage = true;
+  const dispatch: AppDispatch = useDispatch();
+  const [isAuthCheckComplete, setIsAuthCheckComplete] = useState(false);
+
+  // Get authentication state from Redux store
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth); // We only need isAuthenticated here
+
+  useEffect(() => {
+    const performAuthCheck = async () => {
+      console.log(
+        "App initialized. Dispatching initial authentication check..."
+      );
+      await dispatch(initializeAuth());
+      console.log("Initial authentication check completed.");
+      setIsAuthCheckComplete(true);
+    };
+
+    performAuthCheck();
+  }, [dispatch]);
+
+  // Show a loading screen until the initial authentication check is complete
+  if (!isAuthCheckComplete) {
+    return <AppLoadingScreen />;
+  }
 
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles />
-
-      {renderAdminPage ? (
-        <NotificationProvider>
-          {/* <AdminPage /> */}
-          <Home />
-        </NotificationProvider>
-      ) : (
-        <>
-          <div
+      <NotificationProvider>
+        <Router>
+          <main
+            className="app-container"
             style={{
-              height: "100vh",
-              padding: "50px",
-              background: theme.colors.lightGray,
-              color: theme.colors.textDark,
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
+              width: "100vw",
+              scrollbarWidth: "none",
+              padding: "0 0px",
+              minHeight: "calc(100vh - 140px)",
             }}
           >
-            <h2
-              style={{
-                fontFamily: theme.typography.heading.fontFamily,
-                fontSize: theme.typography.heading.sizes.h2,
-              }}
-            >
-              Frontend Homepage
-            </h2>
-            <p
-              style={{
-                marginTop: "20px",
-                fontFamily: theme.typography.body.fontFamily,
-              }}
-            >
-              To see the Admin panel, set 'renderAdminPage' to 'true' in
-              src/App.tsx.
-            </p>
-            <button
-              onClick={() => alert("Switch to Admin (Implement Routing)")}
-              style={{
-                marginTop: "20px",
-                padding: "10px 20px",
-                border: "none",
-                backgroundColor: theme.colors.accent1,
-                color: theme.colors.textLight,
-                borderRadius: "8px",
-                cursor: "pointer",
-              }}
-            >
-              Switch to Admin Panel (Demo)
-            </button>
-          </div>
-        </>
-      )}
+            <Routes>
+      
+                <Route path="/senz" element={<SenzPage />} />
+      
+              <Route path="/admin" element={<AdminPage_ />} />
+              <Route path="/" element={<HomePage />} />
+              {/* //<Route path="/admin" element={<AdminPage />} /> */}
+              <Route path="/auth/*" element={<AuthPage />} />
+              <Route
+                path="/product/:productId"
+                element={<ProductDetailPage />}
+              />
+              <Route path="/category" element={<ProductListingPage />} />
+                    <Route path="/becomeseller" element={<BecomeAPartnerPage />} />
+
+              {/* Protected Routes (require authentication) */}
+              <Route
+                element={<ProtectedRoute isAuthenticated={isAuthenticated} />}
+              >
+                {/* The AuthenticatedRoutes component handles all further protected/role-based routing */}
+                <Route path="/*" element={<AuthenticatedRoutes />} />
+              </Route>
+              {/* Fallback for unknown routes (should be outside all specific route groups) */}
+              <Route path="*" element={<div>404 - Page Not Found</div>} />
+            </Routes>
+          </main>
+        </Router>
+      </NotificationProvider>
     </ThemeProvider>
   );
 }

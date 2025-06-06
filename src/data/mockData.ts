@@ -1,0 +1,375 @@
+// src/data/mockData.ts
+const getProductImage = (seed: string, width: number, height: number, tags: string = '') =>
+  `https://picsum.photos/seed/${seed.replace(/\s/g, '-')}/${width}/${height}/?${tags}`;
+
+export interface Product {
+  id: string;
+  name: string;
+  brandOrSeller?: string;
+  imageUrl: string;
+  originalPrice?: number;
+  price: number;
+  discountPercentage?: number;
+  deliveryInfo?: string;
+  rating?: number;
+  reviewCount?: number;
+  tags?: string[];
+  isRocketShipping?: boolean;
+}
+
+export interface FilterOption {
+  id: string;
+  label: string;
+  value: string;
+  count?: number;
+  checked?: boolean; 
+}
+
+export interface FilterGroup {
+  id: string;
+  title: string;
+  type: 'category' | 'checkbox' | 'range' | 'color'; 
+  options: FilterOption[];
+  isCollapsed?: boolean;
+}
+export const mockProducts: Product[] = [
+  {
+    id: 'prodpo1',
+    name: 'Women\'s Summer Half Sleeve Print Loose Fit Daily Casual Cotton T-shirt MIS',
+    brandOrSeller: 'Coupang Delivery',
+    imageUrl: getProductImage('green-shirt-model', 400, 500),
+    originalPrice: 18000,
+    price: 13500,
+    discountPercentage: 25,
+    deliveryInfo: 'Arrives by 6/24', 
+    rating: 4.5,
+    reviewCount: 229,
+    tags: ['Max 675 won accumulation'], 
+    isRocketShipping: true,
+  },
+  {
+    id: 'prodjk1',
+    name: 'Women\'s Summer Half Sleeve Print Loose Fit Daily Casual Cotton T-shirt MIS',
+    brandOrSeller: 'Coupang Delivery',
+    imageUrl: getProductImage('green-shirt-model', 400, 500),
+    originalPrice: 18000,
+    price: 13500,
+    discountPercentage: 25,
+    deliveryInfo: 'Arrives by 6/24',
+    rating: 4.5,
+    reviewCount: 229,
+    tags: ['Max 675 won accumulation'],
+    isRocketShipping: true,
+  },
+  {
+    id: 'prodp1',
+    name: 'Women\'s Summer Half Sleeve Print Loose Fit Daily Casual Cotton T-shirt MIS',
+    brandOrSeller: 'Coupang Delivery',
+    imageUrl: getProductImage('green-shirt-model', 400, 500),
+    originalPrice: 18000,
+    price: 13500,
+    discountPercentage: 25,
+    deliveryInfo: 'Arrives by 6/24',
+    rating: 4.5,
+    reviewCount: 229,
+    tags: ['Max 675 won accumulation'],
+    isRocketShipping: true,
+  },
+  {
+    id: 'prold1',
+    name: 'Women\'s Summer Half Sleeve Print Loose Fit Daily Casual Cotton T-shirt MIS',
+    brandOrSeller: 'Coupang Delivery',
+    imageUrl: getProductImage('green-shirt-model', 400, 500),
+    originalPrice: 18000,
+    price: 13500,
+    discountPercentage: 25,
+    deliveryInfo: 'Arrives by 6/24',
+    rating: 4.5,
+    reviewCount: 229,
+    tags: ['Max 675 won accumulation'],
+    isRocketShipping: true,
+  },
+  {
+    id: 'pr1mod1',
+    name: 'Women\'s Summer Half Sleeve Print Loose Fit Daily Casual Cotton T-shirt MIS',
+    brandOrSeller: 'Coupang Delivery',
+    imageUrl: getProductImage('green-shirt-model', 400, 500),
+    originalPrice: 18000,
+    price: 13500,
+    discountPercentage: 25,
+    deliveryInfo: 'Arrives by 6/24',
+    rating: 4.5,
+    reviewCount: 229,
+    tags: ['Max 675 won accumulation'],
+    isRocketShipping: true,
+  },
+  {
+    id: 'proaaad1',
+    name: 'Women\'s Summer Half Sleeve Print Loose Fit Daily Casual Cotton T-shirt MIS',
+    brandOrSeller: 'Coupang Delivery',
+    imageUrl: getProductImage('green-shirt-model', 400, 500),
+    originalPrice: 18000,
+    price: 13500,
+    discountPercentage: 25,
+    deliveryInfo: 'Arrives by 6/24',
+    rating: 4.5,
+    reviewCount: 229,
+    tags: ['Max 675 won accumulation'],
+    isRocketShipping: true,
+  },
+  {
+    id: 'pr23od1',
+    name: 'Women\'s Summer Half Sleeve Print Loose Fit Daily Casual Cotton T-shirt MIS',
+    brandOrSeller: 'Coupang Delivery',
+    imageUrl: getProductImage('green-shirt-model', 400, 500),
+    originalPrice: 18000,
+    price: 13500,
+    discountPercentage: 25,
+    deliveryInfo: 'Arrives by 6/24',
+    rating: 4.5,
+    reviewCount: 229,
+    tags: ['Max 675 won accumulation'],
+    isRocketShipping: true,
+  },
+  {
+    id: 'prqowd1',
+    name: 'Women\'s Summer Half Sleeve Print Loose Fit Daily Casual Cotton T-shirt MIS',
+    brandOrSeller: 'Coupang Delivery',
+    imageUrl: getProductImage('green-shirt-model', 400, 500),
+    originalPrice: 18000,
+    price: 13500,
+    discountPercentage: 25,
+    deliveryInfo: 'Arrives by 6/24',
+    rating: 4.5,
+    reviewCount: 229,
+    tags: ['Max 675 won accumulation'],
+    isRocketShipping: true,
+  },
+  {
+    id: 'prqod1',
+    name: 'Women\'s Summer Half Sleeve Print Loose Fit Daily Casual Cotton T-shirt MIS',
+    brandOrSeller: 'Coupang Delivery',
+    imageUrl: getProductImage('green-shirt-model', 400, 500),
+    originalPrice: 18000,
+    price: 13500,
+    discountPercentage: 25,
+    deliveryInfo: 'Arrives by 6/24',
+    rating: 4.5,
+    reviewCount: 229,
+    tags: ['Max 675 won accumulation'],
+    isRocketShipping: true,
+  },
+  {
+    id: 'prod1q',
+    name: 'Women\'s Summer Half Sleeve Print Loose Fit Daily Casual Cotton T-shirt MIS',
+    brandOrSeller: 'Coupang Delivery',
+    imageUrl: getProductImage('green-shirt-model', 400, 500),
+    originalPrice: 18000,
+    price: 13500,
+    discountPercentage: 25,
+    deliveryInfo: 'Arrives by 6/24',
+    rating: 4.5,
+    reviewCount: 229,
+    tags: ['Max 675 won accumulation'],
+    isRocketShipping: true,
+  },
+  {
+    id: 'prod1w',
+    name: 'Women\'s Summer Half Sleeve Print Loose Fit Daily Casual Cotton T-shirt MIS',
+    brandOrSeller: 'Coupang Delivery',
+    imageUrl: getProductImage('green-shirt-model', 400, 500),
+    originalPrice: 18000,
+    price: 13500,
+    discountPercentage: 25,
+    deliveryInfo: 'Arrives by 6/24',
+    rating: 4.5,
+    reviewCount: 229,
+    tags: ['Max 675 won accumulation'],
+    isRocketShipping: true,
+  },
+  {
+    id: 'prod2',
+    name: 'Authentic Color 55 Logo Loose Fit Couple Sweatshirt Unisex Big Size MDW002',
+    imageUrl: getProductImage('grey-sweatshirt-letters', 400, 500),
+    originalPrice: 19800,
+    price: 9770,
+    discountPercentage: 50,
+    deliveryInfo: 'Arrives by tomorrow (Sat)', 
+    rating: 4.0,
+    reviewCount: 7894,
+    tags: ['Max 488 won accumulation'],
+  },
+  {
+    id: 'prod3',
+    name: 'Daily Easywear Women\'s Loose Fit Long Sleeve Stripe Anorak Sweatshirt Set',
+    imageUrl: getProductImage('striped-shirt-model', 400, 500),
+    price: 17800,
+    deliveryInfo: 'Arrives by tomorrow (Fri)', 
+    rating: 4.8,
+    reviewCount: 755,
+    tags: ['Max 890 won accumulation'],
+    isRocketShipping: true,
+  },
+  {
+    id: 'prod4',
+    name: 'Baseilley Unisex Half Loop T-shirt F2832BL',
+    imageUrl: getProductImage('blue-hoodie-words', 400, 500),
+    originalPrice: 130000,
+    price: 19500,
+    discountPercentage: 85,
+    deliveryInfo: 'Arrives by tomorrow (Sat)',
+    rating: 3.5,
+    reviewCount: 1,
+    tags: ['Max 975 won accumulation'],
+  },
+  {
+    id: 'prod5',
+    name: 'Women\'s Loose Fit Raglan Sweatshirt Round Neck Solid Oversized Sweatshirt',
+    imageUrl: getProductImage('black-white-stripe-bag', 400, 500),
+    price: 9300,
+    originalPrice: 12000,
+    discountPercentage: 22,
+    deliveryInfo: 'Arrives by 6/24',
+    rating: 4.2,
+    reviewCount: 2094,
+    tags: ['Max 324 won accumulation'],
+  },
+  {
+    id: 'prod6',
+    name: 'Unbalanced Fit Round Collar Sweatshirt Oversized Long Sleeve Sweatshirt',
+    imageUrl: getProductImage('maroon-sweatshirt-text', 400, 500),
+    price: 12900,
+    rating: 4.6,
+    reviewCount: 1004,
+    tags: ['Max 445 won accumulation'],
+  },
+  {
+    id: 'prod7',
+    name: 'BOSTON 1978 Red Casual Sweatshirt',
+    imageUrl: getProductImage('boston-red-sweatshirt', 400, 500),
+    price: 20800,
+    originalPrice: 25000,
+    discountPercentage: 17,
+    deliveryInfo: 'Guaranteed to arrive tomorrow (Fri)', 
+    rating: 4.9,
+    reviewCount: 2584,
+    tags: ['Max 1,040 won accumulation'],
+  },
+  {
+    id: 'prod8',
+    name: 'Women\'s Daily Basic Casual Sneakers Low-cut Shoes',
+    imageUrl: getProductImage('white-shoes-ankles', 400, 500),
+    price: 18200,
+    deliveryInfo: 'Arrives by tomorrow (Sat)',
+    rating: 4.0,
+    reviewCount: 206,
+    tags: ['Max 356 won accumulation'],
+  },
+  {
+    id: 'prod9',
+    name: 'New York City Lettering Casual Sweatshirt',
+    imageUrl: getProductImage('newyork-city-sweatshirt', 400, 500),
+    price: 15500,
+    deliveryInfo: 'Arrives by 6/25',
+    rating: 4.3,
+    reviewCount: 501,
+    tags: ['Max 500 won accumulation'],
+  },
+  {
+    id: 'prod10',
+    name: 'Purple V-neck Loose Fit Short Sweatshirt',
+    imageUrl: getProductImage('purple-vneck-short', 400, 500),
+    price: 22000,
+    rating: 4.7,
+    reviewCount: 180,
+    tags: ['Free Shipping'], 
+  },
+  {
+    id: 'prod11',
+    name: 'Grey Collar Zipper Detail Sweatshirt',
+    imageUrl: getProductImage('grey-collar-zip', 400, 500),
+    price: 27800,
+    originalPrice: 32000,
+    discountPercentage: 13,
+    deliveryInfo: 'Arrives by tomorrow (Fri)',
+    rating: 4.5,
+    reviewCount: 320,
+  },
+  {
+    id: 'prod12',
+    name: 'Yellow Lettering Round Neck Sweatshirt',
+    imageUrl: getProductImage('yellow-lettering-sweat', 400, 500),
+    price: 18900,
+    reviewCount: 95,
+    rating: 4.1,
+    tags: ['Popular Product'], 
+  },
+];
+
+export const mockFilterGroups: FilterGroup[] = [
+  {
+    id: 'rlux',
+    title: 'R.LUX',
+    type: 'checkbox',
+    isCollapsed: false,
+    options: [
+      { id: 'rlux1', label: 'View R.LUX at a glance', value: 'rlux_all', checked: false }, 
+      { id: 'rlux2', label: 'View with Rocket Delivery applied', value: 'rlux_rocket', checked: false }, 
+      { id: 'rlux3', label: 'View Rocket Direct Purchase', value: 'rlux_direct', checked: true },
+    ],
+  },
+  {
+    id: 'cavenue',
+    title: 'C Avenue',
+    type: 'checkbox',
+    isCollapsed: false,
+    options: [
+      { id: 'cavenue1', label: 'Free Shipping', value: 'free_shipping_c', checked: true }, 
+    ],
+  },
+  {
+    id: 'category',
+    title: 'Category',
+    type: 'category',
+    isCollapsed: false,
+    options: [
+      { id: 'cat_all', label: 'All', value: 'all' }, 
+      { id: 'cat_mtm_hoodie', label: 'Sweatshirt/Hoodie', value: 'mtm_hoodie', checked: true }, 
+      { id: 'cat_mtm', label: 'Sweatshirt', value: 'mtm' },
+      { id: 'cat_hoodie', label: 'Hoodie', value: 'hoodie' }, 
+      { id: 'cat_tshirt', label: 'T-shirt', value: 'tshirt' }, 
+      { id: 'cat_blouse', label: 'Blouse/Shirt', value: 'blouse_shirt' }, 
+      { id: 'cat_knit', label: 'Knit/Sweater', value: 'knit_sweater' },
+    ],
+  },
+  {
+    id: 'brand',
+    title: 'Brand',
+    type: 'checkbox',
+    isCollapsed: true,
+    options: [
+      { id: 'brand_nike', label: 'Nike', value: 'nike', count: 120 }, 
+      { id: 'brand_adidas', label: 'Adidas', value: 'adidas', count: 95 }, 
+      { id: 'brand_nb', label: 'New Balance', value: 'newbalance', count: 80 }, 
+      { id: 'brand_fila', label: 'Fila', value: 'fila', count: 60 }, 
+    ],
+  },
+  {
+    id: 'condition',
+    title: 'Product Condition',
+    type: 'checkbox',
+    isCollapsed: true,
+    options: [
+      { id: 'cond_new', label: 'New Product', value: 'new' },
+      { id: 'cond_used', label: 'Used', value: 'used' }, 
+    ],
+  },
+];
+
+export const mockSortOptions = [
+  { id: 'ranking', label: 'Coupang Ranking Order', value: 'ranking' }, 
+  { id: 'price_asc', label: 'Low Price Order', value: 'price_asc' },
+  { id: 'price_desc', label: 'High Price Order', value: 'price_desc' }, 
+  { id: 'sales', label: 'Sales Volume Order', value: 'sales' },
+  { id: 'newest', label: 'Newest Order', value: 'newest' }, 
+];

@@ -1,342 +1,613 @@
 // src/components/CategoryExplorer/ContentCanvas.tsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import ProductCard, { type ProductData } from '../ProductCard/ProductCard';
+// (This ContentCanvas is for the NEW 3-column "Hot Trend" / "Élan Edit" layout)
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import { useTheme, type DefaultTheme } from "styled-components";
+import {
+  FaChevronLeft,
+  FaChevronRight,
+  FaExternalLinkAlt,
+} from "react-icons/fa";
+import { Link as RouterLink, useNavigate } from "react-router-dom"; // For navigation
+
+// Import ALL necessary styled components from the updated styles file
 import {
   ContentCanvasContainer,
-  CategoryIntro,
-  CategoryName,
-  GoToLink,
-  HotTagsContainer,
-  HotTag,
-  SliderWrapper,
-  SlidesContainer,
-  Slide,
-  SliderNavArrow,
-  SliderDots,
-  Dot,
-  HeroImageSlide,
-  ProductGridContainer,
-  ProductGridWrapper,
-} from './ContentCanvas.styles';
+  SectionHeader, // For the overall "HOT! TREND" title
+  ThreeColumnGrid,
+  // Column 1: Keywords
+  KeywordsColumn,
+  KeywordsList,
+  KeywordTag,
+  // Column 2: Image Slider
+  ImageSliderColumn,
+  ImageSlidesTrack,
+  PromoImageSlide,
+  ImageDescriptionBox,
+  // Column 3: Product Grid & Its Slider
+  ProductGridColumn,
+  ProductGridTitle,
+  ProductGridSliderWrapper, // Specific wrapper for product grid slider
+  ProductGridSlidesTrack,
+  ProductItemsDisplayPage,
+  // Product Cell specific styles (replaces external ProductCard)
+  ProductCellStyled,
+  ProductCellImageContainer,
+  ProductCellContent,
+  ProductCellName,
+  ProductCellPrice,
+  ProductPromoBadge, // For badges on product cells
+  ProductShippingInfo, // For shipping text on product cells
+  // Shared Slider Controls
+  SliderNavArrowButton,
+  SliderDotsContainer,
+  DotButton,
+  ProductGridPagination, // Uses SliderDotsContainer with different styling
+  ColumnContainerTop,
+  ColumnContainerBottom,
+  ColumnTopTitle,
+} from "./ContentCanvas.styles"; // ENSURE this path points to your 3-column styles file
 
-
-// --- Demo Data for Categories and Products ---
-interface CategoryContentData {
+// --- Data Structures (Align with your detailed description) ---
+// This is the data for ONE product item in the Column 3 grid
+interface ProductCellData {
   id: string;
-  categoryName: string;
-  categoryLink: string;
-  hotTags: string[];
-  heroImages: string[];
-  productGrid: ProductData[];
+  name: string; // e.g., "옆트임 남녀공용 메쉬원단 와이드 트임 팬츠 2p 세트 MDIP121LJ"
+  price: number; // e.g., 19800
+  originalPrice?: number;
+  image: string; // Product image URL
+  link: string; // Link to product detail page
+  shippingInfo?: string; // e.g., "무료배송"
+  badges?: Array<{
+    text: string;
+    type: "onePlusOne" | "custom" | "bestseller" | "new" | string;
+  }>;
 }
 
-const getDemoImage = (seed: string, width: number, height: number, tags: string = '') =>
-  `https://picsum.photos/seed/${seed.replace(/\s/g, '-')}/${width}/${height}/?${tags},home,interior,style,lifestyle`;
-
-const demoCategoriesContent: CategoryContentData[] = [
-  {
-    id: 'living',
-    categoryName: 'The Living Sanctuary',
-    categoryLink: '#shop-living',
-    hotTags: ['Comfort First', 'Sustainable Seating', 'Ambient Lighting', 'Organic Fabrics'],
-    heroImages: [
-      getDemoImage('living-hero-1', 1200, 400, 'living-room'),
-      getDemoImage('living-hero-2', 1200, 400, 'sofa'),
-      getDemoImage('living-hero-3', 1200, 400, 'fireplace'),
-    ],
-    productGrid: [
-      { id: 'lv1', name: 'Cloud Comfort Sofa', price: 1800, image: getDemoImage('lv1', 400, 560, 'sofa'), link: '#p_lv1', isNew: true },
-      { id: 'lv2', name: 'Marble Side Table', price: 350, image: getDemoImage('lv2', 400, 560, 'side-table'), link: '#p_lv2' },
-      { id: 'lv3', name: 'Abstract Area Rug', price: 290, image: getDemoImage('lv3', 400, 560, 'rug'), link: '#p_lv3', isBestseller: true },
-      { id: 'lv4', name: 'Velvet Lounge Chair', price: 680, image: getDemoImage('lv4', 400, 560, 'lounge-chair'), link: '#p_lv4', isNew: true },
-      { id: 'lv5', name: 'Floor Lamp', price: 190, image: getDemoImage('lv5', 400, 560, 'floor-lamp'), link: '#p_lv5' },
-      { id: 'lv6', name: 'Throw Pillow Set', price: 75, image: getDemoImage('lv6', 400, 560, 'pillow'), link: '#p_lv6', isBestseller: true },
-      { id: 'lv7', name: 'Sculptural Bookshelf', price: 420, image: getDemoImage('lv7', 400, 560, 'bookshelf'), link: '#p_lv7' },
-      { id: 'lv8', name: 'Soft Wool Blanket', price: 95, image: getDemoImage('lv8', 400, 560, 'blanket'), link: '#p_lv8', isNew: true },
-      { id: 'lv9', name: 'Modern Console Table', price: 280, image: getDemoImage('lv9', 400, 560, 'console-table'), link: '#p_lv9' },
-    ],
-  },
-  {
-    id: 'dining',
-    categoryName: 'Dining & Entertaining',
-    categoryLink: '#shop-dining',
-    hotTags: ['Host with Elegance', 'Solid Wood Tables', 'Artisanal Serveware', 'Minimalist Seating'],
-    heroImages: [
-      getDemoImage('dining-hero-1', 1200, 400, 'dining-room'),
-      getDemoImage('dining-hero-2', 1200, 400, 'dining-table'),
-      getDemoImage('dining-hero-3', 1200, 400, 'serveware'),
-    ],
-    productGrid: [
-        { id: 'd1', name: 'Solid Oak Dining Table', price: 1200, image: getDemoImage('d1', 400, 560, 'oak-table'), link: '#p_d1' },
-        { id: 'd2', name: 'Velvet Dining Chair (Set of 2)', price: 350, image: getDemoImage('d2', 400, 560, 'dining-chair'), link: '#p_d2' },
-        { id: 'd3', name: 'Ceramic Dinnerware Set', price: 180, image: getDemoImage('d3', 400, 560, 'dinnerware'), link: '#p_d3', isNew: true },
-        { id: 'd4', name: 'Glass Tumbler Set', price: 50, image: getDemoImage('d4', 400, 560, 'tumbler'), link: '#p_d4' },
-        { id: 'd5', name: 'Linen Napkin Set', price: 40, image: getDemoImage('d5', 400, 560, 'napkin'), link: '#p_d5' },
-        { id: 'd6', name: 'Wine Glasses (Set of 4)', price: 60, image: getDemoImage('d6', 400, 560, 'wine-glasses'), link: '#p_d6', isBestseller: true },
-    ],
-  },
-  {
-    id: 'bedroom',
-    categoryName: 'Bedroom Serenity',
-    categoryLink: '#shop-bedroom',
-    hotTags: ['Pillow Top Mattresses', 'Calming Colors', 'Blackout Curtains', 'Plush Rugs'],
-    heroImages: [
-      getDemoImage('bedroom-hero-1', 1200, 400, 'bedroom'),
-      getDemoImage('bedroom-hero-2', 1200, 400, 'bed'),
-      getDemoImage('bedroom-hero-3', 1200, 400, 'minimalist-bedroom'),
-    ],
-    productGrid: [
-        { id: 'b1', name: 'Organic Cotton Bedding', price: 280, image: getDemoImage('b1', 400, 560, 'bedding'), link: '#p_b1', isNew: true },
-        { id: 'b2', name: 'Memory Foam Mattress', price: 900, image: getDemoImage('b2', 400, 560, 'mattress'), link: '#p_b2' },
-        { id: 'b3', name: 'Minimalist Nightstand', price: 180, image: getDemoImage('b3', 400, 560, 'nightstand'), link: '#p_b3' },
-        { id: 'b4', name: 'Soft Linen Duvet Cover', price: 150, image: getDemoImage('b4', 400, 560, 'duvet'), link: '#p_b4' },
-        { id: 'b5', name: 'Aromatherapy Diffuser', price: 60, image: getDemoImage('b5', 400, 560, 'diffuser'), link: '#p_b5' },
-        { id: 'b6', name: 'Velvet Pillowcases (Set of 2)', price: 45, image: getDemoImage('b6', 400, 560, 'pillowcase'), link: '#p_b6', isBestseller: true },
-    ],
-  },
-  {
-    id: 'lighting',
-    categoryName: 'Ambient Lighting',
-    categoryLink: '#shop-lighting',
-    hotTags: ['Mood Setting', 'Modern Designs', 'Energy Efficient'],
-    heroImages: [
-      getDemoImage('lighting-hero-1', 1200, 400, 'lamps'),
-      getDemoImage('lighting-hero-2', 1200, 400, 'chandeliers'),
-    ],
-    productGrid: [
-        { id: 'l1', name: 'Sculptural Floor Lamp', price: 220, image: getDemoImage('l1', 400, 560, 'floor-lamp'), link: '#p_l1', isNew: true },
-        { id: 'l2', name: 'Minimalist Table Lamp', price: 90, image: getDemoImage('l2', 400, 560, 'table-lamp'), link: '#p_l2' },
-        { id: 'l3', name: 'Smart LED Bulb (Set of 2)', price: 40, image: getDemoImage('l3', 400, 560, 'bulb'), link: '#p_l3', isBestseller: true },
-    ],
-  },
-  {
-    id: 'art',
-    categoryName: 'Art & Decor Collection',
-    categoryLink: '#shop-art',
-    hotTags: ['Unique Finds', 'Handcrafted', 'Conversation Pieces'],
-    heroImages: [
-      getDemoImage('art-hero-1', 1200, 400, 'art'),
-      getDemoImage('art-hero-2', 1200, 400, 'decor'),
-    ],
-    productGrid: [
-        { id: 'a1', name: 'Abstract Ceramic Sculpture', price: 150, image: getDemoImage('a1', 400, 560, 'sculpture'), link: '#p_a1', isNew: true },
-        { id: 'a2', name: 'Hand-Painted Wall Art', price: 280, image: getDemoImage('a2', 400, 560, 'wall-art'), link: '#p_a2' },
-        { id: 'a3', name: 'Textured Throw Pillow', price: 55, image: getDemoImage('a3', 400, 560, 'throw-pillow'), link: '#p_a3' },
-    ],
-  },
-  {
-    id: 'office',
-    categoryName: 'Home Office Essentials',
-    categoryLink: '#shop-office',
-    hotTags: ['Ergonomic', 'Productive Spaces', 'Stylish Desks'],
-    heroImages: [
-      getDemoImage('office-hero-1', 1200, 400, 'home-office'),
-      getDemoImage('office-hero-2', 1200, 400, 'desk-chair'),
-    ],
-    productGrid: [
-        { id: 'o1', name: 'Ergonomic Desk Chair', price: 320, image: getDemoImage('o1', 400, 560, 'desk-chair'), link: '#p_o1', isBestseller: true },
-        { id: 'o2', name: 'Minimalist Writing Desk', price: 550, image: getDemoImage('o2', 400, 560, 'writing-desk'), link: '#p_o2' },
-        { id: 'o3', name: 'Desk Organizer Set', price: 70, image: getDemoImage('o3', 400, 560, 'organizer'), link: '#p_o3', isNew: true },
-    ],
-  },
-  {
-    id: 'outdoor',
-    categoryName: 'Outdoor Living Redefined',
-    categoryLink: '#shop-outdoor',
-    hotTags: ['Durable Designs', 'Patio Furniture', 'Garden Accents'],
-    heroImages: [
-      getDemoImage('outdoor-hero-1', 1200, 400, 'outdoor-patio'),
-      getDemoImage('outdoor-hero-2', 1200, 400, 'garden-furniture'),
-    ],
-    productGrid: [
-        { id: 'ot1', name: 'All-Weather Patio Sofa', price: 900, image: getDemoImage('ot1', 400, 560, 'patio-sofa'), link: '#p_ot1' },
-        { id: 'ot2', name: 'Outdoor Coffee Table', price: 280, image: getDemoImage('ot2', 400, 560, 'outdoor-table'), link: '#p_ot2', isBestseller: true },
-        { id: 'ot3', name: 'Decorative Outdoor Planter', price: 80, image: getDemoImage('ot3', 400, 560, 'outdoor-planter'), link: '#p_ot3', isNew: true },
-    ],
-  },
-  {
-    id: 'wellness',
-    categoryName: 'Wellness & Comfort',
-    categoryLink: '#shop-wellness',
-    hotTags: ['Self-Care', 'Aromatherapy', 'Cozy Spaces'],
-    heroImages: [
-      getDemoImage('wellness-hero-1', 1200, 400, 'spa-home'),
-      getDemoImage('wellness-hero-2', 1200, 400, 'candle-relax'),
-    ],
-    productGrid: [
-        { id: 'w1', name: 'Aromatherapy Diffuser Pro', price: 75, image: getDemoImage('w1', 400, 560, 'diffuser'), link: '#p_w1', isNew: true },
-        { id: 'w2', name: 'Organic Bath Towel Set', price: 90, image: getDemoImage('w2', 400, 560, 'bath-towel'), link: '#p_w2' },
-        { id: 'w3', name: 'Silk Sleep Mask', price: 35, image: getDemoImage('w3', 400, 560, 'sleep-mask'), link: '#p_w3', isBestseller: true },
-    ],
-  },
-];
-
-
-// --- Generic Slider Component (Reusable) ---
-// This component needs to be separate to work as a generic slider
-// It takes slides (either image URLs for hero or arrays of ProductData for grid pages)
-interface GenericSliderProps {
-  slides: (string | ProductData[])[]; // Can be string URLs or arrays of ProductData (for grid)
-  interval?: number; // Auto-slide interval in ms, 0 for no auto-slide
-  sliderHeight?: string; // Optional fixed height for image sliders
-  ProductCardComponent?: React.ComponentType<{ product: ProductData; index?: number }>; // Pass ProductCard from Shared or custom
+interface PromoSlideData {
+  imageUrl: string;
+  title: string;
+  description?: string;
+  link?: string;
 }
 
-const GenericSlider: React.FC<GenericSliderProps> = ({
-  slides,
-  interval = 0,
-  sliderHeight,
-  ProductCardComponent = ProductCard, // Default to the shared ProductCard
-}) => {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const slidesRef = useRef<HTMLDivElement>(null);
-  const totalSlides = slides.length;
+interface KeywordData {
+  id: string;
+  label: string; // e.g., "#원피스"
+  link: string;
+  displayText: string; // e.g., "원피스"
+}
 
-  // Auto-slide functionality
-  useEffect(() => {
-    if (interval > 0 && totalSlides > 1) {
-      const timer = setInterval(() => {
-        setCurrentSlide(prev => (prev + 1) % totalSlides);
-      }, interval);
-      return () => clearInterval(timer);
-    }
-  }, [interval, totalSlides]);
+interface CanvasTrendData {
+  id: string;
+  sectionTitle?: string;
+  sectionTitleHighlight?: string;
+  sectionSubtitle?: string;
+  keywordsSectionTitle: string;
+  keywords: KeywordData[];
+  imageSlides: PromoSlideData[];
+  productGridTitle: string;
+  products: ProductCellData[];
+}
+// --- End Data Structures ---
 
-  // Sync scroll position with currentSlide state
-  useEffect(() => {
-    if (slidesRef.current) {
-      // Ensure smooth scroll to target position
-      slidesRef.current.scrollTo({
-        left: currentSlide * slidesRef.current.clientWidth,
-        behavior: 'smooth'
-      });
-    }
-  }, [currentSlide]);
+// --- MOCK DATA for "HOT! TREND" (as defined meticulously before) ---
+const getPicsumImage = (
+  seed: string,
+  width: number,
+  height: number,
+  tags: string = ""
+) =>
+  `https://picsum.photos/seed/${seed.replace(/\s/g, "-")}/${width}/${height}/?${tags},fashion,trend,${Math.random()}`;
 
-  const goToSlide = useCallback((index: number) => {
-    setCurrentSlide(index);
-  }, []);
-
-  const nextSlide = useCallback(() => {
-    setCurrentSlide(prev => (prev + 1) % totalSlides);
-  }, [totalSlides]);
-
-  const prevSlide = useCallback(() => {
-    setCurrentSlide(prev => (prev - 1 + totalSlides) % totalSlides);
-  }, [totalSlides]);
-
-  // Update slide index on manual scroll (e.g., drag)
-  const handleScroll = useCallback(() => {
-    if (slidesRef.current) {
-        const scrollLeft = slidesRef.current.scrollLeft;
-        const slideWidth = slidesRef.current.clientWidth;
-        // Calculate the closest slide index based on scroll position
-        // Only update if it's a significant change, not on every tiny scroll event
-        const newIndex = Math.round(scrollLeft / slideWidth);
-        if (newIndex !== currentSlide) {
-            setCurrentSlide(newIndex);
-        }
-    }
-  }, [currentSlide]);
-
-  return (
-    <SliderWrapper style={{ height: sliderHeight, animationDelay: `0.3s` } as React.CSSProperties}> {/* Initial slide-in animation */}
-      <SlidesContainer ref={slidesRef} onScroll={handleScroll}>
-        {slides.map((slideItem, slideIndex) => (
-          <Slide key={slideIndex}>
-            {typeof slideItem === 'string' ? ( // If it's a string, render as HeroImageSlide
-              <HeroImageSlide>
-                <img src={slideItem} alt={`Category slide ${slideIndex + 1}`} loading="lazy" />
-              </HeroImageSlide>
-            ) : ( // If it's an array of ProductData (for grid)
-                <ProductGridWrapper>
-                  {(slideItem as ProductData[]).map((product, productIndex) => (
-                      <ProductCardComponent product={product} key={product.id} index={productIndex} />
-                  ))}
-                </ProductGridWrapper>
-            )}
-          </Slide>
-        ))}
-      </SlidesContainer>
-      
-      {totalSlides > 1 && (
-        <>
-          <SliderNavArrow $direction="left" onClick={prevSlide} aria-label="Previous slide">
-            <FaChevronLeft />
-          </SliderNavArrow>
-          <SliderNavArrow $direction="right" onClick={nextSlide} aria-label="Next slide">
-            <FaChevronRight />
-          </SliderNavArrow>
-        </>
-      )}
-
-      {totalSlides > 1 && (
-        <SliderDots>
-          {slides.map((_, index) => (
-            <Dot
-              key={index}
-              $isActive={currentSlide === index}
-              onClick={() => goToSlide(index)}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </SliderDots>
-      )}
-    </SliderWrapper>
-  );
+const mockHotTrendData: CanvasTrendData = {
+  id: "hot-trend-womens-fashion-2024-summer",
+  sectionTitle: "TREND",
+  sectionTitleHighlight: "HOT!",
+  sectionSubtitle: "Recommended Advertised Products by Category",
+  keywordsSectionTitle: "HOT Keywords",
+  keywords: [
+    {
+      id: "onepiece",
+      label: "#Dress",
+      displayText: "Dress",
+      link: "/search?q=dress",
+    },
+    {
+      id: "blouse",
+      label: "#Blouse",
+      displayText: "Blouse",
+      link: "/search?q=blouse",
+    },
+    {
+      id: "tshirt",
+      label: "#T-shirt",
+      displayText: "T-shirt",
+      link: "/search?q=t-shirt",
+    },
+    {
+      id: "skirt",
+      label: "#Skirt",
+      displayText: "Skirt",
+      link: "/search?q=skirt",
+    },
+    {
+      id: "sneakers",
+      label: "#Sneakers",
+      displayText: "Sneakers",
+      link: "/search?q=sneakers",
+    },
+  ],
+  imageSlides: [
+    {
+      imageUrl: getPicsumImage("summer-model-1", 700, 900, "model,summer"),
+      title: "Summer Essentials",
+      description: "Full of freshness! Styling for summer",
+      link: "/promo/summer-essentials",
+    },
+    {
+      imageUrl: getPicsumImage("accessories-promo", 700, 900, "jewelry,bag"),
+      title: "Point Accessories",
+      description: "The final touch to complete your style",
+      link: "/collections/accessories",
+    },
+  ],
+  productGridTitle: "MD's Recommended Popular Items ✨",
+  products: Array.from({ length: 12 }, (_, i) => {
+    const basePrice = parseFloat(
+      (Math.random() * (50000 - 5000) + 5000).toFixed(0)
+    );
+    return {
+      id: `ht_prod_${i + 1}`,
+      name: `Stylish ${["Blouse", "Dress", "Skirt", "Pants", "Accessory"][i % 5]} #${i + 1} (MDIP${100 + i}LJ)`,
+      price: basePrice,
+      originalPrice: i % 3 === 0 ? basePrice * 1.25 : undefined,
+      image: getPicsumImage(
+        `product-item-${i}`,
+        300,
+        300,
+        ["clothing", "fashion-item"][i % 2]
+      ),
+      link: `/product/ht_prod_${i + 1}`,
+      shippingInfo: i % 2 === 0 ? "Free Shipping" : undefined,
+      badges:
+        i % 4 === 0
+          ? [{ text: "BEST", type: "bestseller" }]
+          : i % 5 === 2
+          ? [{ text: "1+1 EVENT", type: "onePlusOne" }]
+          : undefined,
+    };
+  }),
 };
 
-
-// --- Content Canvas Component (Main Right Column) ---
 interface ContentCanvasProps {
-  activeCategory: string; // ID of the currently selected category
+  sectionDataProp?: CanvasTrendData;
 }
 
-const ContentCanvas: React.FC<ContentCanvasProps> = ({ activeCategory }) => {
-  const currentCategoryData = demoCategoriesContent.find(cat => cat.id === activeCategory);
+const PRODUCTS_PER_GRID_PAGE = 6; // 2 rows x 3 columns
 
-  if (!currentCategoryData) {
+const ContentCanvas: React.FC<ContentCanvasProps> = (sectionDataProps) => {
+  const theme = useTheme() as DefaultTheme;
+
+  console.log(sectionDataProps);
+  const navigate = useNavigate(); 
+  const sectionDataProp = mockHotTrendData;
+  
+  const sectionData = useMemo(
+    () => sectionDataProp || mockHotTrendData,
+    [sectionDataProp]
+  );
+
+  const [activeKeywords, setActiveKeywords] = useState<string[]>([]);
+
+
+  const [currentImageSlide, setCurrentImageSlide] = useState(0);
+  const totalImageSlides = sectionData.imageSlides.length;
+  const imageSliderTrackRef = useRef<HTMLDivElement>(null); 
+
+
+  const productGridSlides = useMemo(
+    () => chunkArray(sectionData.products, PRODUCTS_PER_GRID_PAGE),
+    [sectionData.products]
+  );
+  const [currentProductGridSlide, setCurrentProductGridSlide] = useState(0);
+  const totalProductGridSlides = productGridSlides.length;
+  const productSliderTrackRef = useRef<HTMLDivElement>(null); 
+
+
+  const goToSlide = useCallback(
+    (
+      setter: React.Dispatch<React.SetStateAction<number>>,
+      index: number,
+      total: number
+    ) => {
+      if (index >= 0 && index < total) setter(index);
+    },
+    []
+  );
+  const nextSlide = useCallback(
+    (
+      setter: React.Dispatch<React.SetStateAction<number>>,
+      current: number,
+      total: number
+    ) => {
+      if (total > 0) setter((current + 1) % total);
+    },
+    []
+  );
+  const prevSlide = useCallback(
+    (
+      setter: React.Dispatch<React.SetStateAction<number>>,
+      current: number,
+      total: number
+    ) => {
+      if (total > 0) setter((current - 1 + total) % total);
+    },
+    []
+  );
+
+
+  useEffect(() => {
+    if (totalImageSlides > 1) {
+      const timer = setInterval(() => {
+        nextSlide(
+          setCurrentImageSlide,
+          currentImageSlideRef.current,
+          totalImageSlides
+        );
+      }, 5500); 
+      return () => clearInterval(timer);
+    }
+  }, [totalImageSlides, nextSlide]);
+
+  const currentImageSlideRef = useRef(currentImageSlide);
+  useEffect(() => {
+    currentImageSlideRef.current = currentImageSlide;
+  }, [currentImageSlide]);
+
+  useEffect(() => {
+    if (totalProductGridSlides > 1) {
+      const productTimer = setInterval(() => {
+        nextSlide(
+          setCurrentProductGridSlide,
+          currentProductGridSlideRef.current,
+          totalProductGridSlides
+        );
+      }, 7500);
+      return () => clearInterval(productTimer);
+    }
+  }, [totalProductGridSlides, nextSlide]);
+  const currentProductGridSlideRef = useRef(currentProductGridSlide);
+  useEffect(() => {
+    currentProductGridSlideRef.current = currentProductGridSlide;
+  }, [currentProductGridSlide]);
+
+  const handleKeywordClick = (keywordLink: string, keywordId: string) => {
+    // Toggle active state for UI, actual navigation would be to keyword.link
+    setActiveKeywords((prev) =>
+      prev.includes(keywordId)
+        ? prev.filter((id) => id !== keywordId)
+        : [keywordId]
+    );
+    console.log("Keyword link clicked:", keywordLink);
+  
+  };
+
+
+  if (!sectionData) {
     return (
-        <ContentCanvasContainer key={activeCategory} style={{animationDelay: '0s'} as React.CSSProperties}>
-            <p style={{textAlign: 'center', padding: '20px'}}>Select a category from the left.</p>
-        </ContentCanvasContainer>
-    ); // Fallback
+      <ContentCanvasContainer theme={theme}>
+        <p>Loading featured content...</p>
+      </ContentCanvasContainer>
+    );
   }
 
-  // Slice productGrid into groups of 6 for 2x3 grid slides
-  const productGridSlides: ProductData[][] = [];
-  for (let i = 0; i < currentCategoryData.productGrid.length; i += 6) {
-    productGridSlides.push(currentCategoryData.productGrid.slice(i, i + 6));
-  }
+  const MarginAdd = sectionDataProp.index == 0 ? true : false
+console.log("sectionDataProp.index ",sectionDataProp.index )
+  const activeImageSlideData = sectionData.imageSlides[currentImageSlide]; // For description box
+
+  console.log(MarginAdd)
 
   return (
-    <ContentCanvasContainer key={currentCategoryData.id}> {/* Key forces re-render/animation on category change */}
-      <CategoryIntro>
-        <CategoryName style={{ '--animation-delay': '0s' } as React.CSSProperties}>
-            {currentCategoryData.categoryName}
-        </CategoryName>
-        <GoToLink href={currentCategoryData.categoryLink} style={{ '--animation-delay': '0.1s' } as React.CSSProperties}>
-            Explore All in {currentCategoryData.categoryName}
-        </GoToLink>
-        <HotTagsContainer>
-          {currentCategoryData.hotTags.map((tag, index) => (
-            <HotTag key={index} style={{ '--animation-delay': `${0.2 + index * 0.05}s` } as React.CSSProperties}>
-              {tag}
-            </HotTag>
-          ))}
-        </HotTagsContainer>
-      </CategoryIntro>
+    <ContentCanvasContainer style={{ marginBottom:"150px" }} theme={theme} key={sectionData.id}>
+      {sectionDataProps.index === 0 && sectionData.sectionTitle && (
+        <SectionHeader theme={theme}>
+          <h2 className="main-title">
+            {sectionData.sectionTitleHighlight && (
+              <span className="highlight">
+                {sectionData.sectionTitleHighlight}
+              </span>
+            )}
+            {sectionData.sectionTitle}
+          </h2>
+          {sectionData.sectionSubtitle && (
+            <p className="subtitle">{sectionData.sectionSubtitle}</p>
+          )}
+        </SectionHeader>
+      )}
 
-      {/* Hero Image Slider Section */}
-      <GenericSlider slides={currentCategoryData.heroImages} interval={5000} sliderHeight="400px" />
+      <ThreeColumnGrid  theme={theme}>
+        <KeywordsColumn theme={theme}>
+          <ColumnContainerTop>
+            <ColumnTopTitle>Living</ColumnTopTitle>
+          </ColumnContainerTop>
+          <ColumnContainerBottom>
+            <h4 className="keywords-title">
+              {sectionData.keywordsSectionTitle}
+            </h4>
+            <KeywordsList theme={theme}>
+              {sectionData.keywords.map((keyword, index) => (
+                <KeywordTag
+                  theme={theme}
+                  key={keyword.id}
+                  $isActive={activeKeywords.includes(keyword.id)}
+                  style={
+                    {
+                      "--stagger-delay": `${0.2 + index * 0.06}s`,
+                    } as React.CSSProperties
+                  }
+                  onClick={(e) => {
+                    handleKeywordClick(keyword.link, keyword.id);
+                  }}
+                  title={`Explore ${keyword.displayText}`}
+                >
+            
+                  <span>{keyword.label}</span>
+                </KeywordTag>
+              ))}
+            </KeywordsList>
+          </ColumnContainerBottom>
+        </KeywordsColumn>
 
-      {/* Product Grid Slider Section */}
-      <ProductGridContainer>
-        <GenericSlider slides={productGridSlides} interval={0} sliderHeight="auto" />
-      </ProductGridContainer>
+        <ImageSliderColumn theme={theme}>
+          <ImageSlidesTrack
+            theme={theme}
+            ref={imageSliderTrackRef}
+            $slideCount={totalImageSlides}
+            $currentSlide={currentImageSlide}
+          >
+            {sectionData.imageSlides.map((slide, index) => (
+              <PromoImageSlide
+                theme={theme}
+                key={`promo-img-slide-${index}`}
+                $imageUrl={slide.imageUrl}
+              />
+              
+            ))}
+              {activeImageSlideData && (
+            <ImageDescriptionBox
+              theme={theme}
+              className={
+                activeImageSlideData ===
+                sectionData.imageSlides[currentImageSlide]
+                  ? "active"
+                  : "aaaaaaaaaaaaaaaaa"
+              }
+              style={{ animationDelay: "0.3s" }} // Delay after slide transition
+            >
+              <h4>{activeImageSlideData.title}</h4>
+              {activeImageSlideData.description && (
+                <p>{activeImageSlideData.description}</p>
+              )}
+            
+              {/* {activeImageSlideData.link && <PromoCTAButton href={activeImageSlideData.link}>Shop Now</PromoCTAButton>} */}
+            </ImageDescriptionBox>
+          )}
+
+          </ImageSlidesTrack>
+
+    
+
+          {totalImageSlides > 1 && (
+            <>
+              <SliderNavArrowButton
+                theme={theme}
+                $direction="left"
+                onClick={() =>
+                  prevSlide(
+                    setCurrentImageSlide,
+                    currentImageSlide,
+                    totalImageSlides
+                  )
+                }
+                aria-label="Previous feature"
+                $isHidden={currentImageSlide === 0}
+              >
+                <FaChevronLeft />
+              </SliderNavArrowButton>
+              <SliderNavArrowButton
+                theme={theme}
+                $direction="right"
+                onClick={() =>
+                  nextSlide(
+                    setCurrentImageSlide,
+                    currentImageSlide,
+                    totalImageSlides
+                  )
+                }
+                aria-label="Next feature"
+                $isHidden={currentImageSlide === totalImageSlides - 1}
+              >
+                <FaChevronRight />
+              </SliderNavArrowButton>
+              <SliderDotsContainer theme={theme}>
+                {sectionData.imageSlides.map((_, index) => (
+                  <DotButton
+                    theme={theme}
+                    key={`img-dot-${index}`}
+                    $isActive={currentImageSlide === index}
+                    onClick={() =>
+                      goToSlide(setCurrentImageSlide, index, totalImageSlides)
+                    }
+                    aria-label={`Go to feature ${index + 1}`}
+                  />
+                ))}
+              </SliderDotsContainer>
+            </>
+          )}
+        </ImageSliderColumn>
+
+        {/* Column 3: Product Grid Slider */}
+        <ProductGridColumn theme={theme}>
+          <ProductGridTitle theme={theme}>
+            {sectionData.productGridTitle}
+          </ProductGridTitle>
+          <ProductGridSliderWrapper theme={theme}>
+            {" "}
+            {/* This wraps the track and provides overflow:hidden */}
+            <ProductGridSlidesTrack
+              theme={theme}
+              ref={productSliderTrackRef}
+              $slideCount={totalProductGridSlides}
+              $currentSlide={currentProductGridSlide}
+            >
+              {productGridSlides.map((productPageItems, pageIndex) => (
+                // This div acts as a single slide/page in the product grid track
+                <div
+                  style={{ flex: "0 0 100%", width: "100%" }}
+                  key={`prod-grid-slide-${pageIndex}`}
+                >
+                  <ProductItemsDisplayPage theme={theme}>
+                    {" "}
+                    {/* This is the 2x3 CSS Grid */}
+                    {productPageItems.map((product) => (
+                      <ProductCellStyled
+                        theme={theme}
+                        key={product.id}
+                        href={product.link} // Simple link for now
+                        title={product.name}
+                        onClick={(e) => {
+                          e.preventDefault(); // Prevent default if using RouterLink or navigate
+                          navigate(product.link);
+                          console.log("Navigate to product:", product.link);
+                        }}
+                      >
+                        <ProductCellImageContainer theme={theme}>
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            loading="lazy"
+                          />
+                          {/* Render Badges */}
+                          {product.badges?.map((badge, badgeIdx) => (
+                            <ProductPromoBadge
+                              theme={theme}
+                              key={`${product.id}-badge-${badgeIdx}`}
+                              $type={badge.type}
+                            >
+                              {badge.text}
+                            </ProductPromoBadge>
+                          ))}
+                        </ProductCellImageContainer>
+                        <ProductCellContent theme={theme}>
+                          <ProductCellName theme={theme}>
+                            {product.name}
+                          </ProductCellName>
+                          <ProductCellPrice theme={theme}>
+                            {product.originalPrice && (
+                              <s
+                                style={{
+                                  color: theme.colors.darkGray,
+                                  marginRight: theme.spacing(1.5),
+                                  fontSize: "0.85em",
+                                  opacity: 0.7,
+                                }}
+                              >
+                                ${product.originalPrice.toLocaleString()}
+                              </s>
+                            )}
+                            ${product.price.toLocaleString()}원{" "}
+                            {/* Assuming price is in Won */}
+                          </ProductCellPrice>
+                          {product.shippingInfo && (
+                            <ProductShippingInfo theme={theme}>
+                              {product.shippingInfo}
+                            </ProductShippingInfo>
+                          )}
+                        </ProductCellContent>
+                      </ProductCellStyled>
+                    ))}
+                  </ProductItemsDisplayPage>
+                </div>
+              ))}
+            </ProductGridSlidesTrack>
+            {totalProductGridSlides > 1 && (
+              <>
+                <SliderNavArrowButton
+                  theme={theme}
+                  $direction="left"
+                  onClick={() =>
+                    prevSlide(
+                      setCurrentProductGridSlide,
+                      currentProductGridSlide,
+                      totalProductGridSlides
+                    )
+                  }
+                  aria-label="Previous products"
+                  $isHidden={currentProductGridSlide === 0}
+                  style={{ top: "50%", transform: "translateY(-50%)" }}
+                >
+                  <FaChevronLeft />
+                </SliderNavArrowButton>
+                <SliderNavArrowButton
+                  theme={theme}
+                  $direction="right"
+                  onClick={() =>
+                    nextSlide(
+                      setCurrentProductGridSlide,
+                      currentProductGridSlide,
+                      totalProductGridSlides
+                    )
+                  }
+                  aria-label="Next products"
+                  $isHidden={
+                    currentProductGridSlide >= totalProductGridSlides - 1
+                  }
+                  style={{ top: "50%", transform: "translateY(-50%)" }}
+                >
+                  <FaChevronRight />
+                </SliderNavArrowButton>
+                <ProductGridPagination theme={theme}>
+                  {Array.from({ length: totalProductGridSlides }).map(
+                    (_, index) => (
+                      <DotButton
+                        theme={theme}
+                        key={`prod-grid-dot-${index}`}
+                        $isActive={currentProductGridSlide === index}
+                        onClick={() =>
+                          goToSlide(
+                            setCurrentProductGridSlide,
+                            index,
+                            totalProductGridSlides
+                          )
+                        }
+                        aria-label={`Go to product set ${index + 1}`}
+                      />
+                    )
+                  )}
+                </ProductGridPagination>
+              </>
+            )}
+          </ProductGridSliderWrapper>
+        </ProductGridColumn>
+      </ThreeColumnGrid>
     </ContentCanvasContainer>
   );
 };
+
+// Helper to chunk array (keep this at the bottom or in a utils file)
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const result: T[][] = [];
+  if (!array || size <= 0) return result;
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
+}
 
 export default ContentCanvas;

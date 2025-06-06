@@ -49,7 +49,7 @@ export const resendPendingRegistrationOtp = async (
 ): Promise<ApiResponse<any>> => {
   console.log("API: Attempting to resend OTP...");
   const response = await api.post<ApiResponse<any>>(
-    "/auth/resend-otp",
+    "/auth/resendpendingpegistrationotp",
     payload
   );
   console.log("API: Resend OTP response received.", response.data);

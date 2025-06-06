@@ -19,14 +19,14 @@ interface CategoryIcon {
 }
 
 const categoryIcons: CategoryIcon[] = [
-  { id: 'living', label: 'Living', icon: FaHome },
-  { id: 'dining', label: 'Dining', icon: FaUtensils },
-  { id: 'bedroom', label: 'Bedroom', icon: FaBed },
-  { id: 'lighting', label: 'Lighting', icon: FaLightbulb },
-  { id: 'art', label: 'Art & Decor', icon: FaPalette },
-  { id: 'office', label: 'Office', icon: FaBriefcase },
+  { id: 'prod1', label: 'Living', icon: FaHome },
+  { id: 'prod2', label: 'Dining', icon: FaUtensils },
+  { id: 'prod3', label: 'Bedroom', icon: FaBed },
+  { id: 'prod4', label: 'Lighting', icon: FaLightbulb },
+  { id: 'prod5', label: 'Art & Decor', icon: FaPalette },
+  { id: 'prod6', label: 'Office', icon: FaBriefcase },
   { id: 'outdoor', label: 'Outdoor', icon: FaSun },
-  { id: 'wellness', label: 'Wellness', icon: FaSpa }, // Example of more categories
+  { id: 'wellness', label: 'Wellness', icon: FaSpa }, 
 ];
 
 interface IconicNavigatorProps {

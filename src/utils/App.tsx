@@ -6,9 +6,7 @@ import { type RootState, type AppDispatch } from "@/store";
 import { initializeAuth } from "@/store/thunks/authThunks";
 
 import AuthPage from "@/pages/AuthPage/AuthPage";
-import HomePage from "@/pages/HomePage/HomePage";
 import ProfilePage from "@/pages/Others/ProfilePage";
-import IndividualSellerApplicationForm from "@/components/seller/IndividualSellerApplicationForm";
 import SellerDashboardPage from "@/pages/seller/SellerDashboardPage";
 
 import Header from "@/components/layout/Header";
@@ -67,10 +65,7 @@ function App() {
           <Route
             path="/apply-to-sell"
             element={<IndividualSellerApplicationForm />}
-          />{" "}
-          {/* Public access for application */}
-          {/* Protected Routes */}
-          {/* Use a single ProtectedRoute to wrap multiple protected routes for better structure */}
+          />
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/seller-dashboard" element={<SellerDashboardPage />} />

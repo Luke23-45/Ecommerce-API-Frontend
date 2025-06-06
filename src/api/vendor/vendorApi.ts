@@ -10,10 +10,11 @@ const vendorApiEndpoints = {
   CREATE_PROFILE: "/vendor/create",
   GET_PROFILE: "/vendor/profile",
   UPDATE_PROFILE: "/vendor/update",
+  CHANGE_STATUS: "/vendor/updatestatus",
 };
 
 export async function createVendorProfile(
-  payload: IVendorProfile
+  payload: Partial<IVendorProfile>
 ): Promise<ApiResponse<IVendorProfile>> {
   try {
     const response = await api.post<ApiResponse<IVendorProfile>>(
@@ -45,8 +46,27 @@ export async function getVendorProfile(): Promise<ApiResponse<IVendorProfile>> {
   }
 }
 
+export async function updateVendorProfileStatus(payload: {
+  status: string;
+}): Promise<ApiResponse<IVendorProfile>> {
+  try {
+    console.log("payloadinfo", payload);
+    const response = await api.put<ApiResponse<IVendorProfile>>(
+      vendorApiEndpoints.CHANGE_STATUS,
+      payload
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "Error updating individual seller profile status:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+}
+
 export async function updateVendorProfile(
-  payload: updateVendorProfileUpdateFields
+  payload: any
 ): Promise<ApiResponse<IVendorProfile>> {
   try {
     const response = await api.put<ApiResponse<IVendorProfile>>(

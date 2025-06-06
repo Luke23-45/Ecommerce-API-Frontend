@@ -29,6 +29,12 @@ import InventoryOverview from "@/components/admin/Products/InventoryOverview";
 import BrandingSettings from "@/components/admin/Sidebar/BrandingSettings";
 import ShippingTaxSettings from "@/components/admin/Sidebar/ShippingTaxSettings";
 import PaymentGatewaySettings from "@/components/admin/Sidebar/PaymentGatewaySettings";
+import SellerApplicationList from "@/components/admin/Application/SellerApplications/SellerApplicationList";
+import SellerApplicationDetail from "@/components/admin/Application/SellerApplications/SellerApplicationDetail";
+import type { IIndividualSellerProfile } from "@/types/seller";
+import type { IVendorProfile } from "@/types/vendor";
+import VendorApplicationList from "@/components/admin/Application/VendorApplications/VendorApplicationList";
+import VendorApplicationDetail from "@/components/admin/Application/VendorApplications/VendorApplicationDetail";
 
 // --- CENTRALIZED DUMMY DATA FOR ALL MODULES (Define ONCE OUTSIDE THE COMPONENT) ---
 const mockId = (prefix: string) =>
@@ -134,7 +140,7 @@ const allDummyProducts: Product[] = [
     createdAt: "2023-04-01T11:00:00Z",
   },
 ];
-
+type ApplicationActionType = 'approve' | 'reject' | 'suspend' | 'activate' | 'deactivate'; // Updated
 const allDummyOrders: Order[] = [
   {
     _id: mockId("ORD"),
@@ -403,10 +409,80 @@ const currentGeneralSettings: GeneralSettings = {
   requireProductApproval: true,
   lowStockThreshold: 10,
 };
+const ApplicationOverview: React.FC<{ onNavigateToSection: (path: string) => void }> = ({ onNavigateToSection }) => (
+  <div style={{ padding: 20, border: '1px solid #ccc', background: '#f9f9f9', borderRadius: 8, textAlign: 'center' }}>
+    <h2>Application Management Overview</h2>
+    <p>This page provides a central point for managing seller and vendor applications.</p>
+    <div style={{ marginTop: '20px' }}>
+      <button 
+        onClick={() => onNavigateToSection('/admin/applications/sellers')} 
+        style={{ marginRight: '10px', padding: '10px 15px' }}
+      >
+        View Seller Applications
+      </button>
+      <button 
+        onClick={() => onNavigateToSection('/admin/applications/vendors')}
+        style={{ padding: '10px 15px' }}
+      >
+        View Vendor Applications
+      </button>
+    </div>
+    {/* You could add summary statistics here in the future */}
+  </div>
+);
+
+
+
+
+
+const randomDateString = (start = new Date(2022, 0, 1), end = new Date()) => {
+  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime())).toISOString();
+};
+const allDummySellerApplications: IIndividualSellerProfile[] = [
+  {
+    _id: mockId("APP_SELL"), userId: mockId("USR"), sellerName: "Artisan Pottery Goods", phoneNumber: "555-0101",
+    address: { street: "12 Pottery Lane", city: "Clayville", state: "CA", zip: "90210", country: "USA" },
+    legalFirstName: "Elena", legalLastName: "Vasquez", dateOfBirth: "1985-07-15", citizenshipCountry: "USA", taxIdentificationNumber: "XXX-XX-1234",
+    payoutMethodPreference: "bank_transfer", bankAccountHolderName: "Elena Vasquez", bankAccountNumber: "xxxx1234", bankRoutingNumber: "xxxx0000",
+    briefDescription: "Handmade ceramic pots and vases.", primaryProductCategories: ["Home Decor", "Kitchen"], estimatedMonthlySales: 1500,
+    yearsOfSellingExperience: 3, otherPlatformsSoldOn: "Etsy", agreedToTerms: true, agreedToPrivacyPolicy: true,
+    status: "pending", createdAt: randomDateString(new Date(2023, 8, 1)), updatedAt: randomDateString(new Date(2023, 9, 1)),
+  },
+  {
+    _id: mockId("APP_SELL"), userId: mockId("USR"), sellerName: "Vintage Finds Co.", phoneNumber: "555-0202",
+    address: { street: "45 Retro Rd", city: "Oldtown", state: "NY", zip: "10001", country: "USA" },
+    legalFirstName: "Marcus", legalLastName: "Chen", dateOfBirth: "1990-03-22", citizenshipCountry: "USA", taxIdentificationNumber: "YYY-YY-5678",
+    payoutMethodPreference: "paypal",
+    briefDescription: "Curated vintage homewares and collectibles.", primaryProductCategories: ["Antiques", "Collectibles", "Decor"], estimatedMonthlySales: 2500,
+    yearsOfSellingExperience: 5, otherPlatformsSoldOn: "eBay, Shopify", agreedToTerms: true, agreedToPrivacyPolicy: true,
+    status: "approved", createdAt: randomDateString(new Date(2023, 7, 1)), updatedAt: randomDateString(new Date(2023, 8, 1)),
+  },
+];
+
+const allDummyVendorApplications: IVendorProfile[] = [
+  {
+    _id: mockId("APP_VEND"), userId: mockId("USR"), companyName: "Modern Furniture Inc.", businessRegistrationNumber: "REG123456",
+    companyAddress: { street: "100 Design St", city: "Metrocity", state: "CA", zip: "90001", country: "USA" }, legalEntityType: "corporation",
+    contactPersonFirstName: "Sophia", contactPersonLastName: "Miller", contactPersonEmail: "sophia@modernfurn.com", contactPersonPhone: "555-0303",
+    website: "https://modernfurn.com", yearEstablished: 2015, companyTaxId: "TAXID123", businessBankName: "Commerce Bank", businessBankAccountNumber: "xxxx6789",
+    primaryProductCategories: ["Furniture", "Lighting"], estimatedMonthlySales: 50000,
+    businessDocument: { name: "BusinessLicense.pdf", url: getGenericImage("document-icon", 50, 50, "icon,pdf"), type: "application/pdf" }, agreedToTerms: true, agreedToPrivacyPolicy: true,
+    status: "pending", members: [{ userId: mockId("USR"), roles: ["vendor_admin"], addedAt: randomDateString() }], createdAt: randomDateString(new Date(2023, 9, 10)), updatedAt: randomDateString(new Date(2023, 10, 1)),
+  },
+  {
+    _id: mockId("APP_VEND"), userId: mockId("USR"), companyName: "Sustainable Decor Ltd.", businessRegistrationNumber: "REG789012",
+    companyAddress: { street: "25 Green Way", city: "Ecotown", state: "OR", zip: "97005", country: "USA" }, legalEntityType: "llc",
+    contactPersonFirstName: "Liam", contactPersonLastName: "Davis", contactPersonEmail: "liam@sustainabledecor.co", contactPersonPhone: "555-0404",
+    website: "https://sustainabledecor.co", yearEstablished: 2018, companyTaxId: "TAXID456", businessBankName: "EcoBank", businessBankAccountNumber: "xxxx1122",
+    primaryProductCategories: ["Home Decor", "Sustainable Goods"], estimatedMonthlySales: 20000,
+    businessDocument: { name: "EcoCert.pdf", url: getGenericImage("document-eco", 50, 50, "icon,eco"), type: "application/pdf" }, agreedToTerms: true, agreedToPrivacyPolicy: true,
+    status: "rejected", members: [{ userId: mockId("USR"), roles: ["vendor_admin"], addedAt: randomDateString() }], createdAt: randomDateString(new Date(2023, 6, 1)), updatedAt: randomDateString(new Date(2023, 6, 15)),
+  },
+];
 
 const AdminPage: React.FC = () => {
   const [currentPath, setCurrentPath] = useState("/admin/dashboard");
-  const [userRole] = useState<"seller" | "vendor" | "superAdmin">("superAdmin");
+  const [userRole] = useState<"seller" | "vendor" | "superAdmin">("seller");
 
   // Modal state for banner editing
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
@@ -444,6 +520,16 @@ const AdminPage: React.FC = () => {
       currentPath.startsWith("/admin/products/") &&
       currentPath.endsWith("/edit");
   }
+
+  const isViewingApplicationOverview = currentPath === "/admin/applications";
+
+  const isViewingSellerApplicationList = currentPath === "/admin/applications/sellers";
+  const isViewingSellerApplicationDetail = currentPath.startsWith("/admin/applications/sellers/") && currentPath.length > "/admin/applications/sellers/".length && !currentPath.endsWith("/edit");
+  const sellerApplicationIdToView = isViewingSellerApplicationDetail ? getIdFromPath(currentPath, "applications/sellers") : null;
+
+  const isViewingVendorApplicationList = currentPath === "/admin/applications/vendors";
+  const isViewingVendorApplicationDetail = currentPath.startsWith("/admin/applications/vendors/") && currentPath.length > "/admin/applications/vendors/".length && !currentPath.endsWith("/edit");
+  const vendorApplicationIdToView = isViewingVendorApplicationDetail ? getIdFromPath(currentPath, "applications/vendors") : null;
 
   const isAddingProduct = currentPath === "/admin/products/new";
   const productIdToEdit = isEditingProduct
@@ -632,6 +718,28 @@ const AdminPage: React.FC = () => {
     );
   };
 
+    const handleViewSellerApplicationDetails = (applicationId: string) => {
+    handleNavLinkClick(`/admin/applications/sellers/${applicationId}`);
+  };
+  const handleViewVendorApplicationDetails = (applicationId: string) => {
+    handleNavLinkClick(`/admin/applications/vendors/${applicationId}`);
+  };
+  const handleApplicationAction = (appId: string, appType: 'seller' | 'vendor', action: 'approve' | 'reject' | 'suspend', appName: string) => {
+    const actionText = action.charAt(0).toUpperCase() + action.slice(1);
+    showConfirmModal(
+      `Confirm ${actionText}: ${appName}`,
+      `Are you sure you want to ${action} the ${appType} application for "${appName}" (ID: ${appId})?`,
+      () => { 
+        console.log(`CONFIRMED ${action.toUpperCase()} for ${appType} application ID: ${appId}`); 
+        // TODO: Update the actual data array here to reflect the status change
+        showNotification(`${appName} application has been ${action}d.`, 'success'); 
+      },
+      `${actionText} Application`,
+      action === 'reject' || action === 'suspend' ? 'danger' : 'primary'
+    );
+  };
+
+
   // --- Handlers for Category Module ---
   const handleSaveCategory = (category: any, isNew: boolean) => {
     // Temp any type, define actual category type
@@ -773,6 +881,25 @@ const AdminPage: React.FC = () => {
         />
       );
     }
+    else if (isViewingApplicationOverview) { 
+      return <ApplicationOverview onNavigateToSection={handleNavLinkClick} />;
+    }
+    // --- END: NEW RENDERING LOGIC FOR APPLICATION OVERVIEW ---
+    else if (isViewingSellerApplicationList) {
+      // Make sure you have imported SellerApplicationList or are using the placeholder
+      // import SellerApplicationList from '@/components/Admin/Applications/SellerApplications/SellerApplicationList';
+      return <SellerApplicationList applicationsData={allDummySellerApplications} onViewDetails={handleViewSellerApplicationDetails} onApplicationAction={handleApplicationAction} />;
+    } else if (isViewingSellerApplicationDetail) {
+      // Make sure you have imported SellerApplicationDetail or are using the placeholder
+      // import SellerApplicationDetail from '@/components/Admin/Applications/SellerApplications/SellerApplicationDetail';
+      return <SellerApplicationDetail applicationId={sellerApplicationIdToView} applicationsData={allDummySellerApplications} onBackToList={() => handleNavLinkClick('/admin/applications/sellers')} onApplicationAction={handleApplicationAction} />;
+    } else if (isViewingVendorApplicationList) {
+      // Make sure you have imported VendorApplicationList or are using the placeholder
+      return <VendorApplicationList applicationsData={allDummyVendorApplications} onViewDetails={handleViewVendorApplicationDetails} onApplicationAction={handleApplicationAction} />;
+    } else if (isViewingVendorApplicationDetail) {
+      // Make sure you have imported VendorApplicationDetail or are using the placeholder
+      return <VendorApplicationDetail applicationId={vendorApplicationIdToView} applicationsData={allDummyVendorApplications} onBackToList={() => handleNavLinkClick('/admin/applications/vendors')} onApplicationAction={handleApplicationAction} />;
+    }
     return (
       <div style={{ padding: "50px", textAlign: "center", color: "#999" }}>
         Page Not Found. Select an option from the sidebar.
@@ -837,7 +964,6 @@ const AdminPage: React.FC = () => {
     >
       {renderContent()}
 
-      {/* Render the BannerEditModal conditionally (based on Marketing module state) */}
       <BannerEditModal
         isOpen={isAddingBanner || isEditingBanner || isBannerModalOpen}
         onClose={handleCancelBannerEdit}

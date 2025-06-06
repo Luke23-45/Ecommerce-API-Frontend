@@ -10,6 +10,7 @@ import {
   createIndividualSellerProfile,
   getIndividualSellerProfile,
   updateIndividualSellerProfile,
+  updateIndividualSellerProfileStatus,
 } from "@/api/seller/sellerApi";
 
 import { type IIndividualSellerProfile } from "@/types/seller";
@@ -25,19 +26,22 @@ export const useGetIndividualSellerProfile = (
   options?: UseQueryOptions<
     ApiResponse<IIndividualSellerProfile>,
     Error,
-    IIndividualSellerProfile
+    IIndividualSellerProfile, 
+    ReturnType<typeof sellerKeys.profile> 
   >
-) => {
-  const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
+)=> {
+ const { isAuthenticated, loading: isAuthLoading } = useSelector( 
+    (state: RootState) => state.auth
   );
 
   return useQuery<
     ApiResponse<IIndividualSellerProfile>,
     Error,
-    IIndividualSellerProfile
+    IIndividualSellerProfile,
+    ReturnType<typeof sellerKeys.profile>
   >({
     queryKey: sellerKeys.profile(),
+    enabled: isAuthenticated && !isAuthLoading,
     queryFn: async () => {
       const response = await getIndividualSellerProfile();
 
@@ -46,13 +50,14 @@ export const useGetIndividualSellerProfile = (
       }
       return response;
     },
+    
     select: (data) => data.data,
-    enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1,
     ...options,
   });
+
 };
 
 /**
@@ -71,7 +76,6 @@ export const useCreateIndividualSellerProfile = () => {
     mutationFn: createIndividualSellerProfile,
     onSuccess: (response) => {
       console.log("Seller profile created successfully:", response.data);
-
       queryClient.invalidateQueries({ queryKey: sellerKeys.profile() });
     },
     onError: (error) => {
@@ -95,7 +99,28 @@ export const useUpdateIndividualSellerProfile = () => {
     mutationFn: updateIndividualSellerProfile,
     onSuccess: (response) => {
       console.log("Seller profile updated successfully:", response.data);
+      queryClient.invalidateQueries({ queryKey: sellerKeys.profile() });
+    },
+    onError: (error) => {
+      console.error("Error updating seller profile:", error);
+    },
+  });
+};
 
+
+export const useUpdateIndividualSellerProfileStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<IIndividualSellerProfile>,
+    Error,
+    {
+      status:string
+    }
+  >({
+    mutationFn: updateIndividualSellerProfileStatus,
+    onSuccess: (response) => {
+      console.log("Seller profile status updated successfully:", response.data);
       queryClient.invalidateQueries({ queryKey: sellerKeys.profile() });
     },
     onError: (error) => {

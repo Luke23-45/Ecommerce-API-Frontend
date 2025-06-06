@@ -3,13 +3,14 @@
 import { type IAddress } from "./seller";
 export type VendorScopedRole = "vendor_member" | "vendor_admin" | string;
 export type VendorProfileStatus =
-  | "pending"
+  | "submitted"
   | "approved"
   | "rejected"
   | "active"
   | "inactive"
   | "suspended"
   | "closed"
+  | "processing"
   | "withdrawn";
 
 export interface vendorMember {
@@ -29,8 +30,7 @@ export interface updateVendorProfileUpdateFields {
   yearEstablished?: number;
   primaryProductCategories?: string[];
   estimatedMonthlySales?: number;
-  businessRegistrationDocumentUrl: string;
-  taxCertificateUrl: string;
+  businessDosubmittedcument: File | null;
 }
 
 export interface IVendorProfile {
@@ -58,13 +58,15 @@ export interface IVendorProfile {
   businessRoutingNumber?: string;
   primaryProductCategories?: string[];
   estimatedMonthlySales?: number;
-  businessRegistrationDocumentUrl: string;
-  taxCertificateUrl: string;
+  applicationReport: File | null;
+  businessDocument?: File | null;
+  documentURL?: string;
   agreedToTerms: boolean;
   agreedToPrivacyPolicy: boolean;
   status: VendorProfileStatus;
   approvedBy?: string;
   activatedAt?: Date;
+  documentName?:string;
   members: {
     userId: string;
     roles: VendorScopedRole[];
@@ -72,9 +74,28 @@ export interface IVendorProfile {
     addedBy?: string;
     addedAt?: Date;
   }[];
+  updatedAt?:string;
+  createdAt?:string;
 }
 export interface vendorProfileData {
   status: string;
   vendorId: string;
   vendorAdmin: string;
+}
+
+
+export interface IVendorApplicationQueryOptions {
+  filter?: { [key: string]: any };
+  pagination?: {
+    limit: number;
+    skip: number;
+  };
+  sort?: { [key: string]: any } | string;
+  projection?: { [key: string]: number | boolean } | string;
+  lean?: boolean;
+}
+
+export interface IPaginatedVendorApplicationsResult {
+  applications: IVendorProfile[];
+  totalCount: number;
 }

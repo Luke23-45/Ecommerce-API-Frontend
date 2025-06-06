@@ -40,6 +40,14 @@ const GlobalStyles = createGlobalStyle`
         transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     }
 
+    .fa-spin {
+  animation: fa-spin 1s infinite linear;
+}
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
     ul, ol {
         list-style: none;
     }

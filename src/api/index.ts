@@ -15,7 +15,7 @@ const API_BASE_URL = import.meta.env.VITE_ECOMMERCE_API_BASE_URL;
 const api = axios.create({
   baseURL: "/api",
   headers: {
-    "Content-Type": "application/json",
+//  'Content-Type': 'multipart/form-data',
   },
   withCredentials: true,
 });
@@ -43,7 +43,6 @@ api.interceptors.response.use(
   (response) => {
     return response;
   },
-
   async (error: AxiosError) => {
     const originalRequest = error.config;
     if (

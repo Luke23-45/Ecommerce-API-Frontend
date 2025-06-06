@@ -1,0 +1,70 @@
+[
+  {
+    "name": "Electronics",
+    "slug": "electronics",
+    "description": "All kinds of electronic devices and gadgets.",
+    "imageUrl": "https://images.unsplash.com/photo-1581093588401-6c61c6b8b5df?auto=format&fit=crop&w=800&q=60",
+    "parentId": null,
+    "ancestors": [],
+    "childrenCount": 2,
+    "isActive": true,
+    "metaTitle": "Buy Electronics Online",
+    "metaDescription": "Shop for the best electronics online.",
+    "metaKeywords": ["electronics", "gadgets", "devices"],
+    "sortOrder": 1,
+    "createdBy": { "$oid": "665f1a1d71e9b7a6ad8d9999" },
+    "updatedBy": { "$oid": "665f1a1d71e9b7a6ad8d9999" },
+    "createdAt": { "$date": "2024-06-01T10:00:00Z" },
+    "updatedAt": { "$date": "2024-06-01T10:00:00Z" }
+  },
+  {
+    "_id": { "$oid": "665f1a1d71e9b7a6ad8d0002" },
+    "name": "Laptops",
+    "slug": "laptops",
+    "description": "Wide range of laptops from top brands.",
+    "imageUrl": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=60",
+    "parentId": { "$oid": "665f1a1d71e9b7a6ad8d0001" },
+    "ancestors": [
+      {
+        "_id": { "$oid": "665f1a1d71e9b7a6ad8d0001" },
+        "name": "Electronics",
+        "slug": "electronics"
+      }
+    ],
+    "childrenCount": 0,
+    "isActive": true,
+    "metaTitle": "Best Laptops",
+    "metaDescription": "Browse high-performance laptops.",
+    "metaKeywords": ["laptops", "notebooks", "computers"],
+    "sortOrder": 2,
+    "createdBy": { "$oid": "665f1a1d71e9b7a6ad8d9999" },
+    "updatedBy": { "$oid": "665f1a1d71e9b7a6ad8d9999" },
+    "createdAt": { "$date": "2024-06-01T10:05:00Z" },
+    "updatedAt": { "$date": "2024-06-01T10:05:00Z" }
+  },
+  {
+    "_id": { "$oid": "665f1a1d71e9b7a6ad8d0003" },
+    "name": "Smartphones",
+    "slug": "smartphones",
+    "description": "Latest smartphones with cutting-edge technology.",
+    "imageUrl": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=60",
+    "parentId": { "$oid": "665f1a1d71e9b7a6ad8d0001" },
+    "ancestors": [
+      {
+        "_id": { "$oid": "665f1a1d71e9b7a6ad8d0001" },
+        "name": "Electronics",
+        "slug": "electronics"
+      }
+    ],
+    "childrenCount": 0,
+    "isActive": true,
+    "metaTitle": "Top Smartphones",
+    "metaDescription": "Explore the latest smartphones.",
+    "metaKeywords": ["phones", "smartphones", "mobile"],
+    "sortOrder": 3,
+    "createdBy": { "$oid": "665f1a1d71e9b7a6ad8d9999" },
+    "updatedBy": { "$oid": "665f1a1d71e9b7a6ad8d9999" },
+    "createdAt": { "$date": "2024-06-01T10:10:00Z" },
+    "updatedAt": { "$date": "2024-06-01T10:10:00Z" }
+  }
+]

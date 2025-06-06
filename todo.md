@@ -1,0 +1,9 @@
+- manage the routes.
+- regrestation testing.
+- keep only one permission array.
+- login 
+- verify token and resend token. 
+- userprofile.
+- update the header after loging with something welcome of preheader. 
+- userprofile update.
+- apply individual sellers application. 

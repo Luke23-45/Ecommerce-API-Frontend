@@ -1,79 +1,92 @@
-// src/components/Admin/Dashboard/MetricCard/MetricCard.styles.ts
-import styled, { type DefaultTheme, css } from 'styled-components';
-import { rgba } from 'polished';
-
-const getTheme = (props: { theme: DefaultTheme }) => props.theme;
+import styled, { css } from 'styled-components';
+import { rgba } from 'polished'; // For transparent colors if needed
 
 export const MetricCardContainer = styled.div`
-    background-color: ${(props) => getTheme(props).colors.adminSurface};
-    border-radius: 12px;
-    padding: ${(props) => getTheme(props).spacing(6)}; /* Generous padding */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* Soft shadow */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-    cursor: pointer;
+  background-color: ${({ theme }) => theme.colors.adminSurface}; // Typically white
+  border-radius: ${({ theme }) => theme.borderRadius.large}; // Generous rounding (was medium, using large for more visualboard feel)
+  padding: ${({ theme }) => theme.spacing(6)}; // e.g., 24px
+  box-shadow: ${({ theme }) => theme.shadows.md}; // Soft, diffused shadow
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing(2)}; // Space between elements inside the card (e.g., 8px)
+  transition: all ${({ theme }) => theme.transitions.base};
 
-    &:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-    }
+  &:hover {
+    transform: translateY(-4px); // Subtle lift on hover
+    box-shadow: ${({ theme }) => theme.shadows.lg}; // Slightly more pronounced shadow on hover
+  }
 `;
 
-export const CardHeader = styled.div`
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: ${(props) => getTheme(props).spacing(4)};
+export const MetricCardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between; // If you have an icon/action on the right of the title
+  gap: ${({ theme }) => theme.spacing(2)};
 `;
 
 export const MetricTitle = styled.h3`
-    font-family: ${(props) => getTheme(props).typography.admin.fontFamily};
-    font-size: ${(props) => getTheme(props).typography.admin.sizes.label};
-    font-weight: ${(props) => getTheme(props).typography.admin.weights.semiBold};
-    color: ${(props) => getTheme(props).colors.adminTextSecondary};
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  font-family: ${({ theme }) => theme.typography.admin.fontFamily};
+  font-size: ${({ theme }) => theme.typography.admin.sizes.bodyBase}; // e.g., 0.875rem / 14px
+  font-weight: ${({ theme }) => theme.typography.admin.weights.medium}; // Was semiBold, making it slightly less prominent than value
+  color: ${({ theme }) => theme.colors.adminTextSecondary}; // Muted color for the title
+  margin: 0;
+  line-height: ${({ theme }) => theme.typography.lineHeights.tight};
+  text-transform: uppercase; // Common for metric card titles
+  letter-spacing: ${({ theme }) => theme.typography.letterSpacings.wide}; // Slight spacing
 `;
 
-export const MetricIcon = styled.div`
-    font-size: ${(props) => getTheme(props).typography.admin.sizes.sectionTitle};
-    color: ${(props) => getTheme(props).colors.darkGray}; /* Muted icon color */
-    svg {
-        display: block;
-    }
+// Optional: If you want an icon next to the title or as a card action
+export const MetricIconWrapper = styled.div`
+  color: ${({ theme }) => theme.colors.adminTextMuted};
+  font-size: 1.2rem; // Adjust as needed
+  // Add styling if it's an action button (padding, hover)
 `;
 
 export const MetricValue = styled.p`
-    font-family: ${(props) => getTheme(props).typography.heading.fontFamily}; /* Playfair for numbers */
-    font-size: ${(props) => getTheme(props).typography.admin.sizes.moduleTitle}; /* Large for prominence */
-    font-weight: ${(props) => getTheme(props).typography.heading.weights.bold};
-    color: ${(props) => getTheme(props).colors.adminText};
-    line-height: 1;
-    margin-bottom: ${(props) => getTheme(props).spacing(3)}; /* Space below value */
+  font-family: ${({ theme }) => theme.typography.admin.fontFamily};
+  font-size: ${({ theme }) => theme.typography.admin.sizes.metricValue}; // e.g., 2.25rem / 36px (Very prominent)
+  font-weight: ${({ theme }) => theme.typography.admin.weights.bold}; // Or extraBold for more impact
+  color: ${({ theme }) => theme.colors.adminText}; // Primary text color
+  margin: ${({ theme }) => theme.spacing(1)} 0; // Minimal vertical margin
+  line-height: ${({ theme }) => theme.typography.lineHeights.condensed};
 `;
 
-export const MetricFooter = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-family: ${(props) => getTheme(props).typography.admin.fontFamily};
-    font-size: ${(props) => getTheme(props).typography.admin.sizes.small};
-    color: ${(props) => getTheme(props).colors.adminTextSecondary};
+export const MetricTrend = styled.div<{ trendDirection?: 'up' | 'down' | 'stable' }>`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing(1.5)}; // e.g., 6px
+  font-family: ${({ theme }) => theme.typography.admin.fontFamily};
+  font-size: ${({ theme }) => theme.typography.admin.sizes.smallText}; // e.g., 0.8125rem / 13px
+  margin-top: ${({ theme }) => theme.spacing(1)};
+
+  svg { // Styling for the trend icon (up/down arrow)
+    font-size: 0.9em; // Relative to the trend text font size
+    color: ${({ theme, trendDirection }) =>
+      trendDirection === 'up' ? theme.colors.adminStatusSuccess :
+      trendDirection === 'down' ? theme.colors.adminStatusError :
+      theme.colors.adminTextMuted};
+  }
 `;
 
-export const Trend = styled.span<{ $type?: 'positive' | 'negative' | 'neutral' }>`
-    display: flex;
-    align-items: center;
-    gap: ${(props) => getTheme(props).spacing(1)};
-    font-weight: ${(props) => getTheme(props).typography.admin.weights.semiBold};
+export const TrendPercentage = styled.span<{ trendDirection?: 'up' | 'down' | 'stable' }>`
+  font-weight: ${({ theme }) => theme.typography.admin.weights.semiBold};
+  color: ${({ theme, trendDirection }) =>
+    trendDirection === 'up' ? theme.colors.adminStatusSuccess :
+    trendDirection === 'down' ? theme.colors.adminStatusError :
+    theme.colors.adminTextMuted};
+`;
 
-    ${(props) => props.$type === 'positive' && css` color: ${getTheme(props).colors.adminStatusSuccess}; `}
-    ${(props) => props.$type === 'negative' && css` color: ${getTheme(props).colors.adminStatusError}; `}
-    ${(props) => props.$type === 'neutral' && css` color: ${getTheme(props).colors.adminTextSecondary}; `}
+export const TrendPeriod = styled.span`
+  color: ${({ theme }) => theme.colors.adminTextSecondary};
+  margin-left: ${({ theme }) => theme.spacing(0.5)}; // Small space before the period text
+`;
 
-    svg {
-        font-size: ${(props) => getTheme(props).typography.admin.sizes.small};
-    }
+// Optional: If you have a small descriptive sub-text below the trend
+export const MetricSubText = styled.p`
+  font-family: ${({ theme }) => theme.typography.admin.fontFamily};
+  font-size: ${({ theme }) => theme.typography.admin.sizes.xsmallText}; // e.g., 0.75rem / 12px
+  color: ${({ theme }) => theme.colors.adminTextMuted};
+  margin: 0;
+  margin-top: ${({ theme }) => theme.spacing(2)};
+  line-height: ${({ theme }) => theme.typography.lineHeights.base};
 `;

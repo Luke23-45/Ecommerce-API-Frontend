@@ -8,10 +8,10 @@ import GlobalStyles from "../components/home/styles/GlobalStyles";
 import GrandMarquee from "../components/home/GrandMarquee";
 import SpotlightBanner from "../components/home/SpotlightBanner";
 import HeroPanorama from "../components/home/HeroPanorama";
-import FeaturedCategories from "../components/home/featureCategory/FeaturedCategories";
-import ProductCarousel from "../components/home/ProductCarousel/ProductCarousel";
-import BrandEthos from "../components/home/BrandEthos/BrandEthos";
-import LookbookCollections from "../components/home/LookbookCollections/LookbookCollections";
+import FeaturedCategories from "../components/unused/featureCategory/FeaturedCategories";
+import ProductCarousel from "../components/unused/ProductCarousel/ProductCarousel";
+import BrandEthos from "../components/unused/BrandEthos/BrandEthos";
+import LookbookCollections from "../components/unused/LookbookCollections/LookbookCollections";
 import CategoryExplorer from "../components/home/CategoryExplorer/CategoryExplorer";
 function App() {
   return (

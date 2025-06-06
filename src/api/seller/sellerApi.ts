@@ -1,5 +1,8 @@
 import api from "..";
-import { type IIndividualSellerProfile, type IIndividualSellerProfileUpdate } from "@/types/seller";
+import {
+  type IIndividualSellerProfile,
+  type IIndividualSellerProfileUpdate,
+} from "@/types/seller";
 import { type ApiResponse } from "@/types/auth";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 
@@ -7,12 +10,14 @@ const individualSellerApiEndpoints = {
   CREATE_PROFILE: "/seller/create",
   GET_PROFILE: "/seller/profile",
   UPDATE_PROFILE: "/seller/update",
+  CHANGE_STATUS:"/seller/"
 };
 
 export async function createIndividualSellerProfile(
   payload: IIndividualSellerProfile
 ): Promise<ApiResponse<IIndividualSellerProfile>> {
   try {
+    console.log(payload, "00000000000000000000000000000");
     const response = await api.post<ApiResponse<IIndividualSellerProfile>>(
       individualSellerApiEndpoints.CREATE_PROFILE,
       payload
@@ -34,10 +39,30 @@ export async function getIndividualSellerProfile(): Promise<
     const response = await api.get<ApiResponse<IIndividualSellerProfile>>(
       individualSellerApiEndpoints.GET_PROFILE
     );
+    console.log(response);
     return response.data;
   } catch (error: any) {
     console.error(
       "Error fetching individual seller profile:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+}
+
+export async function updateIndividualSellerProfileStatus(payload: {
+  status: string;
+}): Promise<ApiResponse<IIndividualSellerProfile>> {
+  try {
+    console.log("payloadinfo", payload);
+    const response = await api.put<ApiResponse<IIndividualSellerProfile>>(
+      individualSellerApiEndpoints.CHANGE_STATUS,
+      payload
+    );
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "Error updating individual seller profile status:",
       error.response?.data || error.message
     );
     throw error;
@@ -62,18 +87,17 @@ export async function updateIndividualSellerProfile(
   }
 }
 
-
 export function useEditableSellerProfile(): UseQueryResult<
   IIndividualSellerProfileUpdate,
   Error
 > {
   return useQuery<
-    ApiResponse<IIndividualSellerProfile>,   // ← matches getIndividualSellerProfile()
+    ApiResponse<IIndividualSellerProfile>, // ← matches getIndividualSellerProfile()
     Error,
-    IIndividualSellerProfileUpdate          // ← what we expose downstream
+    IIndividualSellerProfileUpdate // ← what we expose downstream
   >({
     queryKey: ["sellerProfile", "editable"],
-    queryFn: getIndividualSellerProfile,    // no more overload errors!
+    queryFn: getIndividualSellerProfile, // no more overload errors!
     staleTime: 5 * 60 * 1000,
     select: (res) => {
       const d = res.data;
@@ -97,6 +121,6 @@ export function useEditableSellerProfile(): UseQueryResult<
         yearsOfSellingExperience: d.yearsOfSellingExperience,
         otherPlatformsSoldOn: d.otherPlatformsSoldOn,
       };
-    }
+    },
   });
 }

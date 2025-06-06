@@ -1,59 +1,78 @@
-// src/components/Admin/Dashboard/ChartCard/ChartCard.styles.ts
-import styled, { type DefaultTheme } from 'styled-components';
-
-const getTheme = (props: { theme: DefaultTheme }) => props.theme;
-
+import styled from 'styled-components';
+import { rgba } from 'polished';
 export const ChartCardContainer = styled.div`
-    background-color: ${(props) => getTheme(props).colors.adminSurface};
-    border-radius: 12px;
-    padding: ${(props) => getTheme(props).spacing(6)};
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    height: 100%; /* Fill parent grid cell */
-    display: flex;
-    flex-direction: column;
+  background-color: ${({ theme }) => theme.colors.adminSurface}; // White
+  border-radius: ${({ theme }) => theme.borderRadius.large};    // e.g., 16px
+  padding: ${({ theme }) => theme.spacing(6)};                  // e.g., 24px
+  box-shadow: ${({ theme }) => theme.shadows.md};
+  display: flex;
+  flex-direction: column;
+  height: 100%; // Allow it to fill the grid cell height
 `;
 
 export const ChartHeader = styled.div`
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: ${(props) => getTheme(props).spacing(4)};
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing(5)}; // e.g., 20px
 `;
 
 export const ChartTitle = styled.h3`
-    font-family: ${(props) => getTheme(props).typography.admin.fontFamily};
-    font-size: ${(props) => getTheme(props).typography.admin.sizes.sectionTitle};
-    font-weight: ${(props) => getTheme(props).typography.admin.weights.bold};
-    color: ${(props) => getTheme(props).colors.adminText};
+  font-family: ${({ theme }) => theme.typography.admin.fontFamily};
+  font-size: ${({ theme }) => theme.typography.admin.sizes.moduleTitle}; // e.g., "My Sales Overview" (was sectionHeader)
+  font-weight: ${({ theme }) => theme.typography.admin.weights.semiBold};
+  color: ${({ theme }) => theme.colors.adminText};
+  margin: 0;
 `;
 
-export const ChartPeriodSelect = styled.select`
-    padding: ${(props) => getTheme(props).spacing(2)} ${(props) => getTheme(props).spacing(3)};
-    border: 1px solid ${(props) => getTheme(props).colors.adminBorder};
-    border-radius: 8px;
-    background-color: ${(props) => getTheme(props).colors.adminSecondaryBg};
-    font-family: ${(props) => getTheme(props).typography.admin.fontFamily};
-    font-size: ${(props) => getTheme(props).typography.admin.sizes.small};
-    color: ${(props) => getTheme(props).colors.adminText};
-    cursor: pointer;
+export const ChartControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing(3)};
+`;
+
+// Example for a styled dropdown/select if you have one
+// If using a library select, you'll style it via its props or global overrides
+export const StyledSelect = styled.select`
+  font-family: ${({ theme }) => theme.typography.admin.fontFamily};
+  font-size: ${({ theme }) => theme.typography.admin.sizes.bodyBase};
+  padding: ${({ theme }) => theme.spacing(2)} ${({ theme }) => theme.spacing(3)};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  border: 1px solid ${({ theme }) => theme.colors.adminBorder};
+  background-color: ${({ theme }) => theme.colors.adminSurface};
+  color: ${({ theme }) => theme.colors.adminTextSecondary};
+  min-width: 120px; // Adjust as needed
+  cursor: pointer;
+
+  &:focus {
     outline: none;
-    transition: border-color 0.2s ease-out;
-
-    &:focus {
-        border-color: ${(props) => getTheme(props).colors.accent1};
-    }
+    border-color: ${({ theme }) => theme.colors.adminAccent};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.adminAccentSubtleBg};
+  }
 `;
 
-export const ChartContent = styled.div`
-    flex-grow: 1; /* Chart content takes available space */
-    display: flex; /* For centering placeholder */
+export const ChartWrapper = styled.div`
+  flex-grow: 1; // Make the chart itself take available vertical space
+  width: 100%;
+  min-height: 250px; // Minimum height for the chart drawing area
+
+  // Recharts often needs specific dimensions on its ResponsiveContainer
+  // or direct chart component. This wrapper helps manage that.
+  .recharts-responsive-container {
+    width: 100% !important;
+    height: 100% !important;
+  }
+`;
+
+export const NoDataMessage = styled.div`
+    display: flex;
     align-items: center;
     justify-content: center;
-    font-family: ${(props) => getTheme(props).typography.admin.fontFamily};
-    color: ${(props) => getTheme(props).colors.adminTextSecondary};
-    font-size: ${(props) => getTheme(props).typography.admin.sizes.bodyBase};
-    border: 1px dashed ${(props) => getTheme(props).colors.adminBorder};
-    border-radius: 8px;
-    padding: ${(props) => getTheme(props).spacing(4)};
-    text-align: center;
+    height: 100%;
+    min-height: 200px; /* Match ChartWrapper min-height roughly */
+    color: ${({ theme }) => theme.colors.adminTextMuted};
+    font-size: ${({ theme }) => theme.typography.admin.sizes.bodyBase};
+    border: 1px dashed ${({ theme }) => theme.colors.adminBorder};
+    border-radius: ${({ theme }) => theme.borderRadius.medium};
+    background-color: ${({ theme }) => rgba(theme.colors.adminPrimaryBg, 0.5)};
 `;

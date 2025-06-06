@@ -4,21 +4,7 @@ import { rgba } from 'polished';
 
 // REMOVED: const getTheme = (props: { theme: DefaultTheme }) => props.theme;
 
-export const AdminSidebarContainer = styled.nav`
-    width: 250px;
-    background-color: ${(props) => props.theme.colors.adminSecondaryBg}; /* DIRECT ACCESS */
-    padding: ${(props) => props.theme.spacing(8)} 0; /* DIRECT ACCESS */
-    border-right: 1px solid ${(props) => props.theme.colors.adminBorder}; /* DIRECT ACCESS */
-    flex-shrink: 0;
-    
-    @media (max-width: ${(props) => props.theme.breakpoints.tablet}) { /* DIRECT ACCESS */
-        width: 100%;
-        height: auto;
-        padding: ${(props) => props.theme.spacing(4)} 0; /* DIRECT ACCESS */
-        border-right: none;
-        border-bottom: 1px solid ${(props) => props.theme.colors.adminBorder}; /* DIRECT ACCESS */
-    }
-`;
+
 
 export const NavList = styled.ul`
     list-style: none;
@@ -98,5 +84,53 @@ export const SubNavList = styled.ul<{ $isOpen?: boolean }>`
         a {
             padding-left: ${(props) => props.theme.spacing(4)}; /* DIRECT ACCESS */
         }
+    }
+`;
+
+export const AdminSidebarContainer = styled.nav<{ $isCollapsed?: boolean }>`
+    width: ${(props) => (props.$isCollapsed ? '80px' : '250px')}; // Example widths
+    transition: width 0.3s ease-in-out; // Smooth transition for width
+    background-color: ${(props) => props.theme.colors.adminSecondaryBg};
+    padding: ${(props) => props.theme.spacing(4)} 0; // Consistent top/bottom padding
+    border-right: 1px solid ${(props) => props.theme.colors.adminBorder};
+    flex-shrink: 0;
+    overflow-x: hidden; // Hide horizontal overflow when collapsing
+
+    // Styles for when collapsed
+    ${(props) =>
+    props.$isCollapsed &&
+    css`
+        // You might adjust padding for collapsed state if top/bottom buttons/logo area needs it
+        // padding: ${props.theme.spacing(4)} ${props.theme.spacing(2)}; 
+        
+        // Hide text in NavItem > a > span:not(.icon-class-if-any)
+        // This is a general approach, you might need more specific selectors
+        ${NavItem} a span:not([class*="icon"]) { // A bit hacky, better to have specific class on icon span
+            display: none;
+        }
+        ${NavItem} a svg + span { // Hides label span if it's next to an svg icon
+             display: none;
+        }
+        ${NavItem} a {
+            justify-content: center; // Center the icon
+            padding: ${props.theme.spacing(3)}; // Adjust padding for icon only
+        }
+        ${SubNavList} {
+            display: none; // Submenus are always hidden when sidebar is collapsed
+        }
+    `}
+    
+    @media (max-width: ${(props) => props.theme.breakpoints.tablet}) {
+        width: 100%; // Full width on tablet
+        height: auto;
+        // ... other tablet styles ...
+        // Collapse functionality might be disabled or behave differently on mobile
+        ${(props) =>
+        props.$isCollapsed &&
+        css`
+            // Override collapsed styles if needed for mobile
+            // e.g. width: 100%; display: flex; justify-content: space-around; 
+            // Or simply don't allow collapse on mobile.
+        `}
     }
 `;
