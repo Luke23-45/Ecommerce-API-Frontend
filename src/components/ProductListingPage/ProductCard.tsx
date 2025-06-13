@@ -103,7 +103,7 @@ const CurrentPrice = styled.span`
   `}
 
   &::after {
-    content: '원';
+    content: '$';
     font-size: ${({ theme }) => theme.typography.body.sizes.small};
     font-weight: ${({ theme }) => theme.typography.body.weights.regular};
     margin-left: 2px;
@@ -206,7 +206,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {product.price.toLocaleString()}
           </CurrentPrice>
           {product.originalPrice && (
-            <OriginalPrice>{product.originalPrice.toLocaleString()}원</OriginalPrice>
+            <OriginalPrice>{product.originalPrice.toLocaleString()}$</OriginalPrice>
           )}
         </PriceRow>
         {product.deliveryInfo && (

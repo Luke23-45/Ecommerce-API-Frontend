@@ -205,7 +205,7 @@ const DailyDealsCarousel: React.FC<DailyDealsCarouselProps> = ({ products: initi
                     <DealPriceInfo theme={theme}>
                       <DealCurrentPrice theme={theme}>
                         {deal.price.toLocaleString()}
-                        <span className="currency">원</span>
+                        <span className="currency">$</span>
                       </DealCurrentPrice>
                       {deal.discountText && (
                         <DealDiscountText theme={theme}>{deal.discountText}</DealDiscountText>

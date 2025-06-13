@@ -40,6 +40,7 @@ export const ImageWrapper = styled.div`
 
 export const CardWrapper = styled.div`
   display: flex;
+  cursor: pointer;
   flex-direction: column;
   font-family: 'Inter';
   background-color: #FFFFFF; 
@@ -97,9 +98,10 @@ export const ProductNameAndVolume = styled.div`
 `;
 
 export const ProductName = styled.h3`
-  font-size: 13px; // Matches image
+  font-size: 14px; 
   line-height: 1.45;
   color: #111;
+  font-weight: 600;
   font-weight: 400; 
   font-family: 'Inter';
   margin: 0;
@@ -119,7 +121,7 @@ export const ProductVolume = styled.span`
 
 
 export const DiscountOriginalPrice = styled.div`
-  font-size: 11px;
+  font-size: 12px;
   color: ${COUPANG_TEXT_LIGHT};
   margin-top: 2px;
 `;
@@ -142,7 +144,7 @@ export const CurrentPriceText = styled.span`
   font-weight: 700;
 
   &::after {
-    content: '원';
+    content: '$';
     font-size: 14px; 
     font-weight: 700;
     margin-left: 1px;
@@ -152,7 +154,7 @@ export const CurrentPriceText = styled.span`
 export const RocketShippingText = styled.span`
   display: inline-flex;
   align-items: center;
-  font-size: 11px; // Smaller text for "로켓배송"
+  font-size: 12px; 
   color: ${COUPANG_ROCKET_BLUE};
   font-weight: 700;
   
@@ -165,7 +167,7 @@ export const RocketShippingText = styled.span`
 `;
 
 export const UnitPriceText = styled.p`
-  font-size: 10px; // Very small
+  font-size: 12px; // Very small
   color: ${COUPANG_TEXT_LIGHT};
   margin: 2px 0 0 0;
 `;
@@ -187,7 +189,7 @@ export const SellerInfoText = styled.p`
 export const Rating = styled.div`
   display: flex;
   align-items: center;
-  font-size: 11px; 
+  font-size: 12px; 
   color: ${COUPANG_TEXT_LIGHT};
   margin-top: 6px;
 
@@ -196,7 +198,7 @@ export const Rating = styled.div`
     margin-right: 3px;
     display: flex;
     align-items: center;
-    svg { font-size: 13px; } // Slightly larger stars to be visible
+    svg { font-size: 13px; } 
   }
 `;
 
@@ -238,7 +240,7 @@ export const CardDiscountTag = styled(BaseTag)`
 
   .tag-icon { // Blue icon for card discount
     background-color: ${COUPANG_TAG_BLUE_TEXT}; 
-    // content: '✓'; /* If using ::before, or use actual icon */
+    content: '✓'; 
   }
 `;
 

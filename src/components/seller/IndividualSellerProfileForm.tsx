@@ -63,6 +63,7 @@ import type {
   IAddress,
 } from "@/types/seller"; // Ensure your types are correctly defined
 import { useCreateIndividualSellerProfile } from "@/hooks/useIndividualSeller"; // Ensure hook path is correct
+import { useNavigate } from "react-router-dom";
 
 // Mock Theme (ensure this matches or is replaced by your actual theme provider)
 const mockThemeForDemo: DefaultTheme = {
@@ -294,6 +295,8 @@ const IndividualSellerProfileForm = () => {
   const [mascotMessage, setMascotMessage] = useState<string>("");
   const [showIntroMessage, setShowIntroMessage] = useState<boolean>(true);
   const [introMessageFaded, setIntroMessageFaded] = useState<boolean>(false);
+
+  const navigate = useNavigate();
 
   const { mutateAsync, isPending: isLoadingSubmission } =
     useCreateIndividualSellerProfile();
@@ -662,7 +665,8 @@ const IndividualSellerProfileForm = () => {
         setIntroMessageFaded(false); // Reset for potential new submission
         setMascotMessage(
           "Hi, I'm <strong>Rose</strong>! Your friendly guide for this application. Let's create something amazing together!"
-        ); // Reset intro message
+        ); 
+        navigate("/seller/application/view")
       } catch (error: any) {
         const apiErrors = error?.response?.data?.errors;
         if (apiErrors && typeof apiErrors === "object") {

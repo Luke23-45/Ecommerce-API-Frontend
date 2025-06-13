@@ -57,12 +57,10 @@ interface AttributeListProps {
   attributId: any;
 }
 
-const AttributeForm: React.FC<AttributeListProps> = ({
-  onClickBackList,
-  onSuccess,
-  attributId,
-}) => {
-  const  attributeId  = attributId;
+const AttributeForm: React.FC<AttributeListProps> = () => {
+
+  const test = useParams();
+  const attributeId = test.attributeId;
   const isEditMode = Boolean(attributeId);
   const [attributeData, setAttributeData] = useState<
     IAttributeCreatePayload | IAttributeUpdatePayload
@@ -72,6 +70,8 @@ const AttributeForm: React.FC<AttributeListProps> = ({
 
   const { showNotification } = useNotification();
 
+  const navigate = useNavigate();
+
   const {
     data: existingAttribute,
     isLoading: isLoadingAttribute,
@@ -80,6 +80,10 @@ const AttributeForm: React.FC<AttributeListProps> = ({
   } = useGetAttributeById(attributeId, undefined, {
     enabled: isEditMode,
   });
+
+  const onClickBackList = () =>{
+    navigate(`/admin/products/attributes/list`)
+  }
 
   const createAttributeMutation = useCreateAttribute({
     onSuccess: (response) => {
@@ -125,6 +129,10 @@ const AttributeForm: React.FC<AttributeListProps> = ({
       );
     },
   });
+
+  const onSuccess = () => {
+    navigate("/admin/products/attributes/list")
+  }
 
   useEffect(() => {
     if (isEditMode && existingAttribute) {

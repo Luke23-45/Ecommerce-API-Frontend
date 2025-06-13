@@ -1,4 +1,5 @@
 // src/pages/UserProfilePage/UserProfilePage.styles.ts
+import { ActionButton } from '@/components/seller/ViewSellerApplication.styles';
 import styled, { css, keyframes, type DefaultTheme } from 'styled-components';
 import { rgba, darken, lighten, transparentize } from 'polished';
 
@@ -460,4 +461,77 @@ export const FrontendButton = styled.button<{ $variant?: 'primary' | 'secondary'
   ${(props) => props.$variant === 'text' && css` /* ... text button styles ... */ background-color: transparent; color: ${props.theme.colors.accent1}; border-color: transparent; padding-left: ${props.theme.spacing(1)}; padding-right: ${props.theme.spacing(1)}; min-width: auto; text-transform: none; letter-spacing: normal; font-weight: ${props.theme.typography.body.weights.medium}; &:hover:not(:disabled) { color: ${darken(0.1, props.theme.colors.accent1)}; background-color: ${transparentize(0.95, props.theme.colors.accent1)}; } `}
 
   &:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+`;
+
+export const ApplicationStatusList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing(4)}; // Space between multiple application status cards
+`;
+
+export const ApplicationStatusCard = styled.div<{ $status?: string }>`
+  background-color: ${({ theme }) => lighten(0.04, theme.colors.primaryNeutral)}; // Subtle background
+  padding: ${({ theme }) => theme.spacing(4)} ${({ theme }) => theme.spacing(5)};
+  border-radius: ${({ theme }) => theme.borderRadius.medium};
+  border-left: 5px solid ${({ theme, $status }) => { // Accent border based on status
+    if ($status === 'approved') return theme.colors.adminStatusSuccess;
+    if ($status === 'rejected' || $status === 'withdrawn') return theme.colors.adminStatusError;
+    if ($status === 'pending' || $status === 'submitted' || $status === 'under_review') return theme.colors.adminStatusWarning;
+    return theme.colors.mediumGray;
+  }};
+  box-shadow: ${({ theme }) => theme.shadows.xs}; // Very subtle shadow
+  display: grid;
+  grid-template-columns: 1fr auto; // Info on left, actions/status on right
+  gap: ${({ theme }) => theme.spacing(3)} ${({ theme }) => theme.spacing(5)};
+  align-items: center;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobileL}) {
+    grid-template-columns: 1fr; // Stack on small mobile
+    text-align: center; // Center content when stacked
+    justify-items: center;
+  }
+`;
+
+export const ApplicationInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing(1)};
+`;
+
+export const ApplicationType = styled.h4`
+  font-family: ${({ theme }) => theme.typography.heading.fontFamily};
+  font-size: ${({ theme }) => theme.typography.body.sizes.large};
+  font-weight: ${({ theme }) => theme.typography.heading.weights.semiBold};
+  color: ${({ theme }) => theme.colors.textDark};
+  margin: 0;
+`;
+
+export const ApplicationMeta = styled.p`
+  font-family: ${({ theme }) => theme.typography.body.fontFamily};
+  font-size: ${({ theme }) => theme.typography.body.sizes.xsmall};
+  color: ${({ theme }) => theme.colors.textMuted};
+  margin: 0;
+  line-height: 1.4;
+
+  span { // For highlighting dates or IDs
+    font-weight: ${({ theme }) => theme.typography.body.weights.medium};
+    color: ${({ theme }) => theme.colors.textMedium};
+  }
+`;
+
+export const ApplicationStatusAndActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; // Align status and button to the right
+  gap: ${({ theme }) => theme.spacing(2.5)};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobileL}) {
+    align-items: center; // Center when stacked
+    width: 100%;
+    margin-top: ${({ theme }) => theme.spacing(3)};
+    ${ActionButton} { // Target ActionButton if used here
+        width: 100%;
+        max-width: 280px;
+    }
+  }
 `;

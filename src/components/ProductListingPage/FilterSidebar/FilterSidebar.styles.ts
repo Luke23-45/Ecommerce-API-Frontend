@@ -1,6 +1,7 @@
 // src/components/ProductListing/FilterSidebar.styles.ts
 import styled, { css } from 'styled-components';
 import { FaCheck } from 'react-icons/fa'; // Keeping FaCheck for now, can be replaced
+import { rgba } from 'polished';
 
 export const SidebarWrapper = styled.aside<{ isOpen?: boolean }>`
   width: 240px; // Slightly wider for a more generous feel
@@ -119,44 +120,53 @@ export const FilterList = styled.ul<{ isCollapsed?: boolean }>`
   ${({ isCollapsed }) => isCollapsed && css`
     transition-delay: 0s, 0s, 0s; // No delay when collapsing quickly
   `}
+
+  position:relative;
 `;
 
 
-export const CategoryFilterItem = styled.li<{ isActive: boolean; depth?: number }>`
-  font-size: ${({ theme }) => theme.typography.body.sizes.medium};
-  font-weight: ${({ theme, isActive }) => isActive ? theme.typography.body.weights.semiBold : theme.typography.body.weights.regular};
-  color: ${({ theme, isActive }) => isActive ? theme.colors.accent1 : theme.colors.textMedium};
-  padding: ${({ theme }) => theme.spacing(2.5)} ${({ theme }) => theme.spacing(2)};
-  padding-left: ${({ theme, depth = 0 }) => theme.spacing(2 + depth * 4)}; // Indentation based on depth
-  border-radius: ${({ theme }) => theme.borderRadius.medium};
-  cursor: pointer;
-  position: relative;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  margin-bottom: ${({ theme }) => theme.spacing(0.5)}; // Small space between items
+export const CategoryFilterItem = styled.li<{
+  isActive?: boolean;
+  depth: number; // We will use a depth prop to control indentation
+}>`
+  padding: 0.6rem 0.5rem;
+  margin: 0.15rem 0;
 
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.accent1Subtle};
-    color: ${({ theme }) => theme.colors.accent1};
+  font-family: ${(props) => props.theme.typography.body.fontFamily};
+  font-size: 0.9rem;
+  font-weight: ${(props) => (props.isActive ? props.theme.typography.body.weights.bold : props.theme.typography.body.weights.regular)};
+  color: ${(props) => (props.isActive ? props.theme.colors.accent1 : props.theme.colors.textMedium)};
+  border-radius: ${(props) => props.theme.borderRadius.medium};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative; // Needed for the pseudo-element
+
+  // --- HIERARCHY VISUALIZATION ---
+  // Indent the item based on its depth in the tree
+  padding-left: ${(props) => `calc(${props.depth} * 1.25rem + 0.5rem)`};
+
+  // Create the "L" shape connector line for nested items
+  &::before {
+    content: '';
+    position: absolute;
+    top: -0.8rem;
+    left: ${(props) => `calc(${props.depth - 1} * 1.25rem + 0.5rem)`};
+    height: 1.5rem;
+    width: 0.75rem;
+    // Hide the line for top-level items (depth 0)
+    display: ${(props) => (props.depth > 0 ? 'block' : 'none')};
+    border-bottom: 1px solid ${(props) => rgba(props.theme.colors.textMuted, 0.3)};
+    border-left: 1px solid ${(props) => rgba(props.theme.colors.textMuted, 0.3)};
+    border-bottom-left-radius: 5px;
   }
 
-  ${({ isActive, theme }) =>
-    isActive &&
-    css`
-      background-color: ${theme.colors.accent1Subtle}; // Use a subtle accent background for active
-      color: ${theme.colors.accent1};
-      &::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        height: 60%;
-        width: 3px;
-        background-color: ${theme.colors.accent1};
-        border-radius: 0 2px 2px 0;
-      }
-    `}
+  &:hover {
+    background-color: ${(props) => rgba(props.theme.colors.accent1, 0.08)};
+    color: ${(props) => props.theme.colors.accent1};
+  }
+  
 `;
+
 
 export const CheckboxFilterItem = styled.li`
   /* Re-using structure from CategoryFilterItem for consistency if desired */
@@ -275,4 +285,30 @@ export const SidebarTitle = styled.h2`
   font-weight: ${({ theme }) => theme.typography.body.weights.bold};
   color: ${({ theme }) => theme.colors.textDark};
   margin: 0;
+`;
+export const NestedCategoryList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  position: relative;
+
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    padding-left: 2px;
+
+    left: calc(0.5rem - 1px); 
+    width: 1px;
+    height: 100%;
+    background-color: ${(props) => rgba(props.theme.colors.textMuted, 0.3)};
+  }
+
+  &.li{
+
+    margin-top: -20px !important;
+
+  }
 `;

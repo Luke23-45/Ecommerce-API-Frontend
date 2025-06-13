@@ -1,4 +1,3 @@
-
 import React, {
   useState,
   useRef,
@@ -7,22 +6,51 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { useTheme, type DefaultTheme } from "styled-components"; 
+import { useTheme, type DefaultTheme } from "styled-components";
 import {
-  FaRegUser, FaRegHeart, FaShoppingCart, FaSearch, FaUserCircle,
-  FaTachometerAlt, FaBuilding, FaStore, FaListOl, FaHeartbeat, FaCog, FaSignOutAlt,
+  FaRegUser,
+  FaRegHeart,
+  FaShoppingCart,
+  FaSearch,
+  FaUserCircle,
+  FaTachometerAlt,
+  FaBuilding,
+  FaStore,
+  FaListOl,
+  FaHeartbeat,
+  FaCog,
+  FaSignOutAlt,
 } from "react-icons/fa";
-import ElanLogoImage from "@/assets/logo1.png"; 
+import ElanLogoImage from "@/assets/logo1.png";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 
-import {
-  StyledGrandMarquee, MarqueeContent, HeaderLeftSection, BrandLogoContainer,
-  HeaderCenterSearch, SearchInputContainer, HeaderRightUtility, UtilityIconWrapper,
-  CartCountBadge, SearchSectionIcon, CustomSelectWrapper, CustomSelectTrigger,
-  CustomDropdownList, CustomDropdownItem, AccountDropdownContainer, AccountDropdownHeader,
-  AccountDropdownList, AccountDropdownItem, AccountDropdownSeparator,
-} from "./styles/GrandMarquee.styles";
+import { useGetTopLevelCategories } from "@/hooks/admin/product/useCategory";
 
+import {
+  StyledGrandMarquee,
+  MarqueeContent,
+  HeaderLeftSection,
+  BrandLogoContainer,
+  HeaderCenterSearch,
+  SearchInputContainer,
+  HeaderRightUtility,
+  UtilityIconWrapper,
+  CartCountBadge,
+  SearchSectionIcon,
+  CustomSelectWrapper,
+  CustomSelectTrigger,
+  CustomDropdownList,
+  CustomDropdownItem,
+  AccountDropdownContainer,
+  AccountDropdownHeader,
+  AccountDropdownList,
+  AccountDropdownItem,
+  AccountDropdownSeparator,
+  SpinnerIcon,
+} from "./styles/GrandMarquee.styles";
+import { useLogout } from "@/hooks/useAuth";
+import type { RootState } from "@/store/types";
+import { useSelector } from "react-redux";
 
 interface SearchCategory {
   value: string;
@@ -50,64 +78,52 @@ interface GrandMarqueeProps {
   onSearch?: (query: string, category: string) => void;
   onViewCart?: () => void;
   cartItemCount?: number;
-  userData?: UserDataForMarquee; 
-  onLogout?: () => void;        
-  
 }
 
-
-const dummySearchCategories: SearchCategory[] = [
-    { value: "all", label: "All Categories" }, { value: "living-room", label: "Living Room" },
-    { value: "dining", label: "Dining" }, { value: "bedroom", label: "Bedroom" },
-    { value: "lighting", label: "Lighting" }, { value: "decor", label: "Decor" },
-    { value: "kitchen", label: "Kitchen" }, { value: "outdoor", label: "Outdoor" },
-    { value: "office", label: "Home Office" }, { value: "bath", label: "Bathroom" },
-];
-const loggedOutUserData: UserDataForMarquee = { isAuthenticated: false, roles: [] };
-const consumerUserData: UserDataForMarquee = { isAuthenticated: true, roles: ["consumer"], firstName: "Elara"};
-
-export const individualSellerUserData: UserDataForMarquee = {
-  isAuthenticated: true,
-  roles: ["consumer", "individual_seller"], 
-  firstName: "Artisan",
-
-};
-
-export const vendorUserData: UserDataForMarquee = {
-  isAuthenticated: true,
-  roles: ["consumer", "vendor"], 
-  firstName: "BrandCo",
-  
-};
-
-export const adminUserData: UserDataForMarquee = {
-  isAuthenticated: true,
-  roles: ["admin"],
-  firstName: "Admin",
-  
-};
 const GrandMarquee: React.FC<GrandMarqueeProps> = ({
   onSearch,
   onViewCart,
   cartItemCount = 0,
-  userData = adminUserData, 
-  onLogout,
+  isCartLoading,
 }) => {
+  const { isAuthenticated, user } = useSelector(
+    (state: RootState) => state.auth
+  );
+  const userData = { ...user, isAuthenticated: isAuthenticated };
+  const logoutMutation = useLogout();
+  const navigate = useNavigate();
+  const theme = useTheme() as DefaultTheme;
+
+  const { data: topLevelCategories, isLoading: isLoadingCategories } =
+    useGetTopLevelCategories(
+      { limit: 10, sort: "sortOrder:asc" },
+      { staleTime: 60 * 60 * 1000 }
+    );
+
+  const searchCategories = useMemo((): SearchCategory[] => {
+    const defaultCategory = { value: "all", label: "All Categories" };
+    if (!topLevelCategories) {
+      return [defaultCategory];
+    }
+    const fetchedCategories = topLevelCategories.map((cat) => ({
+      value: cat._id,
+      label: cat.name,
+    }));
+    return [defaultCategory, ...fetchedCategories];
+  }, [topLevelCategories]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false); 
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
-  const theme = useTheme() as DefaultTheme; 
-  const navigate = useNavigate();
-
-  const [selectTriggerWidth, setSelectTriggerWidth] = useState("auto");
-  const measurementSpanRef = useRef<HTMLSpanElement | null>(null);
 
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
   const accountDropdownRef = useRef<HTMLDivElement>(null);
   const accountIconRef = useRef<HTMLButtonElement>(null);
 
-  
+  const [selectTriggerWidth, setSelectTriggerWidth] = useState("auto");
+  const measurementSpanRef = useRef<HTMLSpanElement | null>(null);
+
   useEffect(() => {
     const span = document.createElement("span");
     span.style.position = "absolute";
@@ -115,43 +131,47 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
     span.style.height = "auto";
     span.style.width = "auto";
     span.style.whiteSpace = "nowrap";
-    
-    span.style.fontFamily = theme?.typography?.body?.fontFamily || 'Inter, sans-serif';
-    span.style.fontSize = theme?.typography?.body?.sizes?.base || '16px'; 
+    span.style.fontFamily =
+      theme?.typography?.body?.fontFamily || "Inter, sans-serif";
+    span.style.fontSize = theme?.typography?.body?.sizes?.base || "16px";
     document.body.appendChild(span);
     measurementSpanRef.current = span;
     return () => {
       measurementSpanRef.current?.remove();
-      measurementSpanRef.current = null;
     };
   }, [theme]);
 
-  
   const calculateWidth = useCallback(() => {
-    if (!measurementSpanRef.current || !searchDropdownRef.current?.firstChild || !theme) return;
-
-    const currentLabel = dummySearchCategories.find(cat => cat.value === selectedCategory)?.label || 'All Categories';
-    const triggerElement = searchDropdownRef.current.firstChild as HTMLElement; 
+    if (
+      !measurementSpanRef.current ||
+      !searchDropdownRef.current?.firstChild ||
+      !theme
+    )
+      return;
+    const currentLabel =
+      searchCategories.find((cat) => cat.value === selectedCategory)?.label ||
+      "All Categories";
+    const triggerElement = searchDropdownRef.current.firstChild as HTMLElement;
     const computedStyle = getComputedStyle(triggerElement);
-
     const span = measurementSpanRef.current;
-    span.style.fontFamily = computedStyle.fontFamily;
-    span.style.fontSize = computedStyle.fontSize;
-    span.style.fontWeight = computedStyle.fontWeight;
-    span.style.letterSpacing = computedStyle.letterSpacing;
-    span.style.paddingLeft = computedStyle.paddingLeft;
-    span.style.paddingRight = computedStyle.paddingRight;
-    
-    const arrowSpace = 30; 
+    Object.assign(span.style, {
+      fontFamily: computedStyle.fontFamily,
+      fontSize: computedStyle.fontSize,
+      fontWeight: computedStyle.fontWeight,
+      letterSpacing: computedStyle.letterSpacing,
+      paddingLeft: computedStyle.paddingLeft,
+      paddingRight: computedStyle.paddingRight,
+    });
+    const arrowSpace = 30;
     span.textContent = currentLabel;
-    
     const measuredWidth = span.offsetWidth + arrowSpace;
-    const minTriggerWidth = parseFloat(computedStyle.minWidth) || 110; 
-
+    const minTriggerWidth = parseFloat(computedStyle.minWidth) || 110;
     setSelectTriggerWidth(`${Math.max(minTriggerWidth, measuredWidth)}px`);
-    
-    searchDropdownRef.current.style.setProperty('--dropdown-width', `${Math.max(minTriggerWidth, measuredWidth)}px`);
-  }, [selectedCategory, theme]);
+    searchDropdownRef.current.style.setProperty(
+      "--dropdown-width",
+      `${Math.max(minTriggerWidth, measuredWidth)}px`
+    );
+  }, [selectedCategory, searchCategories, theme]);
 
   useLayoutEffect(() => {
     calculateWidth();
@@ -159,67 +179,119 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
     return () => window.removeEventListener("resize", calculateWidth);
   }, [calculateWidth]);
 
-
-  
   useEffect(() => {
-    const handleClickOutsideSearchDropdown = (event: MouseEvent) => {
-      if (searchDropdownRef.current && !searchDropdownRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchDropdownRef.current &&
+        !searchDropdownRef.current.contains(event.target as Node)
+      ) {
         setIsSearchDropdownOpen(false);
       }
-    };
-    if (isSearchDropdownOpen) {
-        document.addEventListener("mousedown", handleClickOutsideSearchDropdown);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutsideSearchDropdown);
-  }, [isSearchDropdownOpen]);
-
-  
-  useEffect(() => {
-    const handleClickOutsideAccountDropdown = (event: MouseEvent) => {
       if (
-        accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node) &&
-        accountIconRef.current && !accountIconRef.current.contains(event.target as Node)
+        accountDropdownRef.current &&
+        !accountDropdownRef.current.contains(event.target as Node) &&
+        accountIconRef.current &&
+        !accountIconRef.current.contains(event.target as Node)
       ) {
         setIsAccountDropdownOpen(false);
       }
     };
-    if (isAccountDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutsideAccountDropdown);
+    if (isSearchDropdownOpen || isAccountDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
     }
-    return () => document.removeEventListener("mousedown", handleClickOutsideAccountDropdown);
-  }, [isAccountDropdownOpen]);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isSearchDropdownOpen, isAccountDropdownOpen]);
 
-  const selectedCategoryLabel = dummySearchCategories.find(cat => cat.value === selectedCategory)?.label || "All Categories";
-  const handleSearchSubmit = useCallback(() => { onSearch?.(searchTerm, selectedCategory); }, [searchTerm, selectedCategory, onSearch]);
-  const handleSearchKeyPress = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === "Enter") handleSearchSubmit(); }, [handleSearchSubmit]);
-  const toggleSearchDropdown = useCallback(() => setIsSearchDropdownOpen(prev => !prev), []); 
-  const handleCategorySelect = useCallback((value: string) => { setSelectedCategory(value); setIsSearchDropdownOpen(false); }, []);
-
-  
+  const selectedCategoryLabel =
+    searchCategories.find((cat) => cat.value === selectedCategory)?.label ||
+    "All Categories";
+  const handleSearchSubmit = useCallback(() => {
+    onSearch?.(searchTerm, selectedCategory);
+  }, [searchTerm, selectedCategory, onSearch]);
+  const handleSearchKeyPress = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") handleSearchSubmit();
+    },
+    [handleSearchSubmit]
+  );
+  const toggleSearchDropdown = useCallback(
+    () => setIsSearchDropdownOpen((prev) => !prev),
+    []
+  );
+  const handleCategorySelect = useCallback((value: string) => {
+    setSelectedCategory(value);
+    setIsSearchDropdownOpen(false);
+  }, []);
   const toggleAccountDropdown = useCallback(() => {
-    setIsAccountDropdownOpen(prev => !prev);
-    
+    setIsAccountDropdownOpen((prev) => !prev);
     if (!isAccountDropdownOpen) setIsSearchDropdownOpen(false);
   }, [isAccountDropdownOpen]);
-
+  const handleLogout = () => {
+    logoutMutation.mutate();
+    setIsAccountDropdownOpen(false);
+    navigate("/", { replace: true });
+  };
 
   const accountMenuItems = useMemo((): DropdownMenuItem[] => {
     if (!userData?.isAuthenticated) return [];
     const items: DropdownMenuItem[] = [];
-    items.push({ id: "profile", label: "My Profile", path: "/profile/dashboard", icon: <FaUserCircle /> });
-    if (userData.roles.includes("admin")) items.push({ id: "admin_dashboard", label: "Admin Dashboard", path: "/admin/dashboard", icon: <FaTachometerAlt /> });
-    else if (userData.roles.includes("individual_seller")) items.push({ id: "seller_dashboard", label: "Seller Dashboard", path: "/seller/dashboard", icon: <FaStore /> });
-    else if (userData.roles.includes("vendor")) items.push({ id: "vendor_dashboard", label: "Vendor Dashboard", path: "/vendor/dashboard", icon: <FaBuilding /> });
+    items.push({
+      id: "profile",
+      label: "My Profile",
+      path: "/profile",
+      icon: <FaUserCircle />,
+    });
+    if (userData.roles.includes("admin"))
+      items.push({
+        id: "admin_dashboard",
+        label: "Admin Dashboard",
+        path: "/admin",
+        icon: <FaTachometerAlt />,
+      });
+    else if (userData.roles.includes("individual_seller"))
+      items.push({
+        id: "seller_dashboard",
+        label: "Seller Dashboard",
+        path: "/admin",
+        icon: <FaStore />,
+      });
+    else if (userData.roles.includes("vendor"))
+      items.push({
+        id: "vendor_dashboard",
+        label: "Vendor Dashboard",
+        path: "/admin",
+        icon: <FaBuilding />,
+      });
     if (!userData.roles.includes("admin")) {
-      items.push({ id: "orders", label: "My Orders", path: "/profile/orders", icon: <FaListOl /> });
-      items.push({ id: "wishlist", label: "Wishlist", path: "/profile/wishlist", icon: <FaHeartbeat /> });
+      items.push({
+        id: "orders",
+        label: "My Orders",
+        path: "/profile/orders",
+        icon: <FaListOl />,
+      });
+      items.push({
+        id: "wishlist",
+        label: "Wishlist",
+        path: "/profile/wishlist",
+        icon: <FaHeartbeat />,
+      });
     }
-    items.push({ id: "settings", label: "Account Settings", path: "/profile/settings", icon: <FaCog /> });
+    items.push({
+      id: "settings",
+      label: "Account Settings",
+      path: "/profile/settings",
+      icon: <FaCog />,
+    });
     items.push({ id: "separator1", label: "", isSeparator: true });
-    items.push({ id: "logout", label: "Logout", action: () => { onLogout?.(); setIsAccountDropdownOpen(false); navigate('/'); }, icon: <FaSignOutAlt />, isDestructive: true });
+    items.push({
+      id: "logout",
+      label: "Logout",
+      action: handleLogout,
+      icon: <FaSignOutAlt />,
+      isDestructive: true,
+    });
     return items;
-  }, [userData, onLogout, navigate]);
-
+  }, [userData, handleLogout]);
 
   return (
     <StyledGrandMarquee>
@@ -231,7 +303,10 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
         </HeaderLeftSection>
 
         <HeaderCenterSearch>
-          <CustomSelectWrapper style={{position:"relative"}} ref={searchDropdownRef}>
+          <CustomSelectWrapper
+            style={{ position: "relative", zIndex: 99999999999999 }}
+            ref={searchDropdownRef}
+          >
             <CustomSelectTrigger
               onClick={toggleSearchDropdown}
               className={isSearchDropdownOpen ? "open" : ""}
@@ -240,10 +315,10 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
               aria-label="Select search category"
               $width={selectTriggerWidth}
             >
-              {selectedCategoryLabel}
+              {isLoadingCategories ? "Loading..." : selectedCategoryLabel}
             </CustomSelectTrigger>
             <CustomDropdownList $isOpen={isSearchDropdownOpen} role="listbox">
-              {dummySearchCategories.map((cat) => (
+              {searchCategories.map((cat) => (
                 <CustomDropdownItem
                   key={cat.value}
                   onClick={() => handleCategorySelect(cat.value)}
@@ -267,15 +342,22 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
               aria-label="Search products"
             />
           </SearchInputContainer>
-          <SearchSectionIcon type="button" onClick={handleSearchSubmit} aria-label="Submit search">
+          <SearchSectionIcon
+            type="button"
+            onClick={handleSearchSubmit}
+            aria-label="Submit search"
+          >
             <FaSearch />
           </SearchSectionIcon>
         </HeaderCenterSearch>
 
         <HeaderRightUtility>
-          {/* Wishlist Icon - shows if user is NOT authenticated */}
           {!userData?.isAuthenticated && (
-            <UtilityIconWrapper type="button" onClick={() => navigate("/auth/login")} aria-label="View wishlist - Login required">
+            <UtilityIconWrapper
+              type="button"
+              onClick={() => navigate("/auth/login")}
+              aria-label="View wishlist - Login required"
+            >
               <FaRegHeart />
             </UtilityIconWrapper>
           )}
@@ -283,22 +365,51 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
           <UtilityIconWrapper
             ref={accountIconRef}
             type="button"
-            onClick={userData?.isAuthenticated ? toggleAccountDropdown : () => navigate("/auth/login")}
-            aria-label={userData?.isAuthenticated ? "Open account menu" : "Sign in or register"}
+            onClick={
+              userData?.isAuthenticated
+                ? toggleAccountDropdown
+                : () => navigate("/auth/login")
+            }
+            aria-label={
+              userData?.isAuthenticated
+                ? "Open account menu"
+                : "Sign in or register"
+            }
             aria-haspopup={userData?.isAuthenticated ? "true" : "false"}
-            aria-expanded={userData?.isAuthenticated ? isAccountDropdownOpen : undefined}
+            aria-expanded={
+              userData?.isAuthenticated ? isAccountDropdownOpen : undefined
+            }
           >
-            {userData?.avatarUrl ? ( <img src={userData.avatarUrl} alt="User avatar" style={{width:"26px", height:"26px", borderRadius:"50%"}}/> ) 
-             : userData?.isAuthenticated ? <FaUserCircle /> 
-             : <FaRegUser />}
+            {userData?.avatarUrl ? (
+              <img
+                src={userData.avatarUrl}
+                alt="User avatar"
+                style={{ width: "26px", height: "26px", borderRadius: "50%" }}
+              />
+            ) : userData?.isAuthenticated ? (
+              <FaUserCircle />
+            ) : (
+              <FaRegUser />
+            )}
           </UtilityIconWrapper>
-          {userData?.isAuthenticated && isAccountDropdownOpen && ( 
-            <AccountDropdownContainer style={{}} $isOpen={isAccountDropdownOpen} ref={accountDropdownRef}>
+          {userData?.isAuthenticated && isAccountDropdownOpen && (
+            <AccountDropdownContainer
+              $isOpen={isAccountDropdownOpen}
+              ref={accountDropdownRef}
+            >
               {userData.firstName && (
                 <AccountDropdownHeader>
-                  {userData.avatarUrl && <img src={userData.avatarUrl} alt={`${userData.firstName}'s avatar`} className="user-avatar"/>}
+                  {userData.avatarUrl && (
+                    <img
+                      src={userData.avatarUrl}
+                      alt={`${userData.firstName}'s avatar`}
+                      className="user-avatar"
+                    />
+                  )}
                   <div className="user-info">
-                    <span className="user-name">Hello, {userData.firstName}</span>
+                    <span className="user-name">
+                      Hello, {userData.firstName}
+                    </span>
                   </div>
                 </AccountDropdownHeader>
               )}
@@ -307,16 +418,49 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
                   item.isSeparator ? (
                     <AccountDropdownSeparator key={item.id} role="separator" />
                   ) : (
-                    <AccountDropdownItem key={item.id} $isDestructive={item.isDestructive} role="menuitem">
+                    <AccountDropdownItem
+                      key={item.id}
+                      $isDestructive={item.isDestructive}
+                      role="menuitem"
+                    >
                       {item.path ? (
-                        <RouterLink className="itemListName" to={item.path} onClick={() => setIsAccountDropdownOpen(false)}>
-                          {item.icon && <span style={{display:'inline-flex', alignItems:'center', marginRight: theme.spacing(2)}}>{item.icon}</span>}
+                        <RouterLink
+                          className="itemListName"
+                          to={item.path}
+                          onClick={() => setIsAccountDropdownOpen(false)}
+                        >
+                          {item.icon && (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                marginRight: theme.spacing(2),
+                              }}
+                            >
+                              {item.icon}
+                            </span>
+                          )}
                           {item.label}
                         </RouterLink>
                       ) : (
-                        <button type="button" onClick={() => { item.action?.(); }}>
-                           {item.icon && <span style={{display:'inline-flex', alignItems:'center', marginRight: theme.spacing(2)}}>{item.icon}</span>}
-                           {item.label}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            item.action?.();
+                          }}
+                        >
+                          {item.icon && (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                marginRight: theme.spacing(2),
+                              }}
+                            >
+                              {item.icon}
+                            </span>
+                          )}
+                          {item.label}
                         </button>
                       )}
                     </AccountDropdownItem>
@@ -326,9 +470,33 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
             </AccountDropdownContainer>
           )}
 
-          <UtilityIconWrapper type="button" onClick={onViewCart} aria-label="View shopping cart">
+          {/* <UtilityIconWrapper
+            type="button"
+            onClick={onViewCart}
+            aria-label="View shopping cart"
+          >
             <FaShoppingCart />
-            {cartItemCount != null && cartItemCount > 0 && <CartCountBadge>{cartItemCount}</CartCountBadge>}
+            {cartItemCount != null && cartItemCount > 0 && (
+              <CartCountBadge>{cartItemCount}</CartCountBadge>
+            )}
+          </UtilityIconWrapper> */}
+
+          <UtilityIconWrapper
+            type="button"
+            onClick={onViewCart}
+            aria-label="View shopping cart"
+          >
+            <FaShoppingCart />
+
+            {isCartLoading ? (
+              <CartCountBadge isLoading={true}>
+                <SpinnerIcon />
+              </CartCountBadge>
+            ) : (
+              cartItemCount > 0 && (
+                <CartCountBadge>{cartItemCount}</CartCountBadge>
+              )
+            )}
           </UtilityIconWrapper>
         </HeaderRightUtility>
       </MarqueeContent>

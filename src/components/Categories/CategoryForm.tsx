@@ -23,7 +23,7 @@ import {
   CategoryImagePreview,
 } from './CategoryForm.styles';
 
-
+import { Types } from 'mongoose';
 import { AdminInput,AdminButton } from '../admin/Dashboard/Common/Common.styles';
 import AdminTextArea from '../admin/common/AdminTextArea/AdminTextArea';
 import AdminSelect,{ type SelectOption }  from '../admin/common/AdminSelect/AdminSelect';
@@ -240,7 +240,9 @@ const CategoryForm: React.FC = () => {
   };
 
   const handleCancel = () => {
-    if (formData.parentId && !isEditMode && explicitParentId) { // If creating sub-category & cancelled
+    navigate(`/admin/products/categories`);
+    return;
+    if (formData.parentId && !isEditMode && explicitParentId) { 
       navigate(`/admin/products/categories/${formData.parentId}/options`); // Or parent's category page
     } else if(isEditMode && existingCategory?.parentId){
       navigate(`/admin/products/categories/${existingCategory.parentId}/options`);

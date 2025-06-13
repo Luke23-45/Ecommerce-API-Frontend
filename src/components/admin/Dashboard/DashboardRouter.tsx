@@ -1,10 +1,9 @@
 import React from "react";
 import SellerDashboard from "./SellerDashboard";
 import VendorDashboard from "./VendorDashboard";
-import SuperAdminDashboard from "./SuperAdminDashboard";
-
+import AdminDashboard from "./SuperAdminDashboard";
 interface DashboardRouterProps {
-  userRole: "seller" | "vendor" | "superAdmin";
+  userRole: "seller" | "vendor" | "admin";
 }
 
 const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
@@ -13,8 +12,8 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ userRole }) => {
       return <SellerDashboard />;
     case "vendor":
       return <VendorDashboard />;
-    case "superAdmin":
-      return <SuperAdminDashboard />;
+    case "admin":
+      return <AdminDashboard />;
     default:
       console.warn(
         `Dashboard for role "${userRole}" not yet implemented or invalid.`

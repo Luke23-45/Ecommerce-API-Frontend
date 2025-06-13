@@ -56,6 +56,7 @@ import { AdminButton } from '../../Dashboard/Common/Common.styles';
 import type { IVendorProfile, PaginatedVendorApplicationsResponse } from '@/types/vendor'; // Ensure this matches your API response structure
 // Hook
 import { useFilterVendorApplication } from '@/hooks/admin/application/useVendor'; // Ensure path is correct
+import { useNavigate } from 'react-router-dom';
 
 // Define SortKey and SortDirection locally
 type SortKey = 'companyName' | 'createdAt' | 'status' | 'estimatedMonthlySales' | 'legalEntityType' | 'contactPersonFirstName' | 'userId';
@@ -77,8 +78,6 @@ interface VendorApplicationListProps {
 const ITEMS_PER_PAGE_DEFAULT = 10;
 
 const VendorApplicationList: React.FC<VendorApplicationListProps> = ({
-  onViewDetails,
-  onApplicationAction,
   onAddNewApplication,
 }) => {
   const theme = useTheme();
@@ -93,6 +92,25 @@ const VendorApplicationList: React.FC<VendorApplicationListProps> = ({
     direction: 'desc',
   });
 
+  const navigate = useNavigate();
+
+  const onViewDetails = (applicationId:any) =>{
+    navigate(`/admin/applications/sellers/${applicationId}`);
+  }
+  const onApplicationAction = (appId: string, appType: 'seller' | 'vendor', action: 'approve' | 'reject' | 'suspend', appName: string) => {
+    const actionText = action.charAt(0).toUpperCase() + action.slice(1);
+    showConfirmModal(
+      `Confirm ${actionText}: ${appName}`,
+      `Are you sure you want to ${action} the ${appType} application for "${appName}" (ID: ${appId})?`,
+      () => { 
+        console.log(`CONFIRMED ${action.toUpperCase()} for ${appType} application ID: ${appId}`); 
+        // TODO: Update the actual data array here to reflect the status change
+        showNotification(`${appName} application has been ${action}d.`, 'success'); 
+      },
+      `${actionText} Application`,
+      action === 'reject' || action === 'suspend' ? 'danger' : 'primary'
+    );
+  };
   // Construct API Query Parameters Object based on API documentation
   const apiQueryParameters = useMemo(() => {
     const queryParams: Record<string, string | number | boolean> = {
@@ -314,7 +332,7 @@ const VendorApplicationList: React.FC<VendorApplicationListProps> = ({
                       {app.status === 'active' && (
                         <>
                           <TableActionButton onClick={() => onApplicationAction(app._id, 'vendor', 'suspend', app.companyName)} title="Suspend Vendor" style={{ color: theme.colors.adminStatusWarning }}><FaHourglassHalf /></TableActionButton>
-                          <TableActionButton onClick={() => onApplicationAction(app._id, 'vendor', 'deactivate', app.companyName)} title="Deactivate Vendor" style={{ color: theme.colors.adminStatusError }}><FaTimesCircle /> Deactivate</TableActionButton>
+                          <TableActionButton onClick={() => onApplicationAction(app._id, 'vendor', 'deactivate', app.companyName)} title="Deactivate Vendor" style={{ color: theme.colors.adminStatusError }}><FaTimesCircle /> </TableActionButton>
                         </>
                       )}
                       {app.status === 'suspended' && (

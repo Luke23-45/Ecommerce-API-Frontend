@@ -12,7 +12,8 @@ import DashboardRouter from "@/components/admin/Dashboard/DashboardRouter";
 
 // Feature Components
 import ProductList from "@/components/admin/Products/ProductList";
-import ProductDetail_ from "@/components/admin/Products/ProductDetail";
+// import ProductDetail_ from "@/components/admin/Products/ProductDetail";
+import ProductDetail_ from "@/components/admin/Products/product/ProductForm";
 import AttributesOverview from "@/components/admin/Products/AttributesOverview";
 import InventoryOverview from "@/components/admin/Products/InventoryOverview";
 import AttributeList from "@/components/admin/Products/attributes/AttributeList";
@@ -82,7 +83,8 @@ const AdminPage: React.FC = () => {
       : undefined
   ) as DefaultTheme | undefined;
 
-  const determinedUserRole = (user?.role as UserRole) || "superAdmin";
+  const determinedUserRole ='admin';
+  console.log(user.roles);
   const [userRole, setUserRole] = useState<UserRole>(determinedUserRole);
 
   useEffect(() => {
@@ -333,7 +335,7 @@ const AdminPage: React.FC = () => {
     handleNavLinkClick(`/admin/applications/vendors/${applicationId}`);
   const handleApplicationAction = (
     appId: string,
-    appType: "seller" | "vendor",
+    appType: "individual_seller" | "vendor",
     action: "approve" | "reject" | "suspend",
     appName: string
   ) => {
@@ -613,6 +615,7 @@ const AdminPage: React.FC = () => {
   };
 
   const getPageTitle = (path: string): string => {
+    return
     // --- ATTRIBUTE & OPTION TITLES ---
     if (isAddingAttributeOptionPage && attributeIdForNewOptionForm)
       return `Add Option to Attribute ${attributeIdForNewOptionForm.substring(0, 6)}...`; // Maybe fetch parent attr name
@@ -635,7 +638,7 @@ const AdminPage: React.FC = () => {
     if (path === "/admin/dashboard") {
       if (userRole === "seller") return "My Seller Dashboard";
       if (userRole === "vendor") return "Vendor Dashboard";
-      if (userRole === "superAdmin") return "Platform Dashboard";
+      if (userRole === "admin") return "Platform Dashboard";
     } else if (path === "/admin/products") return "Products";
     else if (isAddingProductPage) return "Add New Product";
     else if (isEditingProductPage && productIdToEdit) return `Edit Product`;
@@ -694,7 +697,7 @@ const AdminPage: React.FC = () => {
 
   return (
     <AdminLayout
-      pageTitle={getPageTitle(currentPath)}
+      pageTitle={getPageTitle('')}
       activePath={currentPath}
       onNavLinkClick={handleNavLinkClick}
       userRole={userRole}

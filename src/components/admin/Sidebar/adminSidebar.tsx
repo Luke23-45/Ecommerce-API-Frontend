@@ -1,25 +1,17 @@
+// src/components/admin/Sidebar/adminSidebar.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useTheme } from "styled-components";
-
-import {
-  FaTachometerAlt,
-  FaBox,
-  FaShoppingCart,
-  FaUsers,
-  FaChartLine,
-  FaPaintBrush,
-  FaCog,
-  FaAngleDown,
-  FaAngleRight,
-  FaFileAlt,
-  FaFileContract,
-} from "react-icons/fa";
+// Removed useLocation as activePath is passed directly
+import { Link as RouterLink, useLocation } from "react-router-dom"; 
+import { FaAngleDown, FaAngleRight } from "react-icons/fa"; // Keep only necessary icons here
 
 import {
   AdminSidebarContainer,
   NavList,
-  NavItem,
+  NavItemStyled,
   SubNavList,
+  NavLinkStyled, // Use for internal links
+  NavAnchorStyled, // Use for external links or button-like anchors
 } from "./Sidebar.styles";
 
 import {
@@ -29,168 +21,207 @@ import {
 import { getFilteredNavItems } from "@/utils/navigationUtils";
 
 interface AdminSidebarProps {
-  activePath: string;
+  activePath: string; // Current location.pathname from AdminRouter
   userRole: UserRole;
-  onNavLinkClick: (path: string) => void;
+  onNavLinkClick?: (path: string) => void; // Keep for potential non-link actions
+  isCollapsed?: boolean; // For collapsibility
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({
   activePath,
   userRole,
-  onNavLinkClick,
+  onNavLinkClick, 
+  isCollapsed = false, 
 }) => {
   const theme = useTheme();
-  const [openSubMenus, setOpenSubMenus] = useState<{ [key: string]: boolean }>(
-    {}
-  );
+  const [openSubMenus, setOpenSubMenus] = useState<{ [key: string]: boolean }>({});
 
   const navItemsToDisplay: NavItemConfigType[] = useMemo(() => {
     try {
       return getFilteredNavItems(userRole);
     } catch (error) {
-      console.error("[AdminSidebar] Error fetching filtered nav items:", error);
+      console.error("[AdminSidebar] Error fetching nav items:", error);
       return [];
     }
   }, [userRole]);
 
   useEffect(() => {
     const initiallyOpen: Record<string, boolean> = {};
-    const findAndOpenParents = (
-      items: NavItemConfigType[],
-      currentActivePath: string
-    ): void => {
+    // This function now correctly identifies if any child (recursively) matches the activePath.
+    // If so, it ensures all its parents in the path are marked to be open.
+    const findAndMarkParentsToOpen = (items: NavItemConfigType[], currentPath: string): boolean => {
+      let isActiveBranch = false;
       for (const item of items) {
-        if (
-          item.children &&
-          item.children.length > 0 &&
-          currentActivePath.startsWith(item.path)
-        ) {
-          initiallyOpen[item.sectionId] = true;
-          if (
-            item.children.some(
-              (child) =>
-                currentActivePath.startsWith(child.path) &&
-                currentActivePath !== item.path
-            )
-          ) {
-            findAndOpenParents(item.children, currentActivePath);
+        let currentItemIsOrHasActiveChild = false;
+        if (item.path === currentPath) {
+          currentItemIsOrHasActiveChild = true; // Exact match
+        } else if (item.children && currentPath.startsWith(item.path + (item.path.endsWith('/') ? '' : '/'))) {
+          // If currentPath starts with item.path, it's a potential parent.
+          // Recursively check if any child in this branch is active.
+          if (findAndMarkParentsToOpen(item.children, currentPath)) {
+            initiallyOpen[item.sectionId] = true; // Mark this parent to be open
+            currentItemIsOrHasActiveChild = true;
           }
         }
+        if (currentItemIsOrHasActiveChild) isActiveBranch = true;
       }
+      return isActiveBranch;
     };
-    if (navItemsToDisplay.length > 0) {
-      findAndOpenParents(navItemsToDisplay, activePath);
+
+    if (navItemsToDisplay.length > 0 && !isCollapsed) { // Don't auto-open if collapsed
+      findAndMarkParentsToOpen(navItemsToDisplay, activePath);
       setOpenSubMenus(initiallyOpen);
     } else {
-      setOpenSubMenus({});
+      setOpenSubMenus({}); // Reset if collapsed or no items
     }
-  }, [activePath, navItemsToDisplay]);
+  }, [activePath, navItemsToDisplay, isCollapsed]);
+
 
   const handleToggleSubMenu = (
     itemSectionId: string,
     event: React.MouseEvent
   ) => {
-    event.preventDefault();
+    event.preventDefault(); // Important to prevent navigation if it's an anchor
+    if (isCollapsed) return; // Don't toggle if collapsed
+
     setOpenSubMenus((prevState) => ({
       ...prevState,
       [itemSectionId]: !prevState[itemSectionId],
     }));
   };
 
-  const isActive = (item: NavItemConfigType) => {
-    return (
-      activePath === item.path ||
-      (item.children &&
-        activePath.startsWith(item.path) &&
-        activePath !== item.path)
-    );
+  // Determines if the NavItemStyled (<li>) should have an "active" appearance
+  // (e.g., border). It's active if its own path matches or if one of its children matches.
+  const isNavItemLiActive = (item: NavItemConfigType, currentPath: string): boolean => {
+    if (item.path === currentPath) return true;
+    if (item.children) {
+      return item.children.some(child => isNavItemLiActive(child, currentPath));
+    }
+    return false;
   };
 
-  const isSubMenuActive = (subItem: NavItemConfigType) =>
-    activePath === subItem.path;
-
-  const renderNavItem = (item: NavItemConfigType) => {
-    const hasSubItems = item.children && item.children.length > 0;
-    const isItemActive = isActive(item);
-    const isSubMenuOpen =
-      openSubMenus[item.sectionId] === true ||
-      (hasSubItems &&
-        isItemActive &&
-        item.children?.some((child) => activePath.startsWith(child.path)));
-
+  const renderNavItem = (item: NavItemConfigType): React.ReactNode => {
     const IconToRender = item.icon as React.ElementType | undefined;
+    const hasSubItems = item.children && item.children.length > 0;
+
+    // For the <li> element's active state (e.g. left border)
+    const liIsActive = isNavItemLiActive(item, activePath);
+
+    // For the link/anchor's active state (e.g. text color, background)
+    // A link is directly active only if its path matches the current path exactly.
+    const linkIsDirectlyActive = item.path === activePath;
+
+    // Determine if submenu should be open (only if not collapsed)
+    const isSubMenuOpen = !isCollapsed && (openSubMenus[item.sectionId] === true);
+
+
+    // Content common to both Link and Anchor
+    const linkContent = (
+      <>
+        {IconToRender && <IconToRender />}
+        {!isCollapsed && <span>{item.label}</span>} {/* Hide label text when collapsed */}
+        {!isCollapsed && hasSubItems && ( /* Hide indicator when collapsed */
+          <span className="submenu-indicator">
+            {isSubMenuOpen ? <FaAngleDown /> : <FaAngleRight />}
+          </span>
+        )}
+      </>
+    );
 
     return (
-      <NavItem
+      <NavItemStyled
         key={item.sectionId}
-        $isActive={isItemActive}
+        $isActive={liIsActive} // For the <li>'s own active styling (e.g., border)
         $hasSubItems={hasSubItems}
       >
-        <a
-          href={item.path}
-          onClick={(e) => {
-            if (item.isExternal) {
-              return;
-            }
+        {item.isExternal ? (
+          <NavAnchorStyled
+            href={item.path}
+            target="_blank"
+            rel="noopener noreferrer"
+            $isActive={linkIsDirectlyActive} // Anchor's own active state
+          >
+            {linkContent}
+          </NavAnchorStyled>
+        ) : hasSubItems ? (
+          // Parent item with submenu - acts as a toggle
+          <NavAnchorStyled
+            href={item.path} // Keep href for semantics/SEO, but click is overridden
+            onClick={(e) => handleToggleSubMenu(item.sectionId, e)}
+            $isActive={linkIsDirectlyActive} // Can be active if its path is the target
+            $hasSubItems={true}
+          >
+            {linkContent}
+          </NavAnchorStyled>
+        ) : (
+          // Regular internal navigation item
+          <NavLinkStyled
+            to={item.path}
+            $isActive={linkIsDirectlyActive}
+            onClick={() => { // Close all submenus when a top-level direct link is clicked
+              if (onNavLinkClick) onNavLinkClick(item.path); // If specific action needed
+              // if (!isCollapsed) setOpenSubMenus({}); // Optional: close other menus
+            }}
+          >
+            {linkContent}
+          </NavLinkStyled>
+        )}
 
-            if (hasSubItems) {
-              handleToggleSubMenu(item.sectionId, e);
-            } else {
-              e.preventDefault();
-              onNavLinkClick(item.path);
-            }
-          }}
-          target={item.isExternal ? "_blank" : undefined}
-          rel={item.isExternal ? "noopener noreferrer" : undefined}
-        >
-          {IconToRender && <IconToRender />} {/* <<<< ICON IS RENDERED HERE */}
-          {item.label}
-          {hasSubItems && (isSubMenuOpen ? <FaAngleDown /> : <FaAngleRight />)}
-        </a>
-        {hasSubItems && (
+        {!isCollapsed && hasSubItems && (
           <SubNavList $isOpen={isSubMenuOpen}>
             {item.children?.map((subItem) => {
+              const SubItemIconToRender = subItem.icon as React.ElementType | undefined;
+              const subItemLinkIsDirectlyActive = subItem.path === activePath;
+              const subItemContent = (
+                  <>
+                    {SubItemIconToRender && <SubItemIconToRender />}
+                    <span>{subItem.label}</span>
+                  </>
+              );
+
               return (
                 <li key={subItem.sectionId}>
-                  <a
-                    href={subItem.path}
-                    onClick={(e) => {
-                      if (subItem.isExternal) return;
-                      e.preventDefault();
-                      onNavLinkClick(subItem.path);
-                    }}
-                    target={subItem.isExternal ? "_blank" : undefined}
-                    rel={subItem.isExternal ? "noopener noreferrer" : undefined}
-                    style={
-                      isSubMenuActive(subItem)
-                        ? {
-                            fontWeight: theme.typography.admin.weights.semiBold,
-                            color: theme.colors.accent1,
-                          }
-                        : {}
-                    }
-                  >
-                    {/* {SubItemIconToRender && <SubItemIconToRender />} You can add icon rendering for subitems */}
-                    {subItem.label}
-                  </a>
+                  {subItem.isExternal ? (
+                    <NavAnchorStyled
+                      href={subItem.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      $isSubItem={true}
+                      $isActive={subItemLinkIsDirectlyActive}
+                    >
+                     {subItemContent}
+                    </NavAnchorStyled>
+                  ) : (
+                    <NavLinkStyled
+                      to={subItem.path}
+                      $isSubItem={true}
+                      $isActive={subItemLinkIsDirectlyActive}
+                      onClick={() => {
+                         if (onNavLinkClick) onNavLinkClick(subItem.path);
+                      }}
+                    >
+                      {subItemContent}
+                    </NavLinkStyled>
+                  )}
                 </li>
               );
             })}
           </SubNavList>
         )}
-      </NavItem>
+      </NavItemStyled>
     );
   };
 
   if (navItemsToDisplay.length === 0 && userRole) {
     return (
-      <AdminSidebarContainer>
+      <AdminSidebarContainer $isCollapsed={isCollapsed}>
         <NavList>
           <li
             style={{
               padding: "20px",
-              color: theme.colors.adminTextSecondary || "#ccc",
+              color: theme?.colors?.adminTextSecondary || "#ccc",
               textAlign: "center",
+              display: isCollapsed ? 'none' : 'block', // Hide text if collapsed
             }}
           >
             No items for role: {userRole}.
@@ -201,7 +232,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   }
 
   return (
-    <AdminSidebarContainer>
+    <AdminSidebarContainer $isCollapsed={isCollapsed}>
       <NavList>{navItemsToDisplay.map(renderNavItem)}</NavList>
     </AdminSidebarContainer>
   );

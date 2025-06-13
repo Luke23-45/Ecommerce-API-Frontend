@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useTheme } from "styled-components";
-import { FaFilter, FaAngleDown } from "react-icons/fa"; 
+import { FaFilter, FaAngleDown } from "react-icons/fa";
 
 import {
   mockProducts,
@@ -23,7 +22,6 @@ import Breadcrumbs, {
 import * as S from "./ProductListingPage.styles";
 import GrandMarquee from "@/components/home/GrandMarquee";
 
-
 interface SortOptionUIData {
   id: string;
   label: string;
@@ -31,7 +29,12 @@ interface SortOptionUIData {
   hasInfoIcon?: boolean;
 }
 const pageSortOptions: SortOptionUIData[] = [
-  { id: "ranking", label: "Coupang Ranking Order", value: "ranking", hasInfoIcon: true },
+  {
+    id: "ranking",
+    label: "Coupang Ranking Order",
+    value: "ranking",
+    hasInfoIcon: true,
+  },
   { id: "price_asc", label: "Low Price Order", value: "price_asc" },
   { id: "price_desc", label: "High Price Order", value: "price_desc" },
   { id: "sales", label: "Sales Volume Order", value: "sales" },
@@ -52,7 +55,7 @@ const ProductListingPage: React.FC = () => {
     const mobileLWidth = parseInt(theme.breakpoints.mobileL.replace("px", ""));
     const tabletWidth = parseInt(theme.breakpoints.tablet.replace("px", ""));
     const laptopWidth = parseInt(theme.breakpoints.laptop.replace("px", ""));
-    if (window.innerWidth <= mobileLWidth) return 1; 
+    if (window.innerWidth <= mobileLWidth) return 1;
     if (window.innerWidth <= tabletWidth) return 2;
     if (window.innerWidth <= laptopWidth) return 3;
     return 4;
@@ -83,27 +86,23 @@ const ProductListingPage: React.FC = () => {
     pageSortOptions[0].value
   );
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(12); 
+  const [itemsPerPage, setItemsPerPage] = useState<number>(12);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    
     let productsToDisplay = [...mockProducts];
-    
-    
-    
+
     if (activeSort === "price_asc") {
       productsToDisplay.sort((a, b) => a.price - b.price);
     } else if (activeSort === "price_desc") {
       productsToDisplay.sort((a, b) => b.price - a.price);
     }
     setDisplayedProducts(productsToDisplay);
-    
-  }, [filterGroups, activeSort]); 
+  }, [filterGroups, activeSort]);
 
   const handleSortChange = (sortValue: string) => {
     setActiveSort(sortValue);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
   const handleItemsPerPageChange = (count: number) => {
     setItemsPerPage(count);
@@ -138,7 +137,7 @@ const ProductListingPage: React.FC = () => {
         return group;
       })
     );
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
   const handleToggleFilterGroupCollapse = (groupId: string) => {
     setFilterGroups((prevGroups) =>
@@ -154,60 +153,57 @@ const ProductListingPage: React.FC = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-  const categoryTitleFromData = "Skin/toner"; 
+  const categoryTitleFromData = "Skin/toner";
 
   return (
-
     <>
-        <GrandMarquee />
-        <S.PageWrapper>
-      <Breadcrumbs items={mockBreadcrumbItems} />
-      <S.FilterToggleButton onClick={toggleMobileSidebar}>
-        <FaFilter /> filter
-      </S.FilterToggleButton>
+      <S.PageWrapper>
+        <Breadcrumbs items={mockBreadcrumbItems} />
+        <S.FilterToggleButton onClick={toggleMobileSidebar}>
+          <FaFilter /> filter
+        </S.FilterToggleButton>
 
-      <S.MainContent>
-        <FilterSidebar
-          filterGroups={filterGroups}
-          onFilterChange={handleFilterChange}
-          onToggleCollapse={handleToggleFilterGroupCollapse}
-          isOpen={isSidebarOpen}
-          onClose={toggleMobileSidebar}
-        />
-        <S.ProductDisplayArea>
-          <S.PageContentHeader>
-            <S.CategoryPageTitle>{categoryTitleFromData}</S.CategoryPageTitle>
-          </S.PageContentHeader>
-
-          <S.HeaderSortContainer>
-            <SortOptions
-              options={pageSortOptions}
-              activeSort={activeSort}
-              onSortChange={handleSortChange}
-            />
-
-            <ItemsPerPageSelector
-              itemsPerPageOptions={[20, 40, 60, 100]}
-              currentItemsPerPage={itemsPerPage}
-              onItemsPerPageChange={handleItemsPerPageChange}
-            />
-          </S.HeaderSortContainer>
-
-          <ProductGrid
-            products={currentProductsOnPage}
-            columnsInCurrentView={currentColumnCount}
+        <S.MainContent>
+          <FilterSidebar
+            filterGroups={filterGroups}
+            onFilterChange={handleFilterChange}
+            onToggleCollapse={handleToggleFilterGroupCollapse}
+            isOpen={isSidebarOpen}
+            onClose={toggleMobileSidebar}
           />
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            pageNeighbours={5} 
-          />
-        </S.ProductDisplayArea>
-      </S.MainContent>
-    </S.PageWrapper>
+          <S.ProductDisplayArea>
+            <S.PageContentHeader>
+              <S.CategoryPageTitle>{categoryTitleFromData}</S.CategoryPageTitle>
+            </S.PageContentHeader>
+
+            <S.HeaderSortContainer>
+              <SortOptions
+                options={pageSortOptions}
+                activeSort={activeSort}
+                onSortChange={handleSortChange}
+              />
+
+              <ItemsPerPageSelector
+                itemsPerPageOptions={[20, 40, 60, 100]}
+                currentItemsPerPage={itemsPerPage}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </S.HeaderSortContainer>
+
+            <ProductGrid
+              products={currentProductsOnPage}
+              columnsInCurrentView={currentColumnCount}
+            />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              pageNeighbours={5}
+            />
+          </S.ProductDisplayArea>
+        </S.MainContent>
+      </S.PageWrapper>
     </>
-
   );
 };
 

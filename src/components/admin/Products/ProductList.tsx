@@ -24,6 +24,7 @@ import { AdminButton } from '../Dashboard/Common/Common.styles';
 import { type Product, type ProductStatusFrontend, type StockStatusFrontend } from '../../../types/product'; 
 
 import { useNotification } from '@/contexts/NotificationContext';
+import { useNavigate } from 'react-router-dom';
 
 
 
@@ -61,6 +62,8 @@ interface ProductListProps {
 const ProductList: React.FC<ProductListProps> = ({ onAddProduct, onEditProduct, handleDeleteProduct }) => {
   const [products, setProducts] = useState<Product[]>(dummyProducts); // Using internal state to simulate deletion
   const [searchTerm, setSearchTerm] = useState('');
+
+  const navigate = useNavigate();
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -193,7 +196,7 @@ const ProductList: React.FC<ProductListProps> = ({ onAddProduct, onEditProduct, 
     <ProductListContainer>
       <ProductListHeader>
         <HeaderTitle>All Products ({filteredAndSortedProducts.length})</HeaderTitle>
-        <AdminButton $variant="primary" onClick={handleAddNew}>
+        <AdminButton $variant="primary" onClick={ () => navigate("/admin/products/new")}>
           <FaPlus /> Add New Product
         </AdminButton>
       </ProductListHeader>

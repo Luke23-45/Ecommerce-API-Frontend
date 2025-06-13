@@ -34,6 +34,7 @@ import {
   MessageContainer,
 } from './ProductList.styles';
 import { adminProductListTheme } from './theme';
+import { useNavigate } from 'react-router-dom';
 // Define a type for our mock product data
 interface Product {
   id: string;
@@ -69,6 +70,8 @@ const ProductList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false); // For demo purposes
+
+  const navigate = useNavigate();
 
   // Simulate loading
   useEffect(() => {
@@ -174,7 +177,7 @@ const ProductList: React.FC = () => {
               <ProductActionButton $variant="secondary">
                 <FaUpload /> Bulk Import
               </ProductActionButton>
-              <ProductActionButton $variant="primary">
+              <ProductActionButton $variant="primary" onClick={ () => navigate("/admin/products/new")}>
                 <FaPlus /> Add New Product
               </ProductActionButton>
             </ActionsGroup>

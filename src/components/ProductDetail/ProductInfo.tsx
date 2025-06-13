@@ -434,7 +434,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       )}
 
       <ProductName theme={theme}>{productData.name}</ProductName>
-
+{/* 
       <PriceContainer theme={theme}>
         <CurrentPrice
           theme={theme}
@@ -459,7 +459,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             </SaleBadge>
           </>
         )}
-      </PriceContainer>
+      </PriceContainer> */}
 
       {productData.reviewSummary &&
         productData.reviewSummary.reviewCount > 0 && (

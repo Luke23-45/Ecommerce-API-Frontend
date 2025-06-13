@@ -26,6 +26,37 @@ export const ProductHeaderSection = styled.div`
   gap: ${(props) => props.theme.spacing?.(1) || '8px'}; /* Small gap between category/brand and name */
 `;
 
+export const StockStatus = styled.div<{ $isAvailable: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  gap: ${(props) => props.theme.spacing(2)};
+  padding: ${(props) => props.theme.spacing(1.5)} ${(props) => props.theme.spacing(3)};
+  margin-top: ${(props) => props.theme.spacing(4)};
+  border-radius: ${(props) => props.theme.borderRadius.pill};
+  font-size: ${(props) => props.theme.typography.body.sizes.small};
+  font-weight: ${(props) => props.theme.typography.body.weights.semiBold};
+  transition: all 0.2s ease-out;
+
+  svg {
+    font-size: 1.1em;
+  }
+
+  // Use the transient prop '$isAvailable' to determine the color scheme
+  ${(props) =>
+    props.$isAvailable
+      ? css`
+          // Styles for "In Stock"
+          background-color: ${rgba(props.theme.colors.adminStatusSuccess, 0.1)};
+          color: ${darken(0.1, props.theme.colors.adminStatusSuccess)};
+        `
+      : css`
+          // Styles for "Out of Stock" or "Select options"
+          background-color: ${rgba(props.theme.colors.textMuted, 0.1)};
+          color: ${(props) => props.theme.colors.textMedium};
+        `}
+`;
+
 // --- Product Category/Brand ---
 export const ProductCategoryLink = styled.a<{ theme: DefaultTheme }>`
   font-size: ${(props) => props.theme.typography?.body?.sizes?.xsmall || '0.75rem'};

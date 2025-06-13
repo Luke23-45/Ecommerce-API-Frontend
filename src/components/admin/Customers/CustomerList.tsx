@@ -28,6 +28,16 @@ import type { Customer, CustomerAccountStatus } from '@/types/customer';
 type SortKey = 'firstName' | 'email' | 'registrationDate' | 'totalOrders' | 'totalSpent' | 'accountStatus';
 type SortDirection = 'asc' | 'desc';
 
+const mockId = (prefix: string) =>
+  `${prefix}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+const getGenericImage = (
+  seed: string,
+  width: number = 800,
+  height: number = 450,
+  tags: string = ""
+) =>
+  `https://picsum.photos/seed/${seed.replace(/\s/g, "-")}/${width}/${height}/?${tags}`;
+
 
 interface CustomerListProps {
   customersData: Customer[]; 
@@ -36,7 +46,80 @@ interface CustomerListProps {
   // onAddNewCustomer?: () => void;
 }
 
-const CustomerList: React.FC<CustomerListProps> = ({ customersData, onViewCustomerDetails }) => {
+
+const customersData : Customer[] = [
+  {
+    _id: mockId("CUST"),
+    firstName: "Alice",
+    lastName: "Johnson",
+    email: "alice@example.com",
+    phone: "+1-555-101-1111",
+    avatarUrl: getGenericImage("alice-j", 150, 150),
+    registrationDate: "2022-01-10T09:00:00Z",
+    lastLoginDate: "2023-10-25T14:30:00Z",
+    totalOrders: 5,
+    totalSpent: 750.5,
+    accountStatus: "active",
+    addresses: [
+      {
+        street: "123 Maple Ave",
+        city: "Springfield",
+        state: "IL",
+        zipCode: "62704",
+        country: "USA",
+        type: "shipping",
+        isDefault: true,
+      },
+      {
+        street: "456 Oak Dr",
+        city: "Springfield",
+        state: "IL",
+        zipCode: "62704",
+        country: "USA",
+        type: "billing",
+      },
+    ],
+  },
+  {
+    _id: mockId("CUST"),
+    firstName: "Bob",
+    lastName: "Williams",
+    email: "bob@example.com",
+    phone: "+1-555-202-2222",
+    avatarUrl: getGenericImage("bob-w", 150, 150),
+    registrationDate: "2022-03-01T11:30:00Z",
+    lastLoginDate: "2023-09-20T10:00:00Z",
+    totalOrders: 1,
+    totalSpent: 280.0,
+    accountStatus: "active",
+    addresses: [
+      {
+        street: "45 Oak Lane",
+        city: "Greenville",
+        state: "SC",
+        zipCode: "29601",
+        country: "USA",
+        type: "shipping",
+        isDefault: true,
+      },
+    ],
+  },
+  {
+    _id: mockId("CUST"),
+    firstName: "Carol",
+    lastName: "Davis",
+    email: "carol@example.com",
+    phone: "+1-555-303-3333",
+    avatarUrl: getGenericImage("carol-d", 150, 150),
+    registrationDate: "2023-01-05T08:00:00Z",
+    lastLoginDate: "2023-10-15T09:00:00Z",
+    totalOrders: 2,
+    totalSpent: 180.0,
+    accountStatus: "pending_verification",
+  },
+];
+
+const CustomerList: React.FC<CustomerListProps> = ({ onViewCustomerDetails }) => {
   // Use `customersData` from props as the initial source for the list
   const [customers, setCustomers] = useState<Customer[]>(customersData);
   const [searchTerm, setSearchTerm] = useState('');

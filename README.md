@@ -1,309 +1,203 @@
-It's great you're thinking about the user flow for your multi-sided platform! This is a classic challenge: how to integrate different user types (customer, individual seller, vendor, admin) seamlessly while maintaining a clear and intuitive experience.
-
-Let's break down where to place the application links and dashboard access points for individual sellers and vendors, considering your existing navbar design.
-
-## Current Navbar Analysis:
-
-Your current navbar is clean and well-structured for a customer-facing e-commerce site. It includes:
-
-* **Top Bar:** Customer Support, Track Order, Store Locator, Sign In/Register, Wishlist, Recently Viewed.
-* **Main Header:** Logo, Category Dropdown, Search Bar, Search Button, Account Icon, Cart Icon.
-* **Navigation Bar:** Hamburger menu (likely for main categories/pages), Collections, New Arrivals, Bestsellers, Sale, Our Story.
-* **Announcement Bar:** "ENJOY COMPLIMENTARY WORLDWIDE SHIPPING ON ALL ORDERS"
-
-## Where to Keep the Application Links:
-
-The key is to make it discoverable for those interested in selling, but not clutter the main customer journey.
-
-1.  **"Sign In / Register" Dropdown (Recommended Primary Spot):**
-    * This is the most logical place for users who are already thinking about account creation or management.
-    * When a user clicks "Sign In / Register", the dropdown or modal could have options like:
-        * "Sign In"
-        * "Create Account"
-        * "Sell on Our Platform" (This could be a sub-menu or lead to a landing page)
-            * "Become an Individual Seller"
-            * "Register as a Vendor"
-    * **Why this works:** It targets users already engaged with account actions.
-
-2.  **Footer (Secondary, but important):**
-    * Many e-commerce sites have "Sell with Us" or "Become a Partner" links in the footer. This is for users who are exploring the site more thoroughly.
-    * You could have a section like "About Us" or "Partnerships" with links:
-        * "Sell as an Individual"
-        * "For Businesses/Brands"
-    * **Why this works:** It's standard practice, discoverable for interested users, and doesn't clutter the primary navigation.
-
-3.  **Dedicated "Sell" or "Partner" Landing Page (Highly Recommended):**
-    * Instead of directly linking to an application form, a dedicated landing page allows you to:
-        * Explain the benefits of selling on your platform (e.g., reach, tools, support).
-        * Outline the differences between an "Individual Seller" and a "Vendor" (e.g., what types of businesses they are for, requirements, commission structures).
-        * Provide clear calls to action (e.g., "Apply Now as Individual Seller," "Apply Now as Vendor").
-        * Potentially include FAQs or testimonials.
-    * **How to link to it:** From the "Sign In / Register" dropdown and the Footer.
-
-4.  **"Our Story" or a New Top-Level Navigation Item (Less Ideal but Possible):**
-    * If "Our Story" is meant to be a broader "about us" page, you *could* include a section about partnerships there.
-    * Alternatively, if selling is a major part of your platform's identity, you *could* add a top-level "Sell" or "Partners" link next to "Collections" or "Our Story". However, this might clutter the customer journey if most users are just shoppers.
-
-**Recommendation for Application Links:**
-
-* **Primary:** "Sign In / Register" dropdown/modal -> "Sell on Our Platform" (leading to a dedicated landing page).
-* **Secondary:** Footer -> "Sell with Us" or "Become a Partner" (leading to the same dedicated landing page).
+Okay, this is exciting! Designing an "excellent and premium" checkout experience for Élan Homewares is a fantastic goal. Let's break down how we can achieve this, focusing on that "beautiful and wonderful looking" aspiration.
 
-## Where to Keep the Corresponding Dashboards After Approval:
+Here are my suggestions, addressing your questions:
 
-Once an application is approved, the user's "Account Icon" (the person silhouette) in the main header becomes their primary access point.
+1. How do you want each component/section to be presented? (Visual & Interaction Model)
 
-1.  **Account Icon Dropdown (Primary Dashboard Access):**
-    * When a user is logged in, clicking the "Account Icon" should reveal a personalized dropdown menu.
-    * This dropdown should dynamically change based on the user's approved role(s).
-    * **If a Customer only:**
-        * "My Profile"
-        * "My Orders"
-        * "Wishlist"
-        * "Recently Viewed"
-        * "Settings"
-        * "Logout"
-    * **If an Individual Seller:**
-        * "My Profile"
-        * **"Seller Dashboard"** (This is the key link)
-        * "My Orders (as a buyer)"
-        * "Wishlist"
-        * "Settings"
-        * "Logout"
-    * **If a Vendor:**
-        * "My Profile"
-        * **"Vendor Dashboard"** (This is the key link)
-        * "My Orders (as a buyer)"
-        * "Wishlist"
-        * "Settings"
-        * "Logout"
-    * **If an Admin:**
-        * "My Profile"
-        * **"Admin Dashboard"** (This is the key link, possibly to a completely separate subdomain like `admin.yourdomain.com`)
-        * "Settings"
-        * "Logout"
+Instead of the current single-active-section accordion, let's aim for a more visually guided, linear progression that feels both sophisticated and effortless.
 
-2.  **Direct Redirect After Login/Application Approval (Conditional):**
-    * After an individual seller or vendor's application is **approved**, and they log in, you could consider redirecting them directly to their respective dashboard instead of the general homepage. This simplifies their immediate access to their tools.
-    * **Important:** This redirection should be based on their *approved* role, not just the fact that they *applied*. If they only applied and are pending, they should still go to the customer view or a "pending application" status page.
+A. Overarching Structure: The "Focused Step" Model
 
-3.  **Unified Dashboard Concept (Advanced):**
-    * As discussed in the previous response, you could have a single `/dashboard` route that then dynamically renders the appropriate "view" (seller, vendor, admin) based on the user's role. This keeps the URL structure simpler.
-    * The `Account Icon` dropdown would then just link to `/dashboard`, and the dashboard itself would handle the routing and content rendering internally.
+Visual Stepper: At the top of the CheckoutStepsColumn (or even spanning above both columns on wider screens), implement a clean, visual stepper.
 
-**Recommendation for Dashboard Access:**
+Elements: Numbered steps (1, 2, 3, 4) or elegant icons (e.g., FaMapMarkerAlt, FaTruck, FaCreditCard) paired with clear labels: "Shipping," "Delivery," "Payment," "Review."
 
-* **Primary:** The "Account Icon" dropdown should dynamically display a link to the user's specific dashboard ("Seller Dashboard," "Vendor Dashboard," or "Admin Dashboard").
-* **Secondary (Post-Approval Login):** Consider a conditional redirect to their specific dashboard upon login *if* their application is approved.
+States:
 
-## Example Flow:
+Completed: Icon/number in theme.colors.accent1 or accent2, label in theme.colors.textDark. A subtle checkmark could appear.
 
-1.  **Customer Browses:** Sees your current navbar, shops normally.
-2.  **Customer Gets Interested in Selling:** Clicks "Sign In / Register" -> "Sell on Our Platform".
-3.  **Lands on "Sell with Us" Page:** Reads about benefits, chooses "Individual Seller" or "Vendor," and clicks "Apply."
-4.  **Completes Application:** Submits form.
-5.  **Application Pending:** User logs in, clicks "Account Icon," sees "My Profile," "My Orders," and perhaps "Application Status" (linking to a page showing "Your application is under review").
-6.  **Application Approved (Backend Action):**
-    * User receives email notification.
-    * Next time they log in:
-        * They are redirected to `/seller-dashboard` or `/vendor-dashboard`.
-        * When they click the "Account Icon," the dropdown now shows "Seller Dashboard" or "Vendor Dashboard" prominently.
+Current: Icon/number highlighted (e.g., theme.colors.accent1 background, theme.colors.textLight icon), label bold and in theme.colors.textDark.
 
+Upcoming: Muted icons/numbers and labels (theme.colors.textMuted or mediumGray).
 
-Okay, this is an excellent idea! A dedicated "Become a Seller/Vendor" Landing Page is a crucial pre-application step. It educates potential partners, sets expectations, and directs them to the correct application path.
+Interaction: Clicking a completed step could allow quick navigation back to edit it. Clicking an upcoming step (if allowed by logic) would take them there.
 
-Testimonials / Success Stories Section:
-Typically involves TestimonialCard.tsx components arranged in a row or grid.
-Each card would feature a quote, author name/brand, and potentially a small author/brand image.
-"How It Works" / Process Overview Section:
-Could use a ProcessSteps.tsx component with individual ProcessStepItem.tsx.
-Often visual, using numbers, icons, and connecting lines.
-FAQ Section:
-Usually involves FAQAccordion.tsx or FAQItem.tsx components that expand/collapse to show answers.
-Final Call to Action Section:
+Content Display:
 
-Here's a plan to design and structure this landing page for Élan Homewares.
+Single Active Panel: Only the content for the current step is fully visible and interactive.
 
-Plan for "Become an Élan Partner" Landing Page:
+Collapsed Completed Steps: Instead of fully collapsing, completed steps display a clear, read-only summary directly beneath their stepper heading. This summary should include the key selected information (e.g., chosen address, shipping method name) and a prominent "Change" or "Edit" link/button (styled elegantly, perhaps with an icon).
 
-I. Core Objectives & Message:
+No "Continue" Buttons within Panels: The primary "Continue" button will be global to the current step (see point B).
 
-Objective 1: Clearly articulate the value proposition of partnering with Élan Homewares.
+B. Section-Specific Presentation:
 
-Objective 2: Differentiate between "Individual Artisan Seller" and "Brand Vendor" pathways.
+AddressSection (Shipping & Billing):
 
-Objective 3: Drive qualified applicants to the correct application forms.
+Initial View (if no address selected): Clearly prompt to "Select or Add an Address."
 
-Core Message: "Join a curated collective of exceptional creators and brands. Elevate your reach with Élan Homewares."
+Address Cards:
 
-II. Key Sections & Content (Mock/Dummy):
+Generous padding, use theme.borderRadius.large.
 
-Hero Section:
+Subtle hover effect (theme.shadows.interactive, slight border color change).
 
-Headline: "Partner with Élan: Showcase Your Craftsmanship" or "Elevate Your Brand with Élan Homewares."
+Selected state: Border in theme.colors.accent1, a thin, elegant box-shadow (e.g., theme.shadows.focusRing but adapted), perhaps a very subtle background tint (theme.colors.accent1Subtle). The SelectionIndicator with FaCheck is good.
 
-Sub-headline: Briefly explain the opportunity (e.g., "Join our curated marketplace and connect with an audience that values quality, design, and unique homewares.").
+Typography: Recipient name bold (theme.typography.body.weights.semiBold), address lines in theme.typography.body.sizes.base.
 
-Visual: A stunning, aspirational image or short video montage representing the Élan brand and the types of products/artisans it features. Could be a beautifully styled room, a craftsman at work, or elegant product shots.
+"Add New Address" Form:
 
-Primary CTA (Optional): A single, prominent button like "Explore Partnership Opportunities" that scrolls down or directly leads to the comparison section.
+Instead of an abrupt expansion, consider a smoother animated reveal or even a modal overlay for a more focused experience. The modal could be themed with Élan's elegance.
 
-"Why Partner with Élan?" Section (Benefits):
+Inputs should use theme.typography.admin.formLabel for labels and have focus states matching theme.shadows.focusRing.
 
-Headline: "The Élan Advantage" or "Why Creators Choose Élan."
+Summary (when step is completed but not active):
 
-Content: Use 3-4 benefit "cards" or a feature list with icons.
+Shipping Address:
+[Icon] Jane Doe // using theme.colors.textDark
+123 Élan Avenue, Willow Creek, CA, 90210 // using theme.colors.textMedium
+[Edit Button]
 
-Benefit 1: Curated Audience: "Reach Discerning Customers: Connect with a dedicated audience passionate about quality design, sustainable practices, and unique homewares." (Icon: Target/Audience)
 
-Benefit 2: Brand Amplification: "Elevate Your Brand Story: Become part of a respected platform known for its commitment to excellence and an aesthetic that resonates." (Icon: Megaphone/Growth Chart)
+ShippingMethodSection:
 
-Benefit 3: Seller Support & Tools: "Empowering Your Success: Access to intuitive tools, dedicated support, and resources to help you thrive." (Icon: Tools/Support Person)
+Method Cards: Similar styling to Address Cards (padding, radius, selection state).
 
-Benefit 4 (Optional): Community Focus: "Join a Creative Collective: Collaborate and grow within a community of like-minded artisans and premium brands." (Icon: People/Community)
+Content: Clearly display OptionName (bold), OptionDescription, estimatedDelivery, and OptionCost. The RadioCircle for selection is good.
 
-"Choose Your Path" Section (Seller vs. Vendor Comparison):
+Summary (when step is completed but not active):
 
-Headline: "Find Your Fit: Individual Artisan or Brand Vendor?"
+Delivery Method:
+[Icon] Premium Express (1-2 days) - $15.00 // using theme.colors.textDark & textMedium
+[Edit Button]
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+IGNORE_WHEN_COPYING_END
 
-Layout: Two distinct columns or large cards side-by-side.
+PaymentMethodSection:
 
-Individual Artisan Seller:
+Saved Method Cards: Similar styling. Display card type icon, masked number, expiry.
 
-Title: "The Artisan Pathway" or "For Individual Creators & Small Studios."
+"Add New Card": This option should feel like another selectable card. When selected, the Stripe CardElement form animates into view smoothly below it.
 
-Icon: (e.g., FaUserNinja, FaPalette, FaHandHoldingHeart)
+Stripe Element Styling: Ensure CARD_ELEMENT_OPTIONS align with theme.typography.body for font family and theme.colors for text and placeholders. Focus states should be consistent.
 
-Description: "Perfect for independent artisans, crafters, and small studios producing unique, handcrafted, or small-batch homewares. Share your personal story and connect directly with customers."
+Summary (when step is completed but not active):
 
-Key Highlights/Requirements (Bullet points):
+Payment Method:
+[Icon] Visa ending in **** 4242 // using theme.colors.textDark
+[Edit Button]
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+IGNORE_WHEN_COPYING_END
 
-Handcrafted or unique design focus.
+BriefOrderSummary (Right Column / Sticky):
 
-Direct control over your storefront and listings.
+Enhanced Visuals:
 
-Lower volume, high individuality.
+Cleaner item previews with slightly larger thumbnails if space allows.
 
-Simple application process.
+Typography: Clear distinction between item name, quantity, price. Use theme.typography.body.
 
-(Mock) Commission: e.g., "Competitive commission rate."
+Discount Code: The input and "Apply" button should look very refined. Perhaps the button uses theme.colors.accent1 if the input is valid.
 
-CTA: "Apply as an Individual Artisan" (button linking to IndividualSellerProfileForm).
+Totals: Subtotal, Shipping (once selected), Taxes (if applicable), and Grand Total should be very clear. GrandTotal especially should be prominent (larger font, bolder).
 
-Brand Vendor:
+"Proceed to Review / Place Order" Button: This will be the main call to action. It should be visually dominant (using theme.colors.accent1 gradient, larger size, perhaps a subtle icon). Its text will change based on the final step.
 
-Title: "The Brand Partner Pathway" or "For Established Brands & Businesses."
+2. What changes are we making to the overall flow or interaction model?
 
-Icon: (e.g., FaStoreAlt, FaBuilding, FaTags)
+Global "Continue" Button:
 
-Description: "Ideal for established homewares brands, manufacturers, or businesses with a distinct product line and existing operations. Leverage our platform to expand your market reach."
+Remove "Continue" buttons from within each section's content (like in AddressSection, ShippingMethodSection).
 
-Key Highlights/Requirements (Bullet points):
+Instead, have a single, persistent "Continue to [Next Step Name]" button at the bottom of the CheckoutStepsColumn (or integrated elegantly at the bottom of the OrderSummaryColumn if design allows).
 
-Established product lines & brand identity.
+This button is disabled until the current step is validly completed.
 
-Inventory management capabilities.
+On click, it validates the current step, saves data (API call via React Query mutation), updates the stepper to mark current step as complete, and advances to the next step (making it active and scrolling it into view smoothly).
 
-Ability to handle larger order volumes.
+Auto-Advance (Optional but Premium): Upon successful selection within a step (e.g., choosing a shipping address), if there's no further input required for that step, the system could automatically save and advance to the next step after a brief confirmation (e.g., selected card subtly pulses its accent1 border). This reduces clicks. Caveat: User testing would be important here to ensure it doesn't feel too fast or disorienting.
 
-Dedicated account management (potential benefit).
+Error Handling:
 
-(Mock) Commission/Terms: e.g., "Tailored terms for brand partnerships."
+Inline validation for form fields (e.g., as user types or on blur). Errors shown gracefully near the field, using theme.colors.error for text/borders.
 
-CTA: "Apply as a Brand Vendor" (button linking to a future VendorApplicationForm).
+If "Continue" is clicked and validation fails (server-side or complex client-side), clear error messages appear within the relevant section.
 
-Testimonials / Success Stories (Optional, but powerful):
+Order Summary Updates: The OrderSummaryColumn dynamically updates as selections are made (e.g., shipping cost appears once a shipping method is chosen). This should happen with subtle, fluid animations (e.g., new line items fade/slide in).
 
-Headline: "From Our Partners" or "Success with Élan."
+Mobile Experience:
 
-Content: 2-3 short, impactful quotes from fictional sellers/vendors with their name/brand and a small image.
+The stepper might become a more compact horizontal scrolling element or a vertical list above the content.
 
-Example Individual Seller: "Joining Élan gave my handcrafted ceramics a platform and an audience I couldn't have reached on my own. The support has been fantastic!" - Anya Sharma, Clay & Hue.
+The OrderSummaryColumn would likely collapse into an expandable section at the top (below the stepper) or a persistent bar at the bottom displaying key totals and the "Proceed" button.
 
-Example Brand Vendor: "Élan Homewares understands brand integrity. They've helped us connect with customers who truly appreciate our design philosophy." - CEO, Modern Living Co.
+3. What are the specific aesthetic or functional goals to make it "beautiful and wonderfully better," aligning with the Élan Homewares brand?
 
-"How It Works" / Process Overview (Optional):
+Elegant & Premium UI:
 
-Headline: "Simple Steps to Join Élan."
+Generous White Space: More padding around elements, between sections. Let content breathe.
 
-Content: A simple 3-4 step visual process.
+Refined Color Palette: Strict adherence to theme.colors. Use accent1 and accent2 for primary actions and highlights. Neutral tones (primaryNeutral, backgroundSubtle, lightGray) for backgrounds and borders to create a calm, sophisticated feel.
 
-Step 1: Choose Your Pathway (Artisan/Vendor).
+Stunning Typography:
 
-Step 2: Submit Your Application.
+theme.typography.heading.fontFamily (Playfair Display) for section titles (e.g., "Shipping Address," "Delivery Method") to add a touch of classic elegance.
 
-Step 3: Curation & Onboarding.
+theme.typography.body.fontFamily (Inter) for all other text, ensuring excellent legibility. Use varied weights and sizes from the theme to establish clear hierarchy.
 
-Step 4: Start Selling & Growing.
+Subtle Textures/Gradients (Optional & Sparingly): Perhaps the main "Proceed" button could have a very subtle theme.colors.gradients.accent1ToVibrant. Backgrounds should remain clean, mostly solid.
 
-FAQ Section (Optional, but helpful):
+High-Quality Icons: Consistent, pixel-perfect icons that match the premium aesthetic. react-icons is good, but ensure they are used consistently in size and style.
 
-Headline: "Frequently Asked Questions."
+Intuitive & Guided Experience:
 
-Content: Accordion/toggle for 3-5 common questions.
+Clear Visual Hierarchy: Users should instantly know what to focus on, what's selected, what's interactive, and what their next action is.
 
-What are the fees or commission rates? (Answer: "Varies by pathway, detailed during application.")
+Obvious Affordances: Buttons look like buttons, selected states are unmistakable.
 
-What kind of products are you looking for? (Answer: "High-quality, well-designed, unique homewares that align with the Élan aesthetic...")
+Progressive Disclosure: Only show what's relevant for the current step. Hide complexity until needed.
 
-How long does the application process take?
+Actionable Summaries: The read-only summaries of completed steps provide confidence and easy review.
 
-What support do you offer sellers/vendors?
+Fluid Animations & Microinteractions:
 
-Final Call to Action Section:
+Page Load/Step Transition: Initial page elements can fade in gently (like the current fadeIn). Transitions between checkout steps should be smooth (e.g., new content animates in, stepper updates gracefully).
 
-Headline: "Ready to Showcase Your Excellence?" or "Begin Your Élan Journey Today."
+Selection Feedback: When a card (address, shipping, payment) is clicked, it could have a subtle scale/border animation, and the RadioCircle animates smoothly.
 
-Reinforce key benefit.
+Form Field Focus: Smooth transitions for border color and box-shadow on focus, as defined in theme.shadows.focusRing.
 
-Repeat CTAs: "Apply as an Individual Artisan" and "Apply as a Brand Vendor" buttons clearly visible again.
+Loading States: For any API calls (saving address, fetching shipping, applying discount), use elegant loading indicators. Instead of just text, consider subtle shimmer effects on the content being loaded or a beautifully styled spinner (aligned with Élan's brand, not a generic one).
 
-Optional Link: "Have Questions? Contact our Partnership Team." (links to a contact form/email).
+Button Interactions: Hover and active states should provide clear, tactile feedback with smooth transitions (color, transform) using theme.transitions.
 
-III. Design & Aesthetic Considerations (Élan Theme):
+Critical Timing: All animations must adhere to the theme.transitions cubic-bezier timings for a cohesive feel.
 
-Visuals: High-quality, aspirational imagery that reflects Élan's sophisticated, minimalist, and warm aesthetic.
+Performance Optimization: A premium experience is a fast one. Ensure efficient rendering, especially with animations.
 
-Typography: Consistent use of Playfair Display for headings and Inter for body copy. Clear hierarchy.
+Accessibility: Design with ARIA attributes and keyboard navigation in mind from the start. High contrast ratios based on the theme.
 
-Color Palette: Utilize primaryNeutral, accent1, accent2, textDark, textLight. Accents should be used thoughtfully for CTAs and highlights.
+Cohesion: The checkout should feel like an integral, polished part of the Élan Homewares website, not a third-party module.
 
-Layout: Generous whitespace, clean lines, balanced grid structures. Asymmetrical layouts can add interest if done well.
+Summary of Key Changes for "Excellence":
 
-Interactivity: Smooth scroll effects, subtle hover states on buttons and links, engaging microinteractions (e.g., on benefit cards).
+Shift from Accordion to "Focused Step" Model: Visual stepper at the top, one active content panel, completed steps show summaries + edit links.
 
-Responsiveness: Flawless on all devices.
+Global "Continue" Button: Single, consistent CTA to progress, rather than buttons within each section.
 
-IV. Implementation Plan:
+Elevated Aesthetics: Deliberate use of whitespace, typography (Playfair Display for titles), refined color palette, and consistent, high-quality iconography.
 
-Create BecomeAPartnerPage.tsx (Page Component).
+Fluid & Purposeful Animations: Smooth transitions for steps, selections, form interactions, and loading states, all using defined easing.
 
-Create BecomeAPartnerPage.styles.ts (Styles for the page and its sections).
+Dynamic Order Summary: More interactive, visually reflecting selections in real-time.
 
-Component Breakdown (Reusable where possible):
+This approach aims to create a checkout process that feels less like a form-filling chore and more like a guided, reassuring, and elegant part of the Élan Homewares purchasing journey.
 
-HeroSectionPartner.tsx (Specific for this landing page)
-
-BenefitCard.tsx
-
-PartnershipPathwayCard.tsx (For comparing Seller vs. Vendor)
-
-TestimonialCard.tsx (If using testimonials)
-
-FAQItem.tsx (Accordion item)
-
-Generic SectionWrapper.tsx or similar layout components.
-
-Develop each section iteratively, focusing on content and then styling.
-
-Implement using dummy data for all textual content, links, and images.
-
-Ensure clear navigation to the respective application forms.
-
-This plan provides a comprehensive roadmap for creating an effective and beautiful "Become a Seller/Vendor" landing page.
-
-Next Step Suggestion:
-
-We can start by designing and implementing the styles for the overall BecomeAPartnerPage.styles.ts (page wrapper, common section styling) and then move to the HeroSectionPartner styles.
-
-Does this plan align with your vision?
+What are your initial thoughts on this direction? We can then dive into a more detailed plan for implementing these changes.

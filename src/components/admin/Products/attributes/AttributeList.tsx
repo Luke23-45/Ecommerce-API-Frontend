@@ -50,13 +50,11 @@ import { useNotification } from "@/contexts/NotificationContext";
 
 import ConfirmationModal from "../../common/ConfirmationModal/ConfirmationModal";
 import { LoadingOverlay as LoadingSpinner } from "../../Application/SellerApplications/SellerApplicationList.styles";
+import { useNavigate } from "react-router-dom";
 
 interface AttributeListProps {
-  onAddAttribute: () => void;
-  onEditAttribute: (attributeId: string) => void;
-  onManageOptions: (attributeId: string, attributeName: string) => void;
   onClickOption: (value: any) => void;
-  isRefetch:boolean;
+  isRefetch: boolean;
 }
 
 type SortableAttributeColumn =
@@ -70,11 +68,8 @@ type SortDirection = "asc" | "desc";
 const ITEMS_PER_PAGE_DEFAULT = 10;
 
 const AttributeList: React.FC<AttributeListProps> = ({
-  onAddAttribute,
-  onEditAttribute,
-  onManageOptions,
   onClickOption,
-  isRefetch
+  isRefetch,
 }) => {
   const { showNotification } = useNotification();
   const theme = useTheme();
@@ -90,7 +85,7 @@ const AttributeList: React.FC<AttributeListProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE_DEFAULT);
 
-const [onOptionSelected, setOnOptionSelected] = useState("");
+  const [onOptionSelected, setOnOptionSelected] = useState("");
   const [sortConfig, setSortConfig] = useState<{
     key: SortableAttributeColumn;
     direction: SortDirection;
@@ -103,6 +98,8 @@ const [onOptionSelected, setOnOptionSelected] = useState("");
   const [attributeToDelete, setAttributeToDelete] =
     useState<IAttributeResponse | null>(null);
   const [isRefetchState, setIsRefetchState] = useState(false);
+
+  const navigate = useNavigate();
 
   const apiQueryParameters = useMemo(() => {
     const queryParamsForApi: Record<string, string | number | boolean> = {
@@ -168,7 +165,9 @@ const [onOptionSelected, setOnOptionSelected] = useState("");
   const deleteAttributeMutation = useDeleteAttribute({
     onSuccess: (_data, deletedAttributeId) => {
       showNotification(
-        `Attribute "${attributeToDelete?.name || deletedAttributeId}" deleted successfully!`,
+        `Attribute "${
+          attributeToDelete?.name || deletedAttributeId
+        }" deleted successfully!`,
         "success"
       );
       setAttributeToDelete(null);
@@ -179,14 +178,15 @@ const [onOptionSelected, setOnOptionSelected] = useState("");
     },
     onError: (err: any, deletedAttributeId) => {
       showNotification(
-        `Failed to delete attribute "${attributeToDelete?.name || deletedAttributeId}": ${err.message || "Unknown error"}`,
+        `Failed to delete attribute "${
+          attributeToDelete?.name || deletedAttributeId
+        }": ${err.message || "Unknown error"}`,
         "error"
       );
       setAttributeToDelete(null);
       setIsDeleteModalOpen(false);
     },
   });
-
 
   const handleClickOption = useCallback(() => {
     const result = onOptionSelected;
@@ -257,11 +257,11 @@ const [onOptionSelected, setOnOptionSelected] = useState("");
 
   useEffect(() => {
     if (isRefetch) {
-      console.log('Refetching data...');
+      console.log("Refetching data...");
       refetch();
-      setIsRefetchState(false); 
+      setIsRefetchState(false);
     }
-  }, [isRefetch, refetch]); 
+  }, [isRefetch, refetch]);
 
   const handleTriggerRefetch = () => {
     setIsRefetchState(true);
@@ -422,11 +422,23 @@ const [onOptionSelected, setOnOptionSelected] = useState("");
     );
   };
 
+
+  const onEditAttribute = (id: string) => {
+    navigate(`/admin/products/attributes/edit/${id}`);
+  };
+  const addNewAttribute = () => {
+    navigate(`/admin/products/attributes/new`);
+  };
+
+  const onManageOptions = (id: string) => {
+    navigate(`/admin/products/attributes/${id}/options`);
+  };
+
   return (
     <AttributeListContainer>
       <AttributeListHeader>
         <HeaderTitle>Product Attributes ({totalAttributes})</HeaderTitle>
-        <AdminButton $variant="primary" onClick={onAddAttribute}>
+        <AdminButton $variant="primary" onClick={addNewAttribute}>
           <FaPlus /> Add New Attribute
         </AdminButton>
       </AttributeListHeader>
@@ -494,7 +506,9 @@ const [onOptionSelected, setOnOptionSelected] = useState("");
             fontStyle: "italic",
             backgroundColor:
               theme.colors.adminInfoBg || "rgba(0, 123, 255, 0.05)",
-            border: `1px solid ${theme.colors.adminInfoBorder || "rgba(0, 123, 255, 0.2)"}`,
+            border: `1px solid ${
+              theme.colors.adminInfoBorder || "rgba(0, 123, 255, 0.2)"
+            }`,
             borderRadius: "4px",
           }}
         >
@@ -575,7 +589,9 @@ const [onOptionSelected, setOnOptionSelected] = useState("");
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDeleteAttribute}
         title="Confirm Delete Attribute"
-        message={`Are you sure you want to delete the attribute "${attributeToDelete?.name || ""}"? This will also delete all its associated options and cannot be undone.`}
+        message={`Are you sure you want to delete the attribute "${
+          attributeToDelete?.name || ""
+        }"? This will also delete all its associated options and cannot be undone.`}
         confirmButtonText="Delete"
         cancelButtonText="Cancel"
         isDanger={true}

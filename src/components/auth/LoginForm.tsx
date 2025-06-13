@@ -79,7 +79,6 @@ function LoginForm() {
         });
 
         console.log("User profile fetched after login:", user);
-
         if (user) {
           dispatch(setAuthenticated(user));
           queryClient.invalidateQueries({ queryKey: ["userProfile"] });

@@ -1,57 +1,45 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { darken } from 'polished';
+// src/components/admin/Header/Header.tsx
+import React, { useState, useEffect, useRef } from "react";
+import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom"; // Added useLocation
+import styled from "styled-components"; // Keep if PrimaryActionButton is here
+import { darken } from "polished"; // Keep if PrimaryActionButton is here
 import {
-  FaBell, FaCog, FaStore, FaUserCircle, FaPlusSquare, FaSearch,
-  FaUserPlus, // For Super Admin "New User"
-  FaBoxOpen, // For Vendor "Add Product"
-  FaTags,    // For Seller "List Item"
-  FaEllipsisV, // For a potential "More Actions" mobile button
-} from 'react-icons/fa';
+  FaBell,
+  FaCog,
+  FaStore,
+  FaUserCircle,
+  FaPlusSquare,
+  FaSearch,
+  FaUserPlus,
+  FaBoxOpen,
+  FaTags,
+  FaBars, // FaBars for sidebar toggle
+} from "react-icons/fa";
 
-// --- Your Styled Components ---
+// Assuming these are correctly defined in Header.styles.ts
+// You might need to adjust them to properly wrap/style RouterLink or buttons
 import {
   AdminHeaderContainer,
   HeaderLeft,
-  AdminLogo,
+  AdminLogo, // This might be styled(RouterLink) or wrap a RouterLink
   HeaderRight,
-  IconLink,
-  UserProfile,
+  IconLink, // This might be styled.button or styled(RouterLink)
+  UserProfile, // This might be styled.button or styled.div
   SearchInputContainer,
-} from './Header.styles';
-// Assuming AdminButton might still be used or we create a new styled button.
-// For this iteration, let's try to use IconLink for quick actions if possible,
-// or introduce a new styled button specifically for "primary" header actions.
+} from "./Header.styles";
 
-// --- Import UserRole and ROLES_CONFIG ---
-import type { UserRole } from '@/config/rolesConfig';
-import { ROLES_CONFIG } from '@/config/rolesConfig';
+import type { UserRole } from "@/config/rolesConfig";
+import { ROLES_CONFIG } from "@/config/rolesConfig";
+import { Types } from "mongoose"; // For ObjectId.isValid if used in breadcrumbs
 
-// --- Updated AdminHeaderProps ---
-interface AdminHeaderProps {
-  // adminName prop might be less relevant if role dictates title, but can be a fallback.
-  // We'll use userRole to derive the main displayed name/title.
-  userRole: UserRole;
-  userDisplayName?: string; // e.g., "Jane Doe" - for the UserProfile
-  userAvatarSrc?: string;
-  onSearch?: (query: string) => void;
-  onNotificationsClick?: () => void;
-  onQuickActionClick?: (actionType: string) => void; // Action type is now mandatory
-  onLogout?: () => void;
-  onViewStore?: () => void;
-  currentPath?: string; // <<<< NEW: To potentially show breadcrumbs or context
-  onNavigate?: (path: string) => void; // <<<< NEW: For actions that navigate
-}
-
-// New Styled Component (Example, or add to Header.styles.ts)
-// This is for a more prominent "Primary Action" button, distinct from IconLink
+// PrimaryActionButton (if still defined in this file)
 const PrimaryActionButton = styled.button`
-  background-color: #A97C50; /* Your existing Élan brown accent */
+  // ... (your existing styles for PrimaryActionButton) ...
+  background-color: #a97c50;
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 25px; /* Pill shape */
+  border-radius: 25px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -59,60 +47,81 @@ const PrimaryActionButton = styled.button`
   align-items: center;
   gap: 8px;
   transition: background-color 0.2s ease, transform 0.1s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   &:hover {
-    background-color: ${darken(0.05, '#A97C50')};
+    background-color: ${darken(0.05, "#A97C50")};
     transform: translateY(-1px);
   }
   &:active {
     transform: translateY(0px);
-    background-color: ${darken(0.1, '#A97C50')};
+    background-color: ${darken(0.1, "#A97C50")};
   }
-
   @media (max-width: ${(props) => props.theme.breakpoints.mobileL}) {
     padding: 8px 12px;
     font-size: 0.8rem;
-    /* Optionally hide text and show only icon on very small screens */
-    /* span { display: none; } */
-    /* min-width: 40px; // To maintain size for icon */
   }
 `;
 
+interface AdminHeaderProps {
+  userRole: UserRole;
+  userDisplayName?: string;
+  userAvatarSrc?: string;
+  onSearch?: (query: string) => void;
+  onNotificationsClick?: () => void;
+  onQuickActionClick?: (actionType: string) => void;
+  onLogout?: () => void;
+  onViewStore?: () => void;
+  onToggleSidebar?: () => void; // NEW: For sidebar collapse toggle
+  isSidebarCollapsed?: boolean; // NEW: To show different icon based on state
+}
 
 const AdminHeader: React.FC<AdminHeaderProps> = ({
   userRole,
-  userDisplayName = "Admin User", // Default if not provided
-  userAvatarSrc, // Can be undefined, we'll use a fallback
+  userDisplayName = "Admin User",
+  userAvatarSrc,
   onSearch,
   onNotificationsClick,
-  onQuickActionClick, // Expect this to be called with an actionType
+  onQuickActionClick,
   onLogout,
   onViewStore,
-  currentPath,
-  onNavigate,
+  onToggleSidebar,
+  isSidebarCollapsed,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  // --- Determine Role-Specific Title and Default Dashboard Path ---
   let displayedTitle = "Élan Admin";
-  let defaultDashboardPath = "/admin/dashboard";
-  const roleConfig = ROLES_CONFIG[userRole];
+  let fullDefaultDashboardPath = "/admin/dashboard"; // The complete path
 
+  const roleConfig = ROLES_CONFIG[userRole];
   if (roleConfig) {
-    defaultDashboardPath = roleConfig.defaultDashboardPath;
+    fullDefaultDashboardPath = roleConfig.defaultDashboardPath;
     switch (userRole) {
-      case 'superAdmin': displayedTitle = "Élan Platform"; break;
-      case 'vendor': displayedTitle = "Vendor Portal"; break;
-      case 'seller': displayedTitle = "Seller Central"; break;
+      case "admin":
+        displayedTitle = "Élan Platform";
+        break;
+      case "vendor":
+        displayedTitle = "Vendor Portal";
+        break;
+      case "individual_seller":
+        displayedTitle = "Seller Central";
+        break;
     }
   }
 
+  // Determine the 'to' prop for RouterLink, assuming basename="/admin" in BrowserRouter
+  const routerLinkDefaultPath = fullDefaultDashboardPath.startsWith("/admin/")
+    ? fullDefaultDashboardPath.substring("/admin".length) || "/" // Ensures it's at least '/' if path was just '/admin'
+    : fullDefaultDashboardPath;
+
   const handleSearchIconClick = () => {
-    setIsSearchExpanded(prev => {
+    /* ... same ... */
+    setIsSearchExpanded((prev) => {
       const nextState = !prev;
       if (nextState && searchInputRef.current) {
         setTimeout(() => searchInputRef.current?.focus(), 50);
@@ -120,95 +129,142 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
       return nextState;
     });
   };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value);
-
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setSearchQuery(e.target.value);
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (onSearch && searchQuery.trim()) {
       onSearch(searchQuery.trim());
+      // setIsSearchExpanded(false); // Optionally close search on submit
     }
   };
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        if (isSearchExpanded) setIsSearchExpanded(false);
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        if (isSearchExpanded && !searchQuery) setIsSearchExpanded(false); // Close only if empty
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isSearchExpanded]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isSearchExpanded, searchQuery]);
 
-
-  // --- Role-Specific Primary "Quick Action" Button ---
   const renderPrimaryAction = () => {
     let actionText = "";
-    let ActionIcon = FaPlusSquare; // Default icon
+    let ActionIcon = FaPlusSquare;
     let actionType = "";
+    let navigationPath: string | null = null; // Path relative to /admin
 
     switch (userRole) {
-      case 'superAdmin':
+      case "admin":
         actionText = "Add Platform User";
         ActionIcon = FaUserPlus;
-        actionType = 'platform:addUser';
+        actionType = "platform:addUser";
+        navigationPath = "/settings/users";
         break;
-      case 'vendor':
-        actionText = "New Product"; // For their store
+      case "vendor":
+        actionText = "New Product";
         ActionIcon = FaBoxOpen;
-        actionType = 'vendor:addProduct';
+        actionType = "vendor:addProduct";
+        navigationPath = "/products/new";
         break;
-      case 'seller':
+      case "individual_seller":
         actionText = "List New Item";
         ActionIcon = FaTags;
-        actionType = 'seller:listItem';
+        actionType = "seller:listItem";
+        navigationPath = "/products/new";
         break;
       default:
-        return null; // No primary action for unknown roles or if not desired
+        return null;
     }
 
     return (
-      <PrimaryActionButton onClick={() => onQuickActionClick?.(actionType)}>
+      <PrimaryActionButton
+        onClick={() => {
+          if (onQuickActionClick) onQuickActionClick(actionType);
+          if (navigationPath) navigate(navigationPath);
+        }}
+      >
         <ActionIcon />
         <span>{actionText}</span>
       </PrimaryActionButton>
     );
   };
 
-  const getBreadcrumb = () => {
-    if (!currentPath) return null;
-    // Simple breadcrumb, can be made more sophisticated
-    // This requires 'findNavItemByPath' if we want to use labels from config.
-    // For simplicity, we'll just show the path or a part of it.
-    const pathSegments = currentPath.split('/').filter(Boolean);
-    if (pathSegments.length > 1 && pathSegments[1] !== 'dashboard') {
-        const currentPageName = pathSegments.pop()?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        const parentPathName = pathSegments.pop()?.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        return (
-            <span style={{ fontSize: '0.9rem', color: '#777', marginLeft: '20px' }}>
-                 {parentPathName && `${parentPathName} / `}{currentPageName}
-            </span>
-        );
+  // A more robust breadcrumb solution often uses useMatches (RR 6.4+) or a custom hook
+  // that traverses the `adminRoutes` config based on `location.pathname`.
+  // For now, this is a placeholder if you want simple breadcrumbs.
+  const getBreadcrumbDisplay = () => {
+    const pathParts = location.pathname
+      .replace(/^\/admin\/?/, "")
+      .split("/")
+      .filter(Boolean);
+    if (pathParts.length > 0 && pathParts[0] !== "dashboard") {
+      return pathParts
+        .map((part) =>
+          part
+            .split("-")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")
+        )
+        .join(" / ");
     }
     return null;
   };
-
+  const breadcrumbText = getBreadcrumbDisplay();
 
   return (
     <AdminHeaderContainer>
       <HeaderLeft>
+        {onToggleSidebar && (
+          <IconLink // Assuming IconLink can render as a button
+            as="button"
+            onClick={onToggleSidebar}
+            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            style={{ marginRight: "15px" }} // Basic styling
+          >
+            <FaBars /> {/* Or a different icon for "expanded" state */}
+          </IconLink>
+        )}
         <AdminLogo>
-          <Link href={defaultDashboardPath}> {/* Simpler Link for Next.js 13+ */}
+          {" "}
+          {/* Ensure AdminLogo is or wraps RouterLink */}
+          <RouterLink
+            to={routerLinkDefaultPath}
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
             {displayedTitle}
-          </Link>
+          </RouterLink>
         </AdminLogo>
-        {getBreadcrumb()} {/* Display breadcrumb */}
+        {breadcrumbText && (
+          <span
+            style={{
+              fontSize: "0.9rem",
+              color: "#777",
+              marginLeft: "20px",
+              userSelect: "none",
+            }}
+          >
+            {breadcrumbText}
+          </span>
+        )}
       </HeaderLeft>
 
       <HeaderRight>
-        <SearchInputContainer ref={searchContainerRef} $isExpanded={isSearchExpanded}>
-          <FaSearch onClick={isSearchExpanded && searchQuery.trim() ? () => handleSearchSubmit() : handleSearchIconClick} />
-          <form onSubmit={handleSearchSubmit} style={{ width: '100%'}}> {/* Removed display:none, relying on opacity/visibility from styles */}
+        <SearchInputContainer
+          ref={searchContainerRef}
+          $isExpanded={isSearchExpanded}
+        >
+          <FaSearch
+            onClick={
+              isSearchExpanded && searchQuery.trim()
+                ? () => handleSearchSubmit()
+                : handleSearchIconClick
+            }
+          />
+          <form onSubmit={handleSearchSubmit} style={{ width: "100%" }}>
             <input
               ref={searchInputRef}
               type="text"
@@ -219,36 +275,52 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
           </form>
         </SearchInputContainer>
 
-        {renderPrimaryAction()} {/* Render the role-specific primary action button */}
+        {renderPrimaryAction()}
 
-        {/* Regular Icon Links for common actions */}
-        {userRole === 'superAdmin' && ( // Example: Settings cog only for Super Admin
-             <IconLink as="button" title="Platform Settings" onClick={() => onNavigate?.('/admin/settings/general')}>
-                <FaCog />
-            </IconLink>
+        {userRole === "admin" && ( // Example: Settings cog only for Admin
+          <IconLink
+            as="button"
+            title="Platform Settings"
+            onClick={() => navigate("/settings/general")} // Path relative to /admin base
+          >
+            <FaCog />
+          </IconLink>
         )}
 
         <IconLink as="button" title="View Storefront" onClick={onViewStore}>
           <FaStore />
         </IconLink>
 
-        <IconLink as="button" title="Notifications" onClick={onNotificationsClick}>
+        <IconLink
+          as="button"
+          title="Notifications"
+          onClick={onNotificationsClick}
+        >
           <FaBell />
           {/* Potential notification badge */}
         </IconLink>
 
         <UserProfile
+          as="button" // Assuming UserProfile can render as a button
           title="My Account & Options"
           onClick={() => {
-            // TODO: Implement user dropdown menu here
-            // For now, could navigate to profile or logout
-            // onNavigate?.(ROLES_CONFIG[userRole]?.profilePath || '/admin/settings/profile');
-            console.log('UserProfile clicked - to implement dropdown (e.g., profile, logout)');
-            onLogout?.(); // Temp: Direct logout
+            // Determine profile path relative to /admin base
+            const fullProfilePath =
+              ROLES_CONFIG[userRole]?.profilePath || "/admin/settings/profile";
+            const routerProfilePath = fullProfilePath.startsWith("/admin/")
+              ? fullProfilePath.substring("/admin".length)
+              : fullProfilePath;
+            navigate(routerProfilePath || "/settings/profile"); // Fallback just in case
           }}
         >
-          <img src={userAvatarSrc || `https://i.pravatar.cc/38?u=${userDisplayName.replace(/\s/g, "")}`} alt={`${userDisplayName} avatar`} />
-          <span>{userDisplayName}</span> {/* Display actual user name */}
+          <img
+            src={
+              userAvatarSrc ||
+              `https://i.pravatar.cc/38?u=${userDisplayName.replace(/\s/g, "")}`
+            }
+            alt={`${userDisplayName} avatar`}
+          />
+          <span>{userDisplayName}</span>
         </UserProfile>
       </HeaderRight>
     </AdminHeaderContainer>

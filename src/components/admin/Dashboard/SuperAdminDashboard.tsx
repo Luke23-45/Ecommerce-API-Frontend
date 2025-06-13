@@ -28,7 +28,7 @@ import { AdminButton } from "./Common/Common.styles";
 
 import { rgba } from "polished";
 
-const dummySuperAdminMetrics = {
+const dummyadminMetrics = {
   platformGrossSales: "$1,850,000",
   salesTrend: 22.8,
   totalUsers: "5,000",
@@ -38,7 +38,7 @@ const dummySuperAdminMetrics = {
   activeVendors: "120",
   vendorTrend: 0,
 };
-const dummySuperAdminActivity = [
+const dummyadminActivity = [
   {
     id: "sa1",
     name: "New Vendor (Global Goods)",
@@ -174,7 +174,7 @@ const AlertListItem = styled.li`
   }
 `;
 
-const SuperAdminDashboard: React.FC = () => {
+const AdminDashboard: React.FC = () => {
   const navigateTo = (path: string, message?: string) => {
     console.log(message || `Navigating to: ${path}`);
   };
@@ -252,44 +252,44 @@ const SuperAdminDashboard: React.FC = () => {
         {/* Spans full width */}
         <MetricCard
           title="Platform Gross Sales"
-          value={dummySuperAdminMetrics.platformGrossSales}
-          trendPercentage={dummySuperAdminMetrics.salesTrend}
+          value={dummyadminMetrics.platformGrossSales}
+          trendPercentage={dummyadminMetrics.salesTrend}
           trendPeriod="since last quarter"
           onClick={() =>
             navigateTo(
               "/admin/reports/global-sales",
-              "SuperAdmin: View Global Sales Report"
+              "admin: View Global Sales Report"
             )
           }
         />
         <MetricCard
           title="Total Registered Users"
-          value={dummySuperAdminMetrics.totalUsers}
-          trendPercentage={dummySuperAdminMetrics.userTrend}
+          value={dummyadminMetrics.totalUsers}
+          trendPercentage={dummyadminMetrics.userTrend}
           trendPeriod="since last year"
           onClick={() =>
-            navigateTo("/admin/users/all", "SuperAdmin: View All Users")
+            navigateTo("/admin/users/all", "admin: View All Users")
           }
         />
         <MetricCard
           title="Total Live Products"
-          value={dummySuperAdminMetrics.liveProducts}
-          trendPercentage={dummySuperAdminMetrics.productTrend}
+          value={dummyadminMetrics.liveProducts}
+          trendPercentage={dummyadminMetrics.productTrend}
           trendPeriod="across all vendors"
           onClick={() =>
             navigateTo(
               "/admin/products/manage-all",
-              "SuperAdmin: Manage All Products"
+              "admin: Manage All Products"
             )
           }
         />
         <MetricCard
           title="Active Vendor Stores"
-          value={dummySuperAdminMetrics.activeVendors}
-          trendPercentage={dummySuperAdminMetrics.vendorTrend}
+          value={dummyadminMetrics.activeVendors}
+          trendPercentage={dummyadminMetrics.vendorTrend}
           trendPeriod="new registrations"
           onClick={() =>
-            navigateTo("/admin/vendors/manage", "SuperAdmin: Manage Vendors")
+            navigateTo("/admin/vendors/manage", "admin: Manage Vendors")
           }
         />
       </MetricCardsContainer>
@@ -327,7 +327,7 @@ const SuperAdminDashboard: React.FC = () => {
             onClick={() =>
               navigateTo(
                 "/admin/metrics/platform",
-                "SuperAdmin: View All Platform Metrics"
+                "admin: View All Platform Metrics"
               )
             }
           >
@@ -336,7 +336,7 @@ const SuperAdminDashboard: React.FC = () => {
         </DashboardContentCard>
         <DashboardContentCard title="Recent Platform Activity">
           <RecentActivity
-            activities={dummySuperAdminActivity}
+            activities={dummyadminActivity}
             itemsToShow={3}
           />
           <AdminButton
@@ -345,7 +345,7 @@ const SuperAdminDashboard: React.FC = () => {
             onClick={() =>
               navigateTo(
                 "/admin/logs/activity",
-                "SuperAdmin: View Full Activity Log"
+                "admin: View Full Activity Log"
               )
             }
           >
@@ -413,7 +413,7 @@ const SuperAdminDashboard: React.FC = () => {
             onClick={() =>
               navigateTo(
                 "/admin/alerts/manage",
-                "SuperAdmin: Manage All Alerts"
+                "admin: Manage All Alerts"
               )
             }
             style={{ marginTop: "20px", width: "100%" }}
@@ -456,7 +456,7 @@ const SuperAdminDashboard: React.FC = () => {
             onClick={() =>
               navigateTo(
                 "/admin/support/tickets",
-                "SuperAdmin: Go to Support Tickets"
+                "admin: Go to Support Tickets"
               )
             }
           >
@@ -468,7 +468,7 @@ const SuperAdminDashboard: React.FC = () => {
             onClick={() =>
               navigateTo(
                 "/admin/support/faq/manage",
-                "SuperAdmin: FAQ Management"
+                "admin: FAQ Management"
               )
             }
           >
@@ -489,4 +489,4 @@ const theme = {
   },
 } as DefaultTheme;
 
-export default SuperAdminDashboard;
+export default AdminDashboard;

@@ -44,6 +44,7 @@ import {
 // Helper utilities
 import { getValidNextStatuses, isRejectionReasonRequired } from '@/utils/applicationUtils';
 import { useNotification } from '@/contexts/NotificationContext';
+import { useNavigate, useParams } from 'react-router-dom';
 
 
 // --- Fallback Styled Components (Define in Detail.styles.ts or a shared file preferably) ---
@@ -71,17 +72,7 @@ const FallbackErrorMessage = styled.div`
 
 type ApplicationActionForHeader = 'approve' | 'reject' | 'suspend';
 
-interface SellerApplicationDetailProps {
-  applicationId: string | null;
-  onBackToList: () => void;
-  onApplicationAction: (
-    applicationId: string,
-    applicationType: 'seller' | 'vendor',
-    action: ApplicationActionForHeader,
-    applicantName: string,
-    rejectionReason?: string
-  ) => void;
-}
+
 
 const ALL_POSSIBLE_STATUS_LABELS: Record<IndividualSellerProfileStatus, string> = {
   submitted: 'Submitted (Needs Review)',
@@ -95,17 +86,15 @@ const ALL_POSSIBLE_STATUS_LABELS: Record<IndividualSellerProfileStatus, string> 
   closed: 'Closed by Admin',
 };
 
-const SellerApplicationDetail: React.FC<SellerApplicationDetailProps> = ({
-  applicationId,
-  onBackToList,
-  onApplicationAction,
-}) => {
+const SellerApplicationDetail = () => {
   const theme = useTheme();
+    const { applicationId } = useParams();
+
   const { showNotification } = useNotification(); // Get notification function
 
   const [newStatus, setNewStatus] = useState<IndividualSellerProfileStatus | ''>('');
   const [rejectionReason, setRejectionReason] = useState<string>('');
-
+const navigate = useNavigate();
   const {
     data: application, // This is IIndividualSellerProfile | undefined
     error: fetchError,
@@ -167,9 +156,12 @@ const SellerApplicationDetail: React.FC<SellerApplicationDetailProps> = ({
     }
   }, []);
 
-  const handleRejectionReasonChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => { // Accept Input too
+  const handleRejectionReasonChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => { 
     setRejectionReason(e.target.value);
   }, []);
+  const onBackToList = () =>{
+    navigate('/admin/applications/sellers');
+  }
 
   const handleUpdateStatusFromDropdown = useCallback(async () => {
     if (!application || !newStatus || newStatus === '') {
@@ -264,6 +256,10 @@ const SellerApplicationDetail: React.FC<SellerApplicationDetailProps> = ({
 
   const currentAppStatus = application.status;
   const validNextForHeader = getValidNextStatuses(currentAppStatus);
+
+
+
+  
 
   return (
     <DetailContainer>

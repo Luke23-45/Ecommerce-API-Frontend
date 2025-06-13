@@ -41,11 +41,16 @@ const initialOptionState: Omit<IAttributeOptionCreatePayload, 'attributeId'> = {
   swatchValue: '',
 };
 
-const AttributeOptionForm: React.FC = ({attributeId,optionId}) => {
+const AttributeOptionForm: React.FC = () => {
 
-  console.log(attributeId,optionId,"000000000000")
+  const urlsParams = useParams();
   const navigate = useNavigate();
-  // const { attributeId, optionId } = useParams<{ attributeId: string; optionId?: string }>();
+
+  console.log(urlsParams);
+
+  const attributeId = urlsParams.attributeId
+  const optionId = urlsParams.optionId;
+
   const isEditMode = !!optionId;
   const { showNotification } = useNotification();
   const theme = useTheme();
@@ -69,7 +74,7 @@ const AttributeOptionForm: React.FC = ({attributeId,optionId}) => {
   const createOptionMutation = useCreateAttributeOption({
     onSuccess: (response) => {
       showNotification(`Option "${response.data.value}" created successfully!`, 'success');
-      if (attributeId) navigate(`/admin/attributes/${attributeId}/options`);
+      if (attributeId) navigate(`/admin/products/attributes/${attributeId}/options`);
     },
     onError: (error: any) => {
       setFormError(error.message || 'Failed to create option.');
@@ -80,7 +85,7 @@ const AttributeOptionForm: React.FC = ({attributeId,optionId}) => {
   const updateOptionMutation = useUpdateAttributeOption({
     onSuccess: (response) => {
       showNotification(`Option "${response.data.value}" updated successfully!`, 'success');
-      if (attributeId) navigate(`/admin/attributes/${attributeId}/options`);
+      if (attributeId) navigate(`/admin/products/attributes/${attributeId}/options`);
     },
     onError: (error: any) => {
       setFormError(error.message || 'Failed to update option.');
@@ -136,7 +141,8 @@ const AttributeOptionForm: React.FC = ({attributeId,optionId}) => {
   };
 
   const handleCancel = () => {
-    if (attributeId) navigate(`/admin/attributes/${attributeId}/options`);
+    console.log('-----------===')
+    if (attributeId) navigate(`/admin/products/attributes/${attributeId}/options`);
     else navigate('/admin/attributes'); 
   };
 
@@ -153,7 +159,7 @@ const AttributeOptionForm: React.FC = ({attributeId,optionId}) => {
              <FormAlert $type="error">
                 Parent attribute (ID: {attributeId}) not found. Cannot manage options.
              </FormAlert>
-             <AdminButton $variant="secondary" onClick={() => navigate('/admin/attributes')}>
+             <AdminButton $variant="secondary" onClick={handleCancel}>
                 <FaArrowLeft /> Back to Attributes
             </AdminButton>
         </OptionFormContainer>

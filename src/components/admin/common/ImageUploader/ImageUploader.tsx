@@ -1,136 +1,240 @@
-// src/components/Admin/Common/ImageUploader/ImageUploader.tsx
-import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { FaUpload, FaTrashAlt } from 'react-icons/fa';
+// src/components/common/ImageUploader/ImageUploader.tsx
+
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { FaUpload, FaTrashAlt, FaPlus } from "react-icons/fa";
 import {
-  ImageUploaderContainer,
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "react-beautiful-dnd";
+import {
+  UploaderWrapper,
+  DropzoneContainer,
   UploadInput,
+  UploadIcon,
   UploadText,
   ImagePreviewGrid,
-  ImagePreview,
-} from './ImageUploader.styles';
+  ImagePreviewContainer,
+  DeleteButton,
+  PrimaryBadge,
+} from "./ImageUploader.styles";
+
+type ImageRecord = {
+  id: string;
+  type: "EXISTING" | "NEW";
+  url: string;
+  file?: File;
+};
 
 interface ImageUploaderProps {
-  initialImageUrls?: string[]; // Existing images (URLs)
-  onImagesChange: (newImageFiles: File[]) => void; // Callback for newly selected files (File objects)
-  onImageUrlsDelete?: (urlToDelete: string) => void; // Callback when an existing URL is deleted
+  instanceId: string;
+  initialImageUrls?: string[];
+  onImagesUpdate: (newFiles: File[], deletedPublicIds: string[]) => void;
   maxFiles?: number;
-  accept?: string; // e.g., "image/jpeg, image/png"
+  disabled?: boolean;
+  isMini?: boolean;
+  label?: string;
+  primaryImageIndex?: number;
 }
 
 const ImageUploader: React.FC<ImageUploaderProps> = ({
+  instanceId,
   initialImageUrls = [],
-  onImagesChange,
-  onImageUrlsDelete,
-  maxFiles = 5,
-  accept = 'image/*',
+  onImagesUpdate,
+  maxFiles = 10,
+  disabled = false,
+  isMini = false,
+  label = "Upload or drag-and-drop images",
+  primaryImageIndex = 0,
 }) => {
+  const [images, setImages] = useState<ImageRecord[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [currentImageFiles, setCurrentImageFiles] = useState<File[]>([]); // For new files
-  const [displayedImageUrls, setDisplayedImageUrls] = useState<string[]>(initialImageUrls); // For both existing and new preview URLs
 
-  // Update displayedImageUrls when initialImageUrls prop changes (e.g., when editing different products)
+  // This effect synchronizes the internal state whenever the initial URLs from the parent change.
+  // This is crucial for initializing the component correctly in an "edit" form.
   useEffect(() => {
-    setDisplayedImageUrls(initialImageUrls);
-    // When prop changes, reset new files if appropriate (e.g., switching products)
-    setCurrentImageFiles([]);
+    const initialRecords: ImageRecord[] = initialImageUrls.map((url) => ({
+      id: url, // Use the stable URL as the ID for existing images
+      type: "EXISTING",
+      url,
+    }));
+    setImages(initialRecords);
   }, [initialImageUrls]);
 
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (files && files.length > 0) {
-      const selectedFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+  // This effect is for cleanup. It revokes the temporary object URLs for newly added
+  // files to prevent memory leaks when the component unmounts.
+  useEffect(() => {
+    return () => {
+      images.forEach((image) => {
+        if (image.type === "NEW") {
+          URL.revokeObjectURL(image.url);
+        }
+      });
+    };
+  }, [images]);
+
+  // --- ** THE DEFINITIVE FIX ** ---
+  // The `updateParent` function is the core of the fix. It's stable because its dependency
+  // `onImagesUpdate` is memoized in the parent. It calculates the final state and calls the parent.
+  const updateParent = useCallback(
+    (updatedImages: ImageRecord[]) => {
+      const newFiles = updatedImages
+        .filter((img) => img.type === "NEW" && img.file)
+        .map((img) => img.file!);
       
-      const newFilesCount = selectedFiles.length + displayedImageUrls.length + currentImageFiles.length;
-      if (newFilesCount > maxFiles) {
-        alert(`You can only upload a maximum of ${maxFiles} images.`);
-        return;
-      }
+      const currentExistingUrls = new Set(
+        updatedImages.filter((img) => img.type === "EXISTING").map((img) => img.url)
+      );
+    
+      const deletedPublicIds = initialImageUrls.filter(
+        (initialUrl) => !currentExistingUrls.has(initialUrl)
+      );
+      
+      onImagesUpdate(newFiles, deletedPublicIds);
+    },
+    [initialImageUrls, onImagesUpdate]
+  );
 
-      setCurrentImageFiles(prevFiles => {
-        const updatedFiles = [...prevFiles, ...selectedFiles];
-        onImagesChange(updatedFiles); // Inform parent about new file objects
-        return updatedFiles;
+  // --- Handlers now call `updateParent` after setting their own state ---
+  const handleFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFiles = event.target.files ? Array.from(event.target.files) : [];
+      if (selectedFiles.length === 0) return;
+
+      setImages((currentImages) => {
+        if (currentImages.length + selectedFiles.length > maxFiles) {
+          alert(`You can only upload a maximum of ${maxFiles} images.`);
+          return currentImages;
+        }
+        const newImageRecords: ImageRecord[] = selectedFiles.map((file) => ({
+          id: `new-${file.name}-${Date.now()}-${Math.random()}`,
+          type: "NEW",
+          url: URL.createObjectURL(file),
+          file,
+        }));
+        const updated = [...currentImages, ...newImageRecords];
+        updateParent(updated); // Notify parent
+        return updated;
       });
+      event.target.value = "";
+    },
+    [maxFiles, updateParent]
+  );
 
-      // For preview purposes, combine existing URLs with new file URLs
-      setDisplayedImageUrls(prevUrls => [
-        ...prevUrls,
-        ...selectedFiles.map(file => URL.createObjectURL(file)),
-      ]);
-    }
-  }, [maxFiles, onImagesChange, displayedImageUrls.length, currentImageFiles.length]);
-
-  const handleDeleteImage = useCallback((indexToDelete: number) => {
-    // Determine if it's an initial URL or a newly added file
-    const isInitialUrl = indexToDelete < initialImageUrls.length;
-    const urlToDelete = displayedImageUrls[indexToDelete];
-
-    if (isInitialUrl && onImageUrlsDelete) {
-      onImageUrlsDelete(urlToDelete); // Callback for deleting an existing image by its URL
-    } else {
-      // It's a newly added file, remove it from currentImageFiles
-      const fileIndex = indexToDelete - initialImageUrls.length; // Index within the new files array
-      setCurrentImageFiles(prevFiles => {
-        const updatedFiles = prevFiles.filter((_, idx) => idx !== fileIndex);
-        onImagesChange(updatedFiles); // Update parent about remaining new file objects
-        return updatedFiles;
+  const handleDelete = useCallback(
+    (idToDelete: string) => {
+      setImages((currentImages) => {
+        const updated = currentImages.filter((img) => img.id !== idToDelete);
+        updateParent(updated); // Notify parent
+        return updated;
       });
-    }
+    },
+    [updateParent]
+  );
 
-    // Update local display preview
-    setDisplayedImageUrls(prevUrls => prevUrls.filter((_, idx) => idx !== indexToDelete));
+  const handleDragEnd = useCallback(
+    (result: DropResult) => {
+      if (!result.destination) return;
+      setImages((currentImages) => {
+        const items = Array.from(currentImages);
+        const [reorderedItem] = items.splice(result.source.index, 1);
+        items.splice(result.destination!.index, 0, reorderedItem);
+        updateParent(items); // Notify parent
+        return items;
+      });
+    },
+    [updateParent]
+  );
 
-    // Revoke object URL for newly added files that are removed (optional but good for memory)
-    if (!isInitialUrl) {
-      URL.revokeObjectURL(urlToDelete);
-    }
-
-  }, [initialImageUrls, displayedImageUrls, onImagesChange, onImageUrlsDelete]);
-
-  const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const files = event.dataTransfer.files;
-    if (fileInputRef.current) {
-        fileInputRef.current.files = files; // Assign files to input element for reusability
-        handleFileChange({ target: fileInputRef.current } as React.ChangeEvent<HTMLInputElement>); // Trigger existing change handler
-    }
-  }, [handleFileChange]);
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (disabled || !fileInputRef.current) return;
+      fileInputRef.current.files = event.dataTransfer.files;
+      handleFileChange({ target: fileInputRef.current } as React.ChangeEvent<HTMLInputElement>);
+    },
+    [disabled, handleFileChange]
+  );
 
   const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault(); // Prevent default to allow drop
+    event.preventDefault();
     event.stopPropagation();
   }, []);
 
   return (
-    <div onDrop={handleDrop} onDragOver={handleDragOver}>
-      <ImageUploaderContainer onClick={() => fileInputRef.current?.click()}>
-        <UploadInput
-          type="file"
-          multiple
-          accept={accept}
-          ref={fileInputRef}
-          onChange={handleFileChange}
-        />
-        <FaUpload size={48} />
-        <UploadText>
-          Drag & Drop your images here, or <span>Click to Browse</span> (Max {maxFiles})
-        </UploadText>
-      </ImageUploaderContainer>
-      
-      {displayedImageUrls.length > 0 && (
-        <ImagePreviewGrid>
-          {displayedImageUrls.map((url, index) => (
-            <ImagePreview key={index}>
-              <img src={url} alt={`Product Image ${index + 1}`} />
-              <button type="button" onClick={(e) => { e.stopPropagation(); handleDeleteImage(index); }} aria-label="Delete image">
-                <FaTrashAlt />
-              </button>
-            </ImagePreview>
-          ))}
-        </ImagePreviewGrid>
-      )}
-    </div>
+    <UploaderWrapper isMini={isMini}>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        {!isMini && (
+          <DropzoneContainer
+            isDraggingOver={false}
+            isDisabled={disabled}
+            isMini={isMini}
+            onClick={() => !disabled && fileInputRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+          >
+            <UploadInput
+              type="file"
+              multiple
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              disabled={disabled}
+            />
+            <UploadIcon isMini={isMini}><FaUpload /></UploadIcon>
+            <UploadText isMini={isMini}>
+              {label} or <span>Click to Browse</span> (Max {maxFiles})
+            </UploadText>
+          </DropzoneContainer>
+        )}
+
+        <Droppable droppableId={`image-grid-${instanceId}`} direction="horizontal">
+          {(provided) => (
+            <ImagePreviewGrid {...provided.droppableProps} ref={provided.innerRef} isMini={isMini}>
+              {images.map((image, index) => (
+                <Draggable key={image.id} draggableId={image.id} index={index} isDragDisabled={!!disabled}>
+                  {(provided, snapshot) => (
+                    <ImagePreviewContainer
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      isDragging={snapshot.isDragging}
+                      isMini={isMini}
+                    >
+                      <img src={image.url} alt={`Preview ${index + 1}`} />
+                      {index === primaryImageIndex && (<PrimaryBadge>MAIN</PrimaryBadge>)}
+                      {!disabled && (
+                        <DeleteButton type="button" onClick={() => handleDelete(image.id)}>
+                          <FaTrashAlt size={12} />
+                        </DeleteButton>
+                      )}
+                    </ImagePreviewContainer>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </ImagePreviewGrid>
+          )}
+        </Droppable>
+
+        {isMini && images.length < maxFiles && !disabled && (
+          <DropzoneContainer
+            isDraggingOver={false}
+            isDisabled={disabled}
+            isMini={isMini}
+            onClick={() => fileInputRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            style={{ marginTop: "8px", padding: "8px" }}
+          >
+            <UploadInput type="file" multiple accept="image/*" ref={fileInputRef} onChange={handleFileChange} disabled={disabled} />
+            <UploadIcon isMini={isMini} style={{ marginBottom: "0", fontSize: "1.2rem" }}><FaPlus /></UploadIcon>
+          </DropzoneContainer>
+        )}
+      </DragDropContext>
+    </UploaderWrapper>
   );
 };
 

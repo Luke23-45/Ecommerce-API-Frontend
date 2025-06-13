@@ -18,7 +18,11 @@ import {
   HowItWorksGrid,
   FAQSectionWrapper
 } from "./BecomeAPartnerPage.styles";
+
+
 import ProcessStep from '../../components/BecomeAPartnerPage/ProcessStep/ProcessStep'; // Updated import
+
+
 import PathwayCard from "@/components/BecomeAPartnerPage/PathwayCard/PathwayCard";
 import HeroPartnerSection from "../../components/BecomeAPartnerPage/HeroPartnerSection/HeroPartnerSection";
 

@@ -1,17 +1,16 @@
-
-
 import {
-type  NavItem, 
-type  UserRole,
+  type NavItem,
+  type UserRole,
   ROLES_CONFIG,
   ALL_NAV_ITEMS,
-} from '@/config/rolesConfig';
-
+} from "@/config/rolesConfig";
 
 const getRoleConfiguration = (userRole: UserRole) => {
   const roleConfig = ROLES_CONFIG[userRole];
   if (!roleConfig) {
-    console.error(`[NavigationUtils] Configuration for role "${userRole}" not found.`);
+    console.error(
+      `[NavigationUtils] Configuration for role "${userRole}" not found.`
+    );
     throw new Error(`Configuration for role "${userRole}" not found.`);
   }
   return roleConfig;
@@ -28,47 +27,45 @@ const getRoleConfiguration = (userRole: UserRole) => {
  * @param items - The list of NavItems to search within.
  * @returns The most relevant NavItem if found, otherwise undefined.
  */
-export const findNavItemByPath = (currentActualPath: string, items: NavItem[] = ALL_NAV_ITEMS): NavItem | undefined => {
+export const findNavItemByPath = (
+  currentActualPath: string,
+  items: NavItem[] = ALL_NAV_ITEMS
+): NavItem | undefined => {
   let bestMatch: NavItem | undefined = undefined;
 
   for (const item of items) {
-    
     if (item.path === currentActualPath) {
-      return item; 
+      return item;
     }
 
-    
-    
-    
-    
-    
-    if (currentActualPath.startsWith(item.path) &&
-        (item.path.endsWith('/') || currentActualPath.charAt(item.path.length) === '/' || currentActualPath.length === item.path.length)) {
-      
-      
+    if (
+      currentActualPath.startsWith(item.path) &&
+      (item.path.endsWith("/") ||
+        currentActualPath.charAt(item.path.length) === "/" ||
+        currentActualPath.length === item.path.length)
+    ) {
       if (!bestMatch || item.path.length > bestMatch.path.length) {
         bestMatch = item;
       }
     }
 
-    
     if (item.children) {
       const foundInChild = findNavItemByPath(currentActualPath, item.children);
       if (foundInChild) {
-        
-        
-        if (!bestMatch || (foundInChild.path.length > bestMatch.path.length && currentActualPath.startsWith(foundInChild.path))) {
-             bestMatch = foundInChild;
+        if (
+          !bestMatch ||
+          (foundInChild.path.length > bestMatch.path.length &&
+            currentActualPath.startsWith(foundInChild.path))
+        ) {
+          bestMatch = foundInChild;
         } else if (foundInChild.path === currentActualPath) {
-            
-            return foundInChild;
+          return foundInChild;
         }
       }
     }
   }
   return bestMatch;
 };
-
 
 /**
  * Checks if a given path is accessible to a specific user role.
@@ -78,41 +75,48 @@ export const findNavItemByPath = (currentActualPath: string, items: NavItem[] = 
  * @param userRole - The role of the user.
  * @returns True if the path (or its base static part) corresponds to an allowed NavItem for the role, false otherwise.
  */
-export const isPathAccessibleForRole = (currentActualPath: string, userRole: UserRole): boolean => {
+export const isPathAccessibleForRole = (
+  currentActualPath: string,
+  userRole: UserRole
+): boolean => {
   try {
     const { allowedNavSections } = getRoleConfiguration(userRole);
     const allowedSectionsSet = new Set(allowedNavSections);
 
-    
     const navItemConfig = findNavItemByPath(currentActualPath, ALL_NAV_ITEMS);
 
     if (!navItemConfig) {
-      console.warn(`[isPathAccessibleForRole] No NavItem config found matching path (or base path of): "${currentActualPath}". Access denied by default.`);
-      return false; 
+      console.warn(
+        `[isPathAccessibleForRole] No NavItem config found matching path (or base path of): "${currentActualPath}". Access denied by default.`
+      );
+      return false;
     }
 
-    
     const isAllowed = allowedSectionsSet.has(navItemConfig.sectionId);
     if (!isAllowed) {
-        console.warn(`[isPathAccessibleForRole] Path "${currentActualPath}" resolved to NavItem with sectionId "${navItemConfig.sectionId}", which is NOT ALLOWED for role "${userRole}".`);
+      console.warn(
+        `[isPathAccessibleForRole] Path "${currentActualPath}" resolved to NavItem with sectionId "${navItemConfig.sectionId}", which is NOT ALLOWED for role "${userRole}".`
+      );
     }
     return isAllowed;
-
   } catch (error) {
-    console.error(`[NavigationUtils] Error checking path accessibility for role "${userRole}" and path "${currentActualPath}":`, error);
-    return false; 
+    console.error(
+      `[NavigationUtils] Error checking path accessibility for role "${userRole}" and path "${currentActualPath}":`,
+      error
+    );
+    return false;
   }
 };
 
-
 export const getFilteredNavItems = (userRole: UserRole): NavItem[] => {
-  
   try {
     const { allowedNavSections } = getRoleConfiguration(userRole);
     const allowedSectionsSet = new Set(allowedNavSections);
 
     if (allowedSectionsSet.size === 0) {
-      console.warn(`[NavigationUtils] No navigation sections allowed for role "${userRole}". Returning empty list.`);
+      console.warn(
+        `[NavigationUtils] No navigation sections allowed for role "${userRole}". Returning empty list.`
+      );
       return [];
     }
 
@@ -135,7 +139,10 @@ export const getFilteredNavItems = (userRole: UserRole): NavItem[] => {
           if (isItemAllowed) {
             return {
               ...item,
-              children: filteredChildren && filteredChildren.length > 0 ? filteredChildren : undefined,
+              children:
+                filteredChildren && filteredChildren.length > 0
+                  ? filteredChildren
+                  : undefined,
             };
           }
           return null;
@@ -144,7 +151,10 @@ export const getFilteredNavItems = (userRole: UserRole): NavItem[] => {
     };
     return filterNavItemsRecursive(ALL_NAV_ITEMS, allowedSectionsSet);
   } catch (error) {
-    console.error(`[NavigationUtils] Error generating filtered nav items for role "${userRole}":`, error);
+    console.error(
+      `[NavigationUtils] Error generating filtered nav items for role "${userRole}":`,
+      error
+    );
     return [];
   }
 };

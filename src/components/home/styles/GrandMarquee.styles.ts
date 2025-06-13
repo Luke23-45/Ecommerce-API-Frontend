@@ -1,10 +1,21 @@
 
 import styled, { css, type DefaultTheme, keyframes } from 'styled-components';
 import { rgba, lighten, darken, transparentize } from 'polished';
+import { FaSpinner } from 'react-icons/fa';
 
 const inputFocusInnerGlow = keyframes`
     from { box-shadow: inset 0 0 0 0 ${props => rgba(props.theme.colors.accent1, 0.0)}; }
     to { box-shadow: inset 0 0 0 2px ${props => rgba(props.theme.colors.accent1, 0.1)}; }
+`;
+const spin = keyframes`
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+// Add this styled component for the spinner icon
+export const SpinnerIcon = styled(FaSpinner)`
+  animation: ${spin} 1s linear infinite;
 `;
 
 const itemHoverGlow = keyframes`

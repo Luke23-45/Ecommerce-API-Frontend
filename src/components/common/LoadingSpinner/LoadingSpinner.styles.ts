@@ -42,3 +42,17 @@ export const SpinnerText = styled.span`
     font-size: ${(props) => getTheme(props).typography?.admin?.sizes?.small || '0.875rem'};
     line-height: 1.4;
 `;
+export const FullscreenSpinnerWrapper = styled.div`
+  position: fixed; // Or 'absolute' if you want it to center within a relative parent
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.7); // A semi-transparent white backdrop
+  z-index: 9999; // Ensure it's on top of everything
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+`;

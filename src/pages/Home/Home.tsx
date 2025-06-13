@@ -31,7 +31,7 @@ function Home() {
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles />
-      <PreHeader wishlistCount={3} />
+      {/* <PreHeader wishlistCount={3} />
       <GrandMarquee
         onSearch={handleFeSearch}
         onViewCart={handleViewCart}
@@ -39,7 +39,7 @@ function Home() {
         onSignInRegister={handleSignInRegister}
         cartItemCount={cartItemCount}
       />
-      <SecondaryNav />
+      <SecondaryNav /> */}
       <SpotlightBanner />
       <HeroPanorama />
       <CuratedFindsSection />

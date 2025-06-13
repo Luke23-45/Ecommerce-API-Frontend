@@ -12,7 +12,7 @@ interface ProductGridProps {
 
 const ProductGrid: React.FC<ProductGridProps> = ({ products, columnsInCurrentView }) => {
   if (!products || products.length === 0) {
-    return <S.NoProductsMessage>해당 조건에 맞는 상품이 없습니다.</S.NoProductsMessage>;
+    return <S.NoProductsMessage>There are no products matching your criteria.</S.NoProductsMessage>;
   }
 
   // Safety check for columnsInCurrentView, should be at least 1

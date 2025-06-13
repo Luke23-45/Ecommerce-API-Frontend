@@ -57,7 +57,7 @@ import {
 // This is the data for ONE product item in the Column 3 grid
 interface ProductCellData {
   id: string;
-  name: string; // e.g., "옆트임 남녀공용 메쉬원단 와이드 트임 팬츠 2p 세트 MDIP121LJ"
+  name: string; // e.g., "옆트임 남녀공용 메쉬$단 와이드 트임 팬츠 2p 세트 MDIP121LJ"
   price: number; // e.g., 19800
   originalPrice?: number;
   image: string; // Product image URL
@@ -78,9 +78,9 @@ interface PromoSlideData {
 
 interface KeywordData {
   id: string;
-  label: string; // e.g., "#원피스"
+  label: string; // e.g., "#$피스"
   link: string;
-  displayText: string; // e.g., "원피스"
+  displayText: string; // e.g., "$피스"
 }
 
 interface CanvasTrendData {
@@ -521,7 +521,7 @@ console.log("sectionDataProp.index ",sectionDataProp.index )
                                 ${product.originalPrice.toLocaleString()}
                               </s>
                             )}
-                            ${product.price.toLocaleString()}원{" "}
+                            ${product.price.toLocaleString()}${" "}
                             {/* Assuming price is in Won */}
                           </ProductCellPrice>
                           {product.shippingInfo && (

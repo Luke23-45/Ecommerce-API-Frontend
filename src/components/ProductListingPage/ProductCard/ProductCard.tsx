@@ -6,6 +6,7 @@ import { FaCoins } from 'react-icons/fa';
 import type { Product } from '../../data/mockData'; 
 
 import * as S from './ProductCard.styles';
+import { useNavigate } from 'react-router-dom';
 
 const renderStars = (rating: number = 0) => {
   const stars = [];
@@ -35,9 +36,15 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const productNameOnly = product.name?.split(',')[0].trim();
   const productVolumeInfo = product.name?.substring(productNameOnly.length)?.replace(/^,/, '').trim();
 
+  const navigate = useNavigate();
+
+  const navigateToDetail = (id:any) =>{
+    navigate(`/productid/${id}`)
+  }
+
 
   return (
-    <S.CardWrapper>
+    <S.CardWrapper onClick={() => navigateToDetail(product.id)}>
       <S.ImageLink href="#" title={product.name}>
         <S.ImageWrapper>
           <img src={product.imageUrl || `https://picsum.photos/seed/${product.id}/300/400`} alt={product.name} loading="lazy" />
@@ -53,7 +60,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
         {(product.discountPercentage && product.originalPrice) && (
           <S.DiscountOriginalPrice>
             {product.discountPercentage}%
-            <S.OriginalPriceStriked>{product.originalPrice.toLocaleString()}원</S.OriginalPriceStriked>
+            <S.OriginalPriceStriked>{product.originalPrice.toLocaleString()}$</S.OriginalPriceStriked>
           </S.DiscountOriginalPrice>
         )}
 

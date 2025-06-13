@@ -46,7 +46,7 @@ export interface RoleConfig {
   defaultDashboardPath: string;
 }
 
-export const USER_ROLES_LIST = ["superAdmin", "vendor", "seller"] as const;
+export const USER_ROLES_LIST = ["admin", "vendor", "individual_seller"] as const;
 export type UserRole = (typeof USER_ROLES_LIST)[number];
 
 export const ALL_NAV_ITEMS: NavItem[] = [
@@ -244,7 +244,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
 ];
 
 export const ROLES_CONFIG: Record<UserRole, RoleConfig> = {
-  superAdmin: {
+  admin: {
     defaultDashboardPath: "/admin/dashboard",
     allowedNavSections: [
       "dashboard",
@@ -284,7 +284,7 @@ export const ROLES_CONFIG: Record<UserRole, RoleConfig> = {
       "vendorReports",
     ],
   },
-  seller: {
+  individual_seller: {
     defaultDashboardPath: "/admin/dashboard",
     allowedNavSections: [
       "dashboard",

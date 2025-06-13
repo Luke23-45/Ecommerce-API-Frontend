@@ -21,16 +21,124 @@ import {
 
 import type{ Order, PaymentStatus, FulfillmentStatus } from '@/types/order';
 
-// REMOVED: Dummy Orders data is now sourced from AdminPage.tsx
 
+const mockId = (prefix: string) =>
+  `${prefix}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+
+const getGenericImage = (
+  seed: string,
+  width: number = 800,
+  height: number = 450,
+  tags: string = ""
+) =>
+  `https://picsum.photos/seed/${seed.replace(/\s/g, "-")}/${width}/${height}/?${tags}`;
+const allDummyOrders: Order[] = [
+  {
+    _id: mockId("ORD"),
+    customer: {
+      customerId: mockId("CUST"),
+      customerName: "Alice Johnson",
+      customerEmail: "alice@example.com",
+      customerPhone: "+1-555-123-4567",
+    },
+    orderItems: [
+      {
+        productId: mockId("PRD"),
+        productName: "Élan Console",
+        quantity: 1,
+        priceAtTimeOfPurchase: 580,
+        productMainImageUrl: getGenericImage("consoledesk", 100, 100),
+      },
+    ],
+    totalAmount: 580,
+    currency: "USD",
+    paymentStatus: "paid",
+    fulfillmentStatus: "processing",
+    shippingAddress: {
+      street: "123 Maple Ave",
+      city: "Springfield",
+      state: "IL",
+      zipCode: "62704",
+      country: "USA",
+    },
+    shippingMethod: "Standard Ground",
+    createdAt: "2023-10-25T10:00:00Z",
+    updatedAt: "2023-10-25T10:05:00Z",
+  },
+  {
+    _id: mockId("ORD"),
+    customer: {
+      customerId: mockId("CUST"),
+      customerName: "Bob Williams",
+      customerEmail: "bob@example.com",
+    },
+    orderItems: [
+      {
+        productId: mockId("PRD"),
+        productName: "Nordic Rug",
+        quantity: 1,
+        priceAtTimeOfPurchase: 280,
+        productMainImageUrl: getGenericImage("woolrug", 100, 100),
+      },
+    ],
+    totalAmount: 280,
+    currency: "USD",
+    paymentStatus: "paid",
+    fulfillmentStatus: "shipped",
+    trackingNumber: "FEDEX87654321",
+    carrier: "FedEx",
+    shippingAddress: {
+      street: "45 Oak Lane",
+      city: "Greenville",
+      state: "SC",
+      zipCode: "29601",
+      country: "USA",
+    },
+    shippingMethod: "Express Shipping",
+    createdAt: "2023-10-24T14:30:00Z",
+    updatedAt: "2023-10-24T15:00:00Z",
+  },
+  {
+    _id: mockId("ORD"),
+    customer: {
+      customerId: mockId("CUST"),
+      customerName: "Carol D.",
+      email: "carol@example.com",
+    },
+    orderItems: [
+      {
+        productId: mockId("PRD"),
+        productName: "Ceramic Bowl",
+        quantity: 3,
+        priceAtTimeOfPurchase: 45,
+        productMainImageUrl: getGenericImage("ceramicbowl", 100, 100),
+      },
+    ],
+    totalAmount: 135,
+    currency: "USD",
+    paymentStatus: "pending",
+    fulfillmentStatus: "processing",
+    shippingAddress: {
+      street: "78 Pine St",
+      city: "Harmony",
+      state: "KY",
+      zipCode: "40037",
+      country: "USA",
+    },
+    shippingMethod: "Standard",
+    createdAt: "2023-10-23T09:00:00Z",
+    updatedAt: "2023-10-23T09:10:00Z",
+  },
+];
 interface OrderListProps {
   ordersData: Order[]; // <--- NEW: Accept orders data via prop
   onViewOrderDetails: (orderId: string) => void;
 }
 
-const OrderList: React.FC<OrderListProps> = ({ ordersData, onViewOrderDetails }) => {
-  // Use `ordersData` from props as the source for the list
-  const [orders, setOrders] = useState<Order[]>(ordersData); // Use useState to allow internal filtering/sorting
+const OrderList: React.FC<OrderListProps> = ({ onViewOrderDetails }) => {
+
+  const ordersData = allDummyOrders;
+  const [orders, setOrders] = useState<Order[]>(allDummyOrders); // Use useState to allow internal filtering/sorting
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPaymentStatus, setFilterPaymentStatus] = useState('all');
   const [filterFulfillmentStatus, setFilterFulfillmentStatus] = useState('all');

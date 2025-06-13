@@ -18,7 +18,6 @@ interface FormSectionWrapperProps {
 
 // These exports allow direct use of nested styled components by parent modules
 export { FormLabel, FieldGroup, MultiFieldRow }; 
-
 const FormSectionWrapper: React.FC<FormSectionWrapperProps> = ({ title, children, actions }) => {
     return (
         <FormSectionContainer>

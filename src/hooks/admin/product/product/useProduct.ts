@@ -1,215 +1,345 @@
+// src/hooks/admin/product/useProduct.ts
+
 import {
   useQuery,
   useMutation,
   useQueryClient,
   type UseQueryOptions,
   type UseMutationOptions,
-  // type QueryKey, // Not explicitly needed due to ReturnType
 } from "@tanstack/react-query";
-// import { useSelector } from "react-redux"; // Uncomment if using Redux for auth state
+
 
 import {
   // Product API functions
   createProductApi,
-  getPaginatedProducts,
-  getProductById,
-  getProductBySlug,
-  updateProductApi,
-  deleteProductApi,
-  type ProductApiListParams,
-} from "@/api/admin/product/product/productApi"; 
+  type ListProductsParams,
+  type SearchProductsParams,
+  type UpdateInventoryData,
+} from "@/api/admin/product/product/productApi";
 
-// import {
-//   // Main product types for payloads and responses
-//   // type IProductCreateFormState, // Mutation variable will be FormData
-//   // type IProductUpdateFormState, // Mutation variable will be FormData
-//   type IProductResponse,
-//   // Generic API types (assuming they are in product types or a shared api types file)
-//   type ApiResponse,
-//   type IPaginatedData,
-// } from "@/types/product"; // Adjust path
-// // import { type RootState } from "@/store"; // Uncomment if using Redux
+import type { IProductResponse, IProductListItemData, IProductVariationFormState } from "@/types/product.types";
+import type{ ApiResponse } from "@/types/attribute";
+import type{ IPaginatedData } from "@/types/attribute";
 
+import {
+  type CreateProductDTO,
+  type IProductDocument,
+  type IProductVariation,
+  type UpdateProductDTO,
 
-import type{ IProductResponse } from "@/types/product.types";
-import {type ApiResponse,type IPaginatedData } from "@/types/attribute";
-// --- Query Keys ---
-
+} from "@/types/product"; 
+import { type IPaginatedProductsResult } from "@/types/product.types";
+import { productApi } from "@/api/admin/product/product/productApi";
 export const productKeys = {
+  // Key for all product-related queries
   all: ["products"] as const,
-  paginated: (params?: object) => [...productKeys.all, "paginated", params || {}] as const,
-  detailById: (id?: string) => [...productKeys.all, "detail", "id", id || "undefinedProductId"] as const,
-  detailBySlug: (slug?: string) => [...productKeys.all, "detail", "slug", slug || "undefinedProductSlug"] as const,
-  // Add more specific keys if needed, e.g., for variations, related products etc.
+
+  // Key for paginated lists of products. Unique per set of parameters.
+  paginated: (params: ListProductsParams = {}) =>
+    [...productKeys.all, "list", params] as const,
+
+  // Key for paginated storefront lists.
+  paginatedStorefront: (params: ListProductsParams = {}) =>
+    [...productKeys.all, "list-storefront", params] as const,
+
+  // Key for a single product's details fetched by its ID.
+  detailById: (id: string | undefined) =>
+    [...productKeys.all, "detail", id] as const,
+  search: (params: SearchProductsParams = {}) => [...productKeys.all, "search", params] as const, // <-- ** NEW SEARCH KEY **
+
+  // Key for a single product's details fetched by its slug.
+  detailBySlug: (slug: string | undefined) =>
+    [...productKeys.all, "detail-slug", slug] as const,
 };
 
-// --- Type Definitions for Hook Options and Query Keys ---
-
+// --- Type Definitions for Hook Options ---
+// These make the hook signatures cleaner and more readable.
 type PaginatedProductsQueryKey = ReturnType<typeof productKeys.paginated>;
-type ProductByIdQueryKey = ReturnType<typeof productKeys.detailById>;
-type ProductBySlugQueryKey = ReturnType<typeof productKeys.detailBySlug>;
-
 
 // --- Product React Query Hooks ---
 
-/**
- * Hook to create a new product.
- * Mutation function expects FormData.
- */
+
 export const useCreateProduct = (
   options?: UseMutationOptions<ApiResponse<IProductResponse>, Error, FormData>
 ) => {
-  const queryClient = useQueryClient();
-  return useMutation<ApiResponse<IProductResponse>, Error, FormData>({ // Variable is FormData
-    mutationFn: createProductApi,
-    onSuccess: (response) => {
-      console.log("Product created successfully via hook:", response.data);
-      // Invalidate queries that display lists of products
-      queryClient.invalidateQueries({ queryKey: productKeys.paginated() });
-      queryClient.invalidateQueries({ queryKey: productKeys.all }); // Broader invalidation
 
-      // Optionally, pre-populate the cache for the newly created product
-      if (response.data?.id) {
-        queryClient.setQueryData(productKeys.detailById(response.data.id), response);
-      }
-      if (response.data?.slug) {
-        queryClient.setQueryData(productKeys.detailBySlug(response.data.slug), response);
-      }
-    },
-    onError: (error) => {
-      console.error("Error creating product via hook:", error);
-      // Notification or further error handling can be done by the component using the hook
+  const queryClient = useQueryClient();
+return useMutation<ApiResponse<IProductResponse>, Error, FormData>({
+    mutationFn: createProductApi,
+    onSuccess: (response, _variables, _context) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.paginated() });
+      console.log("Product created successfully via hook.", response.data);
     },
     ...options,
   });
 };
 
+
 /**
- * Hook to fetch paginated products.
+ * Fetches a paginated list of full product documents.
+ * Ideal for admin panels or seller dashboards.
  */
 export const useGetPaginatedProducts = (
-  params?: ProductApiListParams, // Uses the specific params type from productApi.ts
-  options?: UseQueryOptions<IPaginatedData<IProductResponse>, Error, IPaginatedData<IProductResponse>, PaginatedProductsQueryKey>
+  params: ListProductsParams,
+  options?: UseQueryOptions<IPaginatedProductsResult>
 ) => {
-  // const { isAuthenticated, loading: isAuthLoading } = useSelector((state: RootState) => state.auth); // Optional
-  return useQuery<IPaginatedData<IProductResponse>, Error, IPaginatedData<IProductResponse>, PaginatedProductsQueryKey>({
+  return useQuery<IPaginatedProductsResult>({
     queryKey: productKeys.paginated(params),
-    queryFn: () => getPaginatedProducts(params),
-    // enabled: isAuthenticated && !isAuthLoading, // Example: enable only if authenticated
+    queryFn: () => productApi.listPaginated(params),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false, // Consider your app's needs
-    keepPreviousData: true, // Good for pagination UX
+    refetchOnWindowFocus: false,
     ...options,
   });
 };
 
 /**
- * Hook to fetch a single product by its ID.
+ * Fetches a paginated list of lightweight product items for the storefront.
+ */
+export const useGetPaginatedStorefrontProducts = (
+  params: ListProductsParams,
+  options?: UseQueryOptions<IPaginatedProductListItemsResult>
+) => {
+
+  return useQuery<IPaginatedProductListItemsResult>({
+    queryKey: productKeys.paginatedStorefront(params),
+    queryFn: () => productApi.listForStorefront(params),
+    staleTime: 2 * 60 * 1000, // 2 minutes, storefront data might change more often
+    ...options,
+  });
+};
+
+/**
+ * Fetches a single product document by its MongoDB ObjectId.
  */
 export const useGetProductById = (
-  productId: string | undefined, // Allow undefined for conditional fetching
-  projection?: string,
-  lean?: boolean,
-  options?: UseQueryOptions<ApiResponse<IProductResponse>, Error, IProductResponse, ProductByIdQueryKey>
+  productId: string | undefined,
+  options?: UseQueryOptions<IProductDocument>
 ) => {
-  // const { isAuthenticated, loading: isAuthLoading } = useSelector((state: RootState) => state.auth); // Optional
-  return useQuery<ApiResponse<IProductResponse>, Error, IProductResponse, ProductByIdQueryKey>({
+
+  console.log("-----------------------")
+  return useQuery<IProductDocument>({
+
+    
     queryKey: productKeys.detailById(productId),
-    queryFn: async () => {
-        if (!productId) throw new Error("Product ID is required to fetch by ID."); // Guard, though 'enabled' handles this
-        const response = await getProductById(productId, projection, lean);
-        // API function already throws if error, so React Query handles it.
-        // If response.data could be null for a found item (e.g. soft delete not filtered by API), handle here.
-        // if (!response.success || !response.data) {
-        //   throw new Error(response.message || "Failed to fetch product.");
-        // }
-        return response;
-    },
-    enabled: !!productId && (options?.enabled !== false), // Only run if productId is present and not explicitly disabled
-    select: (response) => response.data, // Extract the IProductResponse from ApiResponse
-    staleTime: 10 * 60 * 1000, // 10 minutes for individual item details
+    queryFn: () => productApi.getById(productId!),
+  //  enabled: !!productId, // Only run the query if productId is not undefined
     ...options,
   });
 };
 
 /**
- * Hook to fetch a single product by its slug.
+ * Fetches a single product document by its URL-friendly slug.
  */
 export const useGetProductBySlug = (
   slug: string | undefined,
-  projection?: string,
-  lean?: boolean,
-  options?: UseQueryOptions<ApiResponse<IProductResponse>, Error, IProductResponse, ProductBySlugQueryKey>
+  options?: UseQueryOptions<IProductDocument>
 ) => {
-  return useQuery<ApiResponse<IProductResponse>, Error, IProductResponse, ProductBySlugQueryKey>({
+  return useQuery<IProductDocument>({
     queryKey: productKeys.detailBySlug(slug),
-    queryFn: async () => {
-        if (!slug) throw new Error("Slug is required to fetch product by slug.");
-        return getProductBySlug(slug, projection, lean);
-    },
-    enabled: !!slug && (options?.enabled !== false),
-    select: (response) => response.data,
-    staleTime: 10 * 60 * 1000,
+    queryFn: () => productApi.getBySlug(slug!),
+    enabled: !!slug, // Only run the query if slug is not undefined
     ...options,
   });
 };
 
+// =================================================================
+// ==                    PRODUCT MUTATION HOOKS                   ==
+// =================================================================
+
+
+
 /**
- * Hook to update an existing product.
- * Mutation function expects FormData.
+ * A mutation hook for updating a product's text-based data.
  */
 export const useUpdateProduct = (
-  options?: UseMutationOptions<ApiResponse<IProductResponse>, Error, { productId: string; formData: FormData }>
+  options?: UseMutationOptions<IProductDocument, Error, { productId: string; updateData: UpdateProductDTO }>
 ) => {
   const queryClient = useQueryClient();
-  return useMutation<ApiResponse<IProductResponse>, Error, { productId: string; formData: FormData }>({
-    mutationFn: ({ productId, formData }) => updateProductApi(productId, formData),
-    onSuccess: (response, variables) => {
-      const updatedProduct = response.data;
-      console.log(`Product ${variables.productId} updated successfully via hook:`, updatedProduct);
-      // Invalidate relevant queries
+  
+  return useMutation<IProductDocument, Error, { productId: string; updateData: UpdateProductDTO }>({
+    mutationFn: ({ productId, updateData }) => (productApi.update(productId, updateData)),
+    onSuccess: (updatedProduct, variables) => {
+      // Invalidate all lists as product info might have changed (e.g., name, price).
       queryClient.invalidateQueries({ queryKey: productKeys.paginated() });
+      queryClient.invalidateQueries({ queryKey: productKeys.paginatedStorefront() });
+      // Invalidate the specific detail views for this product.
       queryClient.invalidateQueries({ queryKey: productKeys.detailById(variables.productId) });
-      if (updatedProduct?.slug) {
+      if (updatedProduct.slug) {
         queryClient.invalidateQueries({ queryKey: productKeys.detailBySlug(updatedProduct.slug) });
       }
-      // More aggressive: queryClient.invalidateQueries({ queryKey: productKeys.all });
     },
-    onError: (error, variables) => {
-      console.error(`Error updating product ${variables.productId} via hook:`, error);
+    ...options,
+  });
+};
+export const useSearchProducts = (
+  params: SearchProductsParams,
+  options?: UseQueryOptions<IPaginatedProductsResult>
+) => {
+
+  console.log(params,";;;;;;;")
+
+  return useQuery<IPaginatedProductsResult>({
+    queryKey: productKeys.search(params),
+    queryFn: () => productApi.search(params),
+    // Only enable the query if there's a search term or a category
+  //  enabled: !!(params.q || params.category),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...options,
+  });
+};
+/**
+ * A mutation hook for deleting a product.
+ */
+export const useDeleteProduct = (
+  options?: UseMutationOptions<{ deleted: boolean }, Error, string>
+) => {
+  const queryClient = useQueryClient();
+  return useMutation<{ deleted: boolean }, Error, string>({
+    mutationFn: productApi.delete,
+    onSuccess: (_, productId) => {
+      // Invalidate all product queries.
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+      // Remove the cached data for the deleted product.
+      queryClient.removeQueries({ queryKey: productKeys.detailById(productId) });
+    },
+    ...options,
+  });
+};
+
+// --- Variation Mutation Hooks ---
+
+/**
+ * A mutation hook for adding a new variation to a product.
+ */
+export const useAddVariation = (
+  options?: UseMutationOptions<IProductDocument, Error, { productId: string; variationData: IProductVariationFormState }>
+) => {
+  const queryClient = useQueryClient();
+  return useMutation<IProductDocument, Error, { productId: string; variationData: IProductVariationFormState }>({
+    // The mutation function now directly calls the updated productApi.addVariation
+    mutationFn: ({ productId, variationData }) => productApi.addVariation(productId, variationData),
+    onSuccess: (_, variables) => {
+      // Invalidate the entire product detail query to get the fresh data
+      queryClient.invalidateQueries({ queryKey: productKeys.detailById(variables.productId) });
     },
     ...options,
   });
 };
 
 /**
- * Hook to delete a product.
+ * A mutation hook for updating a variation's text-based data.
  */
-export const useDeleteProduct = (
-  options?: UseMutationOptions<ApiResponse<null>, Error, { productId: string; hardDelete?: boolean }>
+export const useUpdateVariation = (
+  options?: UseMutationOptions<IProductDocument, Error, { productId: string; variationId: string; updateData: Partial<IProductVariation> }>
 ) => {
   const queryClient = useQueryClient();
-  return useMutation<ApiResponse<null>, Error, { productId: string; hardDelete?: boolean }>({
-    mutationFn: ({ productId, hardDelete }) => deleteProductApi(productId, hardDelete),
-    onSuccess: (_data, variables) => {
-      console.log(`Product ${variables.productId} deleted successfully via hook.`);
-      queryClient.invalidateQueries({ queryKey: productKeys.all }); // Invalidate all product queries
-      // Optionally, remove the specific product from cache
-      queryClient.removeQueries({ queryKey: productKeys.detailById(variables.productId) });
-      // If slugs were also cached and you can derive it or it's passed in variables:
-      // queryClient.removeQueries({ queryKey: productKeys.detailBySlug(slug_of_deleted_product) });
-    },
-    onError: (error, variables) => {
-      console.error(`Error deleting product ${variables.productId} via hook:`, error);
+  return useMutation<IProductDocument, Error, { productId: string; variationId: string; updateData: Partial<IProductVariation> }>({
+    mutationFn: ({ productId, variationId, updateData }) => productApi.updateVariation(productId, variationId, updateData),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detailById(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.paginatedStorefront() });
     },
     ...options,
   });
 };
 
-// TODO: Implement hooks for more granular product operations if needed:
-// - useAddProductVariation, useUpdateProductVariation, useRemoveProductVariation
-// - useUpdateProductVariationInventory
-// - useAddProductImage, useRemoveProductImage (for main product)
-// - useAddVariationImage, useRemoveVariationImage (for specific variations)
-// These would follow a similar pattern to useCreateProduct/useUpdateProduct/useDeleteProduct,
-// calling their respective functions from productApi.ts and handling cache invalidation.
+/**
+ * A mutation hook for removing a variation from a product.
+ */
+export const useRemoveVariation = (
+  options?: UseMutationOptions<IProductDocument, Error, { productId: string; variationId: string }>
+) => {
+  const queryClient = useQueryClient();
+  return useMutation<IProductDocument, Error, { productId: string; variationId: string }>({
+    mutationFn: ({ productId, variationId }) => productApi.removeVariation(productId, variationId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detailById(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.paginatedStorefront() });
+    },
+    ...options,
+  });
+};
+
+/**
+ * A mutation hook for the high-frequency operation of updating inventory.
+ */
+export const useUpdateVariationInventory = (
+  options?: UseMutationOptions<IProductVariation, Error, { productId: string; variationId: string; data: UpdateInventoryData }>
+) => {
+  const queryClient = useQueryClient();
+  return useMutation<IProductVariation, Error, { productId: string; variationId: string; data: UpdateInventoryData }>({
+    mutationFn: ({ productId, variationId, data }) => productApi.updateVariationInventory(productId, variationId, data),
+    onSuccess: (_, variables) => {
+      // This is a more granular update; we can be more optimistic here if needed,
+      // but invalidating the product detail is a safe and robust approach.
+      queryClient.invalidateQueries({ queryKey: productKeys.detailById(variables.productId) });
+    },
+    ...options,
+  });
+};
+
+// --- Image Mutation Hooks ---
+
+/**
+ * A mutation hook for adding images to the main product gallery.
+ */
+export const useAddProductImages = (
+  options?: UseMutationOptions<IProductDocument, Error, { productId: string; images: File[] }>
+) => {
+  const queryClient = useQueryClient();
+  return useMutation<IProductDocument, Error, { productId: string; images: File[] }>({
+    mutationFn: ({ productId, images }) => productApi.addImages(productId, images),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detailById(variables.productId) });
+    },
+    ...options,
+  });
+};
+
+/**
+ * A mutation hook for removing an image from the main product gallery.
+ */
+export const useRemoveProductImage = (
+  options?: UseMutationOptions<IProductDocument, Error, { productId: string; imageUrl: string }>
+) => {
+  const queryClient = useQueryClient();
+  return useMutation<IProductDocument, Error, { productId: string; imageUrl: string }>({
+    mutationFn: ({ productId, imageUrl }) => productApi.removeImage(productId, imageUrl),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detailById(variables.productId) });
+    },
+    ...options,
+  });
+};
+
+/**
+ * A mutation hook for adding images to a specific variation.
+ */
+export const useAddVariationImages = (
+  options?: UseMutationOptions<IProductDocument, Error, { productId: string; variationId: string; images: File[] }>
+) => {
+  const queryClient = useQueryClient();
+  return useMutation<IProductDocument, Error, { productId: string; variationId: string; images: File[] }>({
+    mutationFn: ({ productId, variationId, images }) => productApi.addVariationImages(productId, variationId, images),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detailById(variables.productId) });
+    },
+    ...options,
+  });
+};
+
+/**
+ * A mutation hook for removing an image from a specific variation.
+ */
+export const useRemoveVariationImage = (
+  options?: UseMutationOptions<IProductDocument, Error, { productId: string; variationId: string; imageUrl: string }>
+) => {
+  const queryClient = useQueryClient();
+  return useMutation<IProductDocument, Error, { productId: string; variationId: string; imageUrl: string }>({
+    mutationFn: ({ productId, variationId, imageUrl }) => productApi.removeVariationImage(productId, variationId, imageUrl),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detailById(variables.productId) });
+    },
+    ...options,
+  });
+};

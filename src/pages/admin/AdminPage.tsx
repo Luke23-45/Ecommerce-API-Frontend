@@ -141,176 +141,9 @@ const allDummyProducts: Product[] = [
   },
 ];
 type ApplicationActionType = 'approve' | 'reject' | 'suspend' | 'activate' | 'deactivate'; // Updated
-const allDummyOrders: Order[] = [
-  {
-    _id: mockId("ORD"),
-    customer: {
-      customerId: mockId("CUST"),
-      customerName: "Alice Johnson",
-      customerEmail: "alice@example.com",
-      customerPhone: "+1-555-123-4567",
-    },
-    orderItems: [
-      {
-        productId: mockId("PRD"),
-        productName: "Élan Console",
-        quantity: 1,
-        priceAtTimeOfPurchase: 580,
-        productMainImageUrl: getGenericImage("consoledesk", 100, 100),
-      },
-    ],
-    totalAmount: 580,
-    currency: "USD",
-    paymentStatus: "paid",
-    fulfillmentStatus: "processing",
-    shippingAddress: {
-      street: "123 Maple Ave",
-      city: "Springfield",
-      state: "IL",
-      zipCode: "62704",
-      country: "USA",
-    },
-    shippingMethod: "Standard Ground",
-    createdAt: "2023-10-25T10:00:00Z",
-    updatedAt: "2023-10-25T10:05:00Z",
-  },
-  {
-    _id: mockId("ORD"),
-    customer: {
-      customerId: mockId("CUST"),
-      customerName: "Bob Williams",
-      customerEmail: "bob@example.com",
-    },
-    orderItems: [
-      {
-        productId: mockId("PRD"),
-        productName: "Nordic Rug",
-        quantity: 1,
-        priceAtTimeOfPurchase: 280,
-        productMainImageUrl: getGenericImage("woolrug", 100, 100),
-      },
-    ],
-    totalAmount: 280,
-    currency: "USD",
-    paymentStatus: "paid",
-    fulfillmentStatus: "shipped",
-    trackingNumber: "FEDEX87654321",
-    carrier: "FedEx",
-    shippingAddress: {
-      street: "45 Oak Lane",
-      city: "Greenville",
-      state: "SC",
-      zipCode: "29601",
-      country: "USA",
-    },
-    shippingMethod: "Express Shipping",
-    createdAt: "2023-10-24T14:30:00Z",
-    updatedAt: "2023-10-24T15:00:00Z",
-  },
-  {
-    _id: mockId("ORD"),
-    customer: {
-      customerId: mockId("CUST"),
-      customerName: "Carol D.",
-      email: "carol@example.com",
-    },
-    orderItems: [
-      {
-        productId: mockId("PRD"),
-        productName: "Ceramic Bowl",
-        quantity: 3,
-        priceAtTimeOfPurchase: 45,
-        productMainImageUrl: getGenericImage("ceramicbowl", 100, 100),
-      },
-    ],
-    totalAmount: 135,
-    currency: "USD",
-    paymentStatus: "pending",
-    fulfillmentStatus: "processing",
-    shippingAddress: {
-      street: "78 Pine St",
-      city: "Harmony",
-      state: "KY",
-      zipCode: "40037",
-      country: "USA",
-    },
-    shippingMethod: "Standard",
-    createdAt: "2023-10-23T09:00:00Z",
-    updatedAt: "2023-10-23T09:10:00Z",
-  },
-];
 
-const allDummyCustomers: Customer[] = [
-  {
-    _id: mockId("CUST"),
-    firstName: "Alice",
-    lastName: "Johnson",
-    email: "alice@example.com",
-    phone: "+1-555-101-1111",
-    avatarUrl: getGenericImage("alice-j", 150, 150),
-    registrationDate: "2022-01-10T09:00:00Z",
-    lastLoginDate: "2023-10-25T14:30:00Z",
-    totalOrders: 5,
-    totalSpent: 750.5,
-    accountStatus: "active",
-    addresses: [
-      {
-        street: "123 Maple Ave",
-        city: "Springfield",
-        state: "IL",
-        zipCode: "62704",
-        country: "USA",
-        type: "shipping",
-        isDefault: true,
-      },
-      {
-        street: "456 Oak Dr",
-        city: "Springfield",
-        state: "IL",
-        zipCode: "62704",
-        country: "USA",
-        type: "billing",
-      },
-    ],
-  },
-  {
-    _id: mockId("CUST"),
-    firstName: "Bob",
-    lastName: "Williams",
-    email: "bob@example.com",
-    phone: "+1-555-202-2222",
-    avatarUrl: getGenericImage("bob-w", 150, 150),
-    registrationDate: "2022-03-01T11:30:00Z",
-    lastLoginDate: "2023-09-20T10:00:00Z",
-    totalOrders: 1,
-    totalSpent: 280.0,
-    accountStatus: "active",
-    addresses: [
-      {
-        street: "45 Oak Lane",
-        city: "Greenville",
-        state: "SC",
-        zipCode: "29601",
-        country: "USA",
-        type: "shipping",
-        isDefault: true,
-      },
-    ],
-  },
-  {
-    _id: mockId("CUST"),
-    firstName: "Carol",
-    lastName: "Davis",
-    email: "carol@example.com",
-    phone: "+1-555-303-3333",
-    avatarUrl: getGenericImage("carol-d", 150, 150),
-    registrationDate: "2023-01-05T08:00:00Z",
-    lastLoginDate: "2023-10-15T09:00:00Z",
-    totalOrders: 2,
-    totalSpent: 180.0,
-    accountStatus: "pending_verification",
-  },
-];
+
+
 
 const allDummyBanners: PromotionBanner[] = [
   {
@@ -409,6 +242,8 @@ const currentGeneralSettings: GeneralSettings = {
   requireProductApproval: true,
   lowStockThreshold: 10,
 };
+
+
 const ApplicationOverview: React.FC<{ onNavigateToSection: (path: string) => void }> = ({ onNavigateToSection }) => (
   <div style={{ padding: 20, border: '1px solid #ccc', background: '#f9f9f9', borderRadius: 8, textAlign: 'center' }}>
     <h2>Application Management Overview</h2>
@@ -482,7 +317,7 @@ const allDummyVendorApplications: IVendorProfile[] = [
 
 const AdminPage: React.FC = () => {
   const [currentPath, setCurrentPath] = useState("/admin/dashboard");
-  const [userRole] = useState<"seller" | "vendor" | "superAdmin">("seller");
+  const [userRole] = useState<"seller" | "vendor" | "admin">("seller");
 
   // Modal state for banner editing
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
@@ -563,22 +398,7 @@ const AdminPage: React.FC = () => {
     : null;
 
   // --- Generic Confirmation Trigger ---
-  const showConfirmModal = (
-    title: string,
-    message: string | React.ReactNode,
-    onConfirm: () => void,
-    confirmButtonText: string = "Confirm",
-    confirmVariant: "primary" | "danger" = "primary"
-  ) => {
-    setConfirmModalData({
-      title,
-      message,
-      onConfirm,
-      confirmButtonText,
-      confirmVariant,
-    });
-    setIsConfirmModalOpen(true);
-  };
+
 
   // --- Confirmation Modal Handlers ---
   const handleConfirmModalCancel = () => {

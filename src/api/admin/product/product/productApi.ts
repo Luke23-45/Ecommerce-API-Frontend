@@ -1,54 +1,233 @@
+// src/api/admin/product/productApi.ts
+
 import api from "@/api"; // Your configured Axios instance
 import {
-  // Assuming these are the primary types needed for create and response
-  type IProductCreateFormState, // This is the state of your Product Form
+  type IProductFormState,
   type IProductResponse,
-  type IProductUpdateFormState, // For update later
-  type IProductVariationForm, // Helper for constructing variations in FormData
-} from "@/types/product.types"; // Adjust path
-// If CreateProductDTO and RawFile were defined for frontend to match backend more closely for FormData:
-// import { CreateProductDTO, RawFile } from "@/types/product";
-import { type ApiResponse, type IPaginatedData } from "@/types/attribute";
+  type IProductCreatePayload,
+  type IProductVariationPayload,
+  type IProductListItemData,
+  type StockStatus,
+  type IPaginatedProductsResult,
+  type IProductVariationFormState,
+} from "@/types/product.types";
+import type { ApiResponse } from "@/types/attribute";
+import type { IPaginatedData } from "@/types/attribute";
+import { safeParseFloat, safeParseInt } from "@/utils/productFormUtils";
+import type {
+  IProductDocument,
+  IProductVariation,
+  UpdateProductDTO,
+} from "@/types/product";
+///api/products
+export const productApiEndpoints = {
+  // Core Product Routes
+  BASE: "/products",
+  LIST_ITEMS: "/products/list-items",
+  BY_ID: (productId: string) => `/products/id/${productId}`,
+  BY_SLUG: (slug: string) => `/products/slug/${slug}`,
+  // Note: The general :productId route is used for DELETE and UPDATE
+  GENERAL_BY_ID: (productId: string) => `/products/${productId}`,
+ SEARCH: "/products/search",
+  // Variation Routes
+  VARIATIONS: {
+    BASE: (productId: string) => `/products/${productId}/variations`,
+    BY_ID: (productId: string, variationId: string) =>
+      `/products/${productId}/variations/${variationId}`,
+    INVENTORY: (productId: string, variationId: string) =>
+      `/products/${productId}/variations/${variationId}/inventory`,
+  },
 
-// --- Endpoint Definitions (Matching your productRoutes.ts) ---
-// Assuming productRoutes are mounted at e.g., /api/admin/products
-const productApiEndpoints = {
-  CREATE_PRODUCT: "/", // POST to the base of the product router, e.g., /api/admin/products/
-  GET_PAGINATED_PRODUCTS: "/", // GET /
-  GET_PRODUCT_BY_ID: (productId: string) => `/${productId}`,
-  GET_PRODUCT_BY_SLUG: (slug: string) => `/slug/${slug}`, // Assuming /slug/:slug
-  UPDATE_PRODUCT: (productId: string) => `/${productId}`,
-  DELETE_PRODUCT: (productId: string) => `/${productId}`,
+  // Image Routes
+  IMAGES: {
+    BASE: (productId: string) => `/products/${productId}/images`,
+    VARIATION: (productId: string, variationId: string) =>
+      `/products/${productId}/variations/${variationId}/images`,
+  },
+};
+export interface SearchProductsParams {
+  q?: string; // The search term
+  categoryId?: string; // The category slug
+  page?: number;
+  limit?: number;
+  filter?: Record<string, any>;
+  sort?: Record<string, 1 | -1>;
+}
+export interface ListProductsParams {
+  page?: number;
+  limit?: number;
+  filter?: Record<string, any>;
+  sort?: Record<string, 1 | -1>;
+}
 
-  // Variation specific (examples, might be part of main update or separate)
-  ADD_VARIATION: (productId: string) => `/${productId}/variations`,
-  UPDATE_VARIATION: (productId: string, variationId: string) =>
-    `/${productId}/variations/${variationId}`,
-  DELETE_VARIATION: (productId: string, variationId: string) =>
-    `/${productId}/variations/${variationId}`,
+/**
+ * Data for updating a single variation's inventory.
+ */
+export interface UpdateInventoryData {
+  quantityChange: number; // e.g., -1 for a sale, 10 for restocking
+  stockStatus?: StockStatus;
+}
 
-  // Image specific (examples)
-  ADD_PRODUCT_IMAGE: (productId: string) => `/${productId}/images`, // For main product images
-  DELETE_PRODUCT_IMAGE: (productId: string, imageIdentifier: string) =>
-    `/${productId}/images/${imageIdentifier}`, // Or pass in body
+
+
+export const buildProductFormData = (
+  formState: IProductFormState
+): FormData => {
+  // This is the payload structure that mirrors your backend's CreateProductDTO.
+  // It includes all fields, which will be flattened for FormData submission.
+  const payload: IProductCreatePayload = {
+    // === Basic Info ===
+    name: formState.name.trim(),
+    description: formState.description?.trim(),
+    shortDescription: formState.shortDescription?.trim(),
+    currency: formState.currency.trim().toUpperCase(),
+    categoryId: formState.categoryId,
+    brandId: formState.brandId || undefined,
+    tags: formState.tags.map((tag) => tag.trim().toLowerCase()).filter(Boolean),
+    status: formState.status,
+    visibility: formState.visibility,
+
+    // === Main Product Images (Index Only) ===
+    // We send files separately, but the index is part of the text data.
+    mainProductImageIndex: safeParseInt(formState.mainProductImageIndex) ?? 0,
+
+    // === Pricing (Optional Base Prices) ===
+    basePrice: safeParseFloat(formState.basePrice) ?? undefined,
+    baseSalePrice: safeParseFloat(formState.baseSalePrice) ?? undefined,
+
+    // === Shipping & Compliance ===
+    defaultWeight: safeParseFloat(formState.defaultWeight) ?? undefined,
+    defaultWeightUnit: formState.defaultWeight
+      ? formState.defaultWeightUnit
+      : undefined,
+    defaultDimensions:
+      formState.defaultDimensions &&
+      (formState.defaultDimensions.length ||
+        formState.defaultDimensions.width ||
+        formState.defaultDimensions.height)
+        ? {
+            length:
+              safeParseFloat(formState.defaultDimensions.length) ?? undefined,
+            width:
+              safeParseFloat(formState.defaultDimensions.width) ?? undefined,
+            height:
+              safeParseFloat(formState.defaultDimensions.height) ?? undefined,
+            unit: formState.defaultDimensions.unit,
+          }
+        : undefined,
+    isShippingRequired: formState.isShippingRequired,
+    isHazardousMaterial: formState.isHazardousMaterial,
+    isAgeRestricted: formState.isAgeRestricted,
+    ageRestrictionMinimum: formState.isAgeRestricted
+      ? safeParseInt(formState.ageRestrictionMinimum) ?? undefined
+      : undefined,
+    allowReviews: formState.allowReviews,
+
+    // === SEO ===
+    metaTitle: formState.metaTitle?.trim(),
+    metaDescription: formState.metaDescription?.trim(),
+    metaKeywords: formState.metaKeywords
+      ?.map((kw) => kw.trim().toLowerCase())
+      .filter(Boolean),
+
+    sellerType:"vendor",
+
+    // === Variations (Fully Mapped) ===
+    // This is the most important part. We map every field from the form state to the payload.
+    variations: formState.variations.map((v) => ({
+      sku: v.sku?.trim() || undefined,
+      price: safeParseFloat(v.price)!, // Price is required on variation
+      salePrice: safeParseFloat(v.salePrice),
+      inventory: safeParseInt(v.inventory)!, // Inventory is required
+      stockStatus: v.stockStatus,
+      attributeOptions: v.attributeOptions,
+      mainVariationImageIndex: safeParseInt(v.mainVariationImageIndex) ?? 0,
+      weight: safeParseFloat(v.weight) ?? undefined,
+      weightUnit: v.weight ? v.weightUnit : undefined,
+      dimensions:
+        v.dimensions &&
+        (v.dimensions.length || v.dimensions.width || v.dimensions.height)
+          ? {
+              length: safeParseFloat(v.dimensions.length) ?? undefined,
+              width: safeParseFloat(v.dimensions.width) ?? undefined,
+              height: safeParseFloat(v.dimensions.height) ?? undefined,
+              unit: v.dimensions.unit,
+            }
+          : undefined,
+      barcode: v.barcode?.trim() || undefined,
+      costPrice: safeParseFloat(v.costPrice) ?? undefined,
+      lowStockThreshold: safeParseInt(v.lowStockThreshold) ?? undefined,
+      isActive: v.isActive,
+    })),
+  };
+
+  const formData = new FormData();
+
+  // --- Flatten the Payload for `multipart/form-data` ---
+  // The backend validator will parse these strings back into their correct types.
+  const flattenedPayload: Record<string, any> = {
+    ...payload,
+    // Explicitly stringify arrays and nested objects
+    tags: JSON.stringify(payload.tags),
+    metaKeywords: JSON.stringify(payload.metaKeywords),
+    defaultDimensions: JSON.stringify(payload.defaultDimensions),
+    variations: JSON.stringify(payload.variations),
+  };
+
+  // Append all text/stringified data.
+  for (const key in flattenedPayload) {
+    const value = flattenedPayload[key];
+    // We append null/undefined as strings "null" or "undefined" to be parsed by backend,
+    // or we can filter them out. Let's filter for a cleaner payload.
+    if (value !== undefined && value !== null) {
+      formData.append(key, String(value));
+    }
+  }
+
+  // --- Append File Data (This logic is correct and remains unchanged) ---
+  if (formState.mainImageFiles) {
+    formState.mainImageFiles.forEach((file, index) => {
+      // Naming convention mainImage_0, mainImage_1 must match backend controller
+      formData.append(`mainImage_${index}`, file, file.name);
+    });
+  }
+
+  if (formState.variations) {
+    formState.variations.forEach((variation, varIndex) => {
+      if (variation.imageFiles && variation.imageFiles.length > 0) {
+        variation.imageFiles.forEach((file, imgIndex) => {
+          // Naming convention variationImage_0_0, variationImage_0_1 must match backend controller
+          formData.append(
+            `variationImage_${varIndex}_${imgIndex}`,
+            file,
+            file.name
+          );
+        });
+      }
+    });
+  }
+
+  // Use this for final debugging if needed
+  // console.log("--- FINAL FormData to be sent ---");
+  // for (const [key, value] of formData.entries()) {
+  //   console.log(`${key}:`, value);
+  // }
+  // console.log("---------------------------------");
+
+  return formData;
 };
 
 export async function createProductApi(
-  formData: FormData // The payload is now FormData directly
+  formData: FormData
 ): Promise<ApiResponse<IProductResponse>> {
   try {
-    console.log("API CALL: createProductApi with FormData");
-    // Log FormData entries for debugging ( FormData is not easily loggable directly)
-    // for (let [key, value] of formData.entries()) {
-    //   console.log(`FormData Entry: ${key}`, value instanceof File ? value.name : value);
-    // }
-
+    console.log("888888888888888", formData, "From aiasfsfsd");
     const response = await api.post<ApiResponse<IProductResponse>>(
-      productApiEndpoints.CREATE_PRODUCT,
+      productApiEndpoints.BASE,
       formData,
       {
         headers: {
-          // Axios might set this automatically for FormData, but can be explicit
+          // Axios automatically sets the correct Content-Type for FormData
           "Content-Type": "multipart/form-data",
         },
       }
@@ -56,11 +235,10 @@ export async function createProductApi(
     return response.data;
   } catch (error: any) {
     console.error(
-      "Error creating product:",
-      error.response?.data || error.message,
-      error.response?.status // Log status for 4xx/5xx errors
+      "API Error: createProductApi",
+      error.response?.data || error.message
     );
-    // Re-throw the structured error from backend if available, or a generic error
+    // Re-throw the structured error from the backend if available, or create a new one.
     throw (
       error.response?.data ||
       new Error(
@@ -70,240 +248,286 @@ export async function createProductApi(
   }
 }
 
-// --- Helper function to construct FormData from your form state ---
-// This would typically reside in your ProductForm.tsx or a utility file,
-// but placing it here to show the structure expected by createProductApi.
-export const buildProductFormData = (
-  formState: IProductCreateFormState
-): FormData => {
-  const formData = new FormData();
-
-  // Append simple string/number/boolean fields
-  // Backend controller will parse these strings back to appropriate types if needed
-  formData.append("name", formState.name);
-  if (formState.description)
-    formData.append("description", formState.description);
-  if (formState.shortDescription)
-    formData.append("shortDescription", formState.shortDescription);
-  if (formState.basePrice !== undefined)
-    formData.append("basePrice", String(formState.basePrice));
-  if (formState.baseSalePrice !== undefined)
-    formData.append("baseSalePrice", String(formState.baseSalePrice));
-  formData.append("currency", formState.currency);
-  formData.append("categoryId", formState.categoryId);
-  if (formState.brandId) formData.append("brandId", formState.brandId);
-  formData.append("sellerType", formState.sellerType);
-  formData.append("sellerId", formState.sellerId);
-  formData.append("status", formState.status);
-  formData.append("visibility", formState.visibility);
-
-  if (formState.tags && formState.tags.length > 0) {
-    // Send tags as multiple fields with same name or stringified JSON array
-    // Option A: Multiple fields (some backends parse this into an array)
-    // formState.tags.forEach(tag => formData.append('tags[]', tag));
-    // Option B: Stringified JSON (Backend needs to JSON.parse this field)
-    formData.append("tags", JSON.stringify(formState.tags));
-  }
-
-  // SEO Fields
-  if (formState.metaTitle) formData.append("metaTitle", formState.metaTitle);
-  if (formState.metaDescription)
-    formData.append("metaDescription", formState.metaDescription);
-  if (formState.metaKeywords && formState.metaKeywords.length > 0) {
-    formData.append("metaKeywords", JSON.stringify(formState.metaKeywords));
-  }
-
-  // Shipping Fields
-  if (formState.defaultWeight !== undefined)
-    formData.append("defaultWeight", String(formState.defaultWeight));
-  if (formState.defaultWeightUnit)
-    formData.append("defaultWeightUnit", formState.defaultWeightUnit);
-  if (formState.defaultDimensions)
-    formData.append(
-      "defaultDimensions",
-      JSON.stringify(formState.defaultDimensions)
+export const productApi = {
+  /**
+   * Corresponds to: GET /products
+   */
+  listPaginated: async (
+    params: ListProductsParams
+  ): Promise<IPaginatedProductsResult> => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.filter)
+      queryParams.append("filter", JSON.stringify(params.filter));
+    if (params.sort) queryParams.append("sort", JSON.stringify(params.sort));
+    const response = await api.get(
+      `${productApiEndpoints.BASE}?${queryParams.toString()}`
     );
-  if (formState.isShippingRequired !== undefined)
-    formData.append("isShippingRequired", String(formState.isShippingRequired));
+    return response.data.data;
+  },
 
-  // Compliance Fields
-  if (formState.isHazardousMaterial !== undefined)
-    formData.append(
-      "isHazardousMaterial",
-      String(formState.isHazardousMaterial)
+  /**
+   * Corresponds to: GET /products/list-items
+   */
+  listForStorefront: async (
+    params: ListProductsParams
+  ): Promise<IPaginatedProductsResult> => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.filter)
+      queryParams.append("filter", JSON.stringify(params.filter));
+    if (params.sort) queryParams.append("sort", JSON.stringify(params.sort));
+    const response = await api.get(
+      `${productApiEndpoints.LIST_ITEMS}?${queryParams.toString()}`
     );
-  if (formState.isAgeRestricted !== undefined)
-    formData.append("isAgeRestricted", String(formState.isAgeRestricted));
-  if (formState.ageRestrictionMinimum !== undefined)
-    formData.append(
-      "ageRestrictionMinimum",
-      String(formState.ageRestrictionMinimum)
+    return response.data.data;
+  },
+
+  /**
+   * Corresponds to: GET /products/id/:productId
+   */
+  getById: async (productId: string): Promise<IProductDocument> => {
+
+    console.log("------------------");
+    const response = await api.get(productApiEndpoints.BY_ID(productId));
+    return response.data.data;
+  },
+
+  /**
+   * Corresponds to: GET /products/slug/:slug
+   */
+  getBySlug: async (slug: string): Promise<IProductDocument> => {
+    const response = await api.get(productApiEndpoints.BY_SLUG(slug));
+    return response.data.data;
+  },
+
+  /**
+   * Corresponds to: PUT /products/:productId
+   */
+  update: async (
+    productId: string,
+    updateData: UpdateProductDTO
+  ): Promise<IProductDocument> => {
+
+    console.log(updateData,")0000000000000")
+    const response = await api.put(
+      productApiEndpoints.GENERAL_BY_ID(productId),
+      updateData
     );
-  if (formState.allowReviews !== undefined)
-    formData.append("allowReviews", String(formState.allowReviews));
+    return response.data.data;
+  },
 
-  // Main Product Image Files
-  if (formState.mainImageFiles && formState.mainImageFiles.length > 0) {
-    formState.mainImageFiles.forEach((file) => {
-      // The field name 'mainImageFiles' must match what Multer expects on the backend
-      formData.append("mainImageFiles", file, file.name);
-    });
-  }
+  /**
+   * Corresponds to: DELETE /products/:productId
+   */
+  delete: async (productId: string): Promise<{ deleted: boolean }> => {
+    const response = await api.delete(
+      productApiEndpoints.GENERAL_BY_ID(productId)
+    );
+    return response.data.data;
+  },
 
-  // Variations - This is the trickiest part with FormData
-  // You typically stringify the array of variation objects (without files)
-  // And append variation files separately with indexed names.
-  const variationsWithoutFiles = formState.variations.map((v) => {
-    const { imageFiles, ...restOfVariation } = v; // Separate files from other data
-    return restOfVariation;
-  });
-  formData.append("variations", JSON.stringify(variationsWithoutFiles));
+  /**
+   * Corresponds to: POST /products/:productId/variations
+   */
+  addVariation: async (
+    productId: string,
+    variationData: IProductVariationFormState
+  ): Promise<IProductDocument> => {
+    const formData = new FormData();
 
-  // Append variation image files with indexed field names
-  // Backend Multer config and controller need to expect these field names.
-  formState.variations.forEach((variation, index) => {
-    if (variation.imageFiles && variation.imageFiles.length > 0) {
-      variation.imageFiles.forEach((file, fileIndex) => {
-        // Example field name: "variationImageFiles_0_0", "variationImageFiles_0_1", "variationImageFiles_1_0"
-        // This tells Multer these are files and your controller can map them back.
-        // The field name convention needs to be agreed upon.
-        // A simpler Multer setup might use `upload.any()` and then you parse `file.fieldname`.
-        // For `upload.fields([...])`, field names must be known.
-        // Let's assume a convention like `variationImages[${index}]` for Multer.
-        // This will send multiple files with the same field name, which Multer handles as an array for that field.
-        formData.append(`variationFiles_${index}`, file, file.name);
+    // 1. Prepare the structured text data object.
+    // This object contains all fields EXCEPT the files themselves.
+    const textData = {
+      // Core fields, parsed to their correct types
+      sku: variationData.sku,
+      price: safeParseFloat(variationData.price)!,
+      salePrice: safeParseFloat(variationData.salePrice),
+      inventory: safeParseInt(variationData.inventory)!,
+      stockStatus: variationData.stockStatus,
+      isActive: variationData.isActive,
+      
+      // Relational data
+      attributeOptions: variationData.attributeOptions,
+
+      // Variation-specific image management
+      mainVariationImageIndex: safeParseInt(variationData.mainVariationImageIndex),
+
+      // Shipping and physical properties
+      weight: safeParseFloat(variationData.weight),
+      weightUnit: variationData.weightUnit,
+      dimensions: {
+        length: safeParseFloat(variationData.dimensions.length),
+        width: safeParseFloat(variationData.dimensions.width),
+        height: safeParseFloat(variationData.dimensions.height),
+        unit: variationData.dimensions.unit,
+      },
+
+      // Other identifiers
+      barcode: variationData.barcode,
+      
+      // Internal data
+      costPrice: safeParseFloat(variationData.costPrice),
+      lowStockThreshold: safeParseInt(variationData.lowStockThreshold),
+    };
+
+    // 2. Stringify the text data object and append it to the FormData.
+    // The backend controller expects this specific field name.
+    formData.append("variationData", JSON.stringify(textData));
+
+    // 3. Append the image files, if they exist.
+    // The backend Multer middleware expects this specific field name.
+    if (variationData.imageFiles && variationData.imageFiles.length > 0) {
+      variationData.imageFiles.forEach((file) => {
+        formData.append("variationImages", file);
       });
     }
-  });
 
-  return formData;
-};
-
-// --- Placeholder for other Product API functions (to be implemented similarly) ---
-
-export type ProductApiListParams = {
-  page?: number;
-  limit?: number;
-  filter?: string; // JSON string
-  sort?: string; // JSON string or simple field string
-  projection?: string;
-  lean?: boolean;
-};
-
-export async function getPaginatedProducts(
-  params?: ProductApiListParams
-): Promise<IPaginatedData<IProductResponse>> {
-  try {
-    console.log("API CALL: getPaginatedProducts with params:", params);
-    const response = await api.get<IPaginatedData<IProductResponse>>(
-      productApiEndpoints.GET_PAGINATED_PRODUCTS,
-      { params }
-    );
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      "Error fetching paginated products:",
-      error.response?.data || error.message
-    );
-    throw error.response?.data || error;
-  }
-}
-
-export async function getProductById(
-  productId: string,
-  projection?: string,
-  lean?: boolean
-): Promise<ApiResponse<IProductResponse>> {
-  try {
-    const params: { fields?: string; lean?: boolean } = {};
-    if (projection) params.fields = projection;
-    if (lean !== undefined) params.lean = lean;
-    const response = await api.get<ApiResponse<IProductResponse>>(
-      productApiEndpoints.GET_PRODUCT_BY_ID(productId),
-      { params: Object.keys(params).length ? params : undefined }
-    );
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      `Error fetching product by ID ${productId}:`,
-      error.response?.data || error.message
-    );
-    throw error.response?.data || error;
-  }
-}
-
-export async function getProductBySlug(
-  slug: string,
-  projection?: string,
-  lean?: boolean
-): Promise<ApiResponse<IProductResponse>> {
-  try {
-    const params: { fields?: string; lean?: boolean } = {};
-    if (projection) params.fields = projection;
-    if (lean !== undefined) params.lean = lean;
-    const response = await api.get<ApiResponse<IProductResponse>>(
-      productApiEndpoints.GET_PRODUCT_BY_SLUG(slug),
-      { params: Object.keys(params).length ? params : undefined }
-    );
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      `Error fetching product by slug ${slug}:`,
-      error.response?.data || error.message
-    );
-    throw error.response?.data || error;
-  }
-}
-
-export async function updateProductApi(
-  productId: string,
-  formData: FormData // Similar to create, updates might involve files
-): Promise<ApiResponse<IProductResponse>> {
-  try {
-    console.log(`API CALL: updateProductApi for ID ${productId} with FormData`);
-    const response = await api.put<ApiResponse<IProductResponse>>(
-      productApiEndpoints.UPDATE_PRODUCT(productId),
+    // 4. Make the API call with the constructed FormData.
+    const response = await api.post(
+      productApiEndpoints.VARIATIONS.BASE(productId),
       formData,
       {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          // Axios handles setting the correct boundary for multipart/form-data
+          "Content-Type": "multipart/form-data",
+        },
       }
     );
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      `Error updating product ${productId}:`,
-      error.response?.data || error.message
+    
+    return response.data.data;
+  },
+  /**
+   * Corresponds to: PUT /products/:productId/variations/:variationId
+   */
+  updateVariation: async (
+    productId: string,
+    variationId: string,
+    updateData: Partial<IProductVariation>
+  ): Promise<IProductDocument> => {
+    const response = await api.put(
+      productApiEndpoints.VARIATIONS.BY_ID(productId, variationId),
+      updateData
     );
-    throw (
-      error.response?.data ||
-      new Error(error.message || "Product update failed.")
-    );
-  }
-}
+    return response.data.data;
+  },
 
-export async function deleteProductApi(
-  productId: string,
-  hardDelete?: boolean
-): Promise<ApiResponse<null>> {
-  try {
-    const params: { hard?: string } = {};
-    if (hardDelete) params.hard = "true";
-
-    const response = await api.delete<ApiResponse<null>>(
-      productApiEndpoints.DELETE_PRODUCT(productId),
-      { params: Object.keys(params).length ? params : undefined }
+  /**
+   * Corresponds to: DELETE /products/:productId/variations/:variationId
+   */
+  removeVariation: async (
+    productId: string,
+    variationId: string
+  ): Promise<IProductDocument> => {
+    const response = await api.delete(
+      productApiEndpoints.VARIATIONS.BY_ID(productId, variationId)
     );
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      `Error deleting product ${productId}:`,
-      error.response?.data || error.message
-    );
-    throw error.response?.data || error;
-  }
-}
+    return response.data.data;
+  },
 
-// TODO: Implement API functions for:
-// - Adding/Updating/Removing individual variations (if using separate endpoints)
-// - Adding/Removing product images (main and for variations, if separate endpoints)
-// - Updating variation inventory
+  /**
+   * Corresponds to: PATCH /products/:productId/variations/:variationId/inventory
+   */
+  updateVariationInventory: async (
+    productId: string,
+    variationId: string,
+    data: UpdateInventoryData
+  ): Promise<IProductVariation> => {
+    const response = await api.patch(
+      productApiEndpoints.VARIATIONS.INVENTORY(productId, variationId),
+      data
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Corresponds to: POST /products/:productId/images
+   */
+  addImages: async (
+    productId: string,
+    images: File[]
+  ): Promise<IProductDocument> => {
+    const formData = new FormData();
+    images.forEach((image) => {
+      formData.append("productImages", image);
+    });
+    const response = await api.post(
+      productApiEndpoints.IMAGES.BASE(productId),
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return response.data.data;
+  },
+
+  search: async (
+    params: SearchProductsParams
+  ): Promise<IPaginatedProductsResult> => {
+    const queryParams = new URLSearchParams();
+
+    console.log('from api', params)
+    if (params.q) queryParams.append("q", params.q);
+    if (params.categoryId) queryParams.append("categoryId", params.categoryId);
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.filter) queryParams.append("filter", JSON.stringify(params.filter));
+    if (params.sort) queryParams.append("sort", JSON.stringify(params.sort));
+
+    const response = await api.get(
+      `${productApiEndpoints.SEARCH}?${queryParams.toString()}`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Corresponds to: DELETE /products/:productId/images
+   */
+  removeImage: async (
+    productId: string,
+    imageUrl: string
+  ): Promise<IProductDocument> => {
+    const response = await api.delete(
+      productApiEndpoints.IMAGES.BASE(productId),
+      {
+        data: { imageUrl },
+      }
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Corresponds to: POST /products/:productId/variations/:variationId/images
+   */
+  addVariationImages: async (
+    productId: string,
+    variationId: string,
+    images: File[]
+  ): Promise<IProductDocument> => {
+    const formData = new FormData();
+    images.forEach((image) => {
+      formData.append("variationImages", image);
+    });
+    const response = await api.post(
+      productApiEndpoints.IMAGES.VARIATION(productId, variationId),
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Corresponds to: DELETE /products/:productId/variations/:variationId/images
+   */
+  removeVariationImage: async (
+    productId: string,
+    variationId: string,
+    imageUrl: string
+  ): Promise<IProductDocument> => {
+    const response = await api.delete(
+      productApiEndpoints.IMAGES.VARIATION(productId, variationId),
+      { data: { imageUrl } }
+    );
+    return response.data.data;
+  },
+};

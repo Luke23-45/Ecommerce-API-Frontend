@@ -17,12 +17,19 @@ import GlobalStyles from "./components/home/styles/GlobalStyles";
 const HomePage = lazy(() => import("@/pages/Home/Home"));
 const AuthPage = lazy(() => import("@/pages/AuthPage/AuthPage"));
 import ProductDetailPage from "@/pages/ProductDetail/ProductDetailPage";
+import ProductDetailInfo from "@/pages/ProductDetail/ProductInformation";
 import ProductListingPage from "@/pages/ProductListingPage/ProductListingPage";
 import AdminPage from "@/pages/admin/AdminPage";
 import BecomeAPartnerPage from "./pages/BecomeAPartnerPage/BecomeAPartnerPage";
-import AdminPage_ from "@/pages/admin/index"
+import AdminPage_ from "@/pages/admin/index";
 import SenzPage from "./pages/senz/SenzPage";
 import { adminProductListTheme } from "./pages/senz/theme";
+import AdminRouterComponent from "./pages/admin/AdminRouter";
+import CartPage from "./pages/CartPage/CartPage";
+import Layout from "./components/layout/navlayout";
+import SearchResultsPage from "./pages/ProductListingPage/SearchResultsPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import CheckoutReviewPage from "./pages/CheckoutReviewPage";
 const AppLoadingScreen = () => (
   <div
     style={{
@@ -62,9 +69,8 @@ const AppLoadingScreen = () => (
 function App() {
   const dispatch: AppDispatch = useDispatch();
   const [isAuthCheckComplete, setIsAuthCheckComplete] = useState(false);
-
   // Get authentication state from Redux store
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth); // We only need isAuthenticated here
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     const performAuthCheck = async () => {
@@ -99,19 +105,33 @@ function App() {
             }}
           >
             <Routes>
-      
-                <Route path="/senz" element={<SenzPage />} />
-      
-              <Route path="/admin" element={<AdminPage_ />} />
-              <Route path="/" element={<HomePage />} />
-              {/* //<Route path="/admin" element={<AdminPage />} /> */}
+              {/* <Route path="/admin" element={<AdminPage_ />} /> */}
+              <Route path="/admin/*" element={<AdminRouterComponent />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/checkoutsummery" element={<CheckoutReviewPage />} />
+              <Route path="/" element={<Layout />}>
+                {/* The Home page will render at "/" */}
+                <Route index element={<HomePage />} />
+
+                {/* The ProductListingPage will render at "/products"
+                It will receive the search query from the URL via useSearchParams
+            */}
+                {/* <Route path="search" element={<ProductListingPage />} /> */}
+
+                <Route path="search" element={<SearchResultsPage />} />
+                <Route path="category" element={<ProductListingPage />} />
+              </Route>
               <Route path="/auth/*" element={<AuthPage />} />
               <Route
                 path="/product/:productId"
                 element={<ProductDetailPage />}
               />
-              <Route path="/category" element={<ProductListingPage />} />
-                    <Route path="/becomeseller" element={<BecomeAPartnerPage />} />
+              <Route
+                path="/productid/:productId"
+                element={<ProductDetailInfo />}
+              />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/becomeseller" element={<BecomeAPartnerPage />} />
 
               {/* Protected Routes (require authentication) */}
               <Route

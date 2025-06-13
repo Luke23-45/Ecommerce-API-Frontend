@@ -61,13 +61,17 @@ interface AttributeOptionListProps {
 
 const AttributeOptionList: React.FC<AttributeOptionListProps> = ({
   attributId,
-  onClickBackList,
   onEditAttributeOption,
 }) => {
 
+
+  const paramsUrl = useParams();
+
+  console.log(paramsUrl,"--------------")
+
   const navigate = useNavigate();
 
-  const attributeId = attributId;
+  const attributeId = paramsUrl.attributeId;
   const { showNotification } = useNotification();
   const theme = useTheme();
 
@@ -119,6 +123,10 @@ const AttributeOptionList: React.FC<AttributeOptionListProps> = ({
     keepPreviousData: true,
   });
 
+  const onClickBackList = () =>{
+    navigate(`/admin/products/attributes/list`)
+  }
+
   const options = paginatedOptionsData?.data || [];
   const totalOptions = paginatedOptionsData?.totalCount || 0;
   const totalPages =
@@ -134,6 +142,8 @@ const AttributeOptionList: React.FC<AttributeOptionListProps> = ({
 
       setIsDeleteModalOpen(false);
       setOptionToDelete(null);
+
+      refetchOptions();
     },
     onError: (err: any) => {
       showNotification(
@@ -170,13 +180,13 @@ const AttributeOptionList: React.FC<AttributeOptionListProps> = ({
 
   const handleAddOption = () => {
     if (attributeId) {
-      navigate(`/admin/attributes/${attributeId}/options/new`);
+      navigate(`/admin/products/attributes/${attributeId}/options/new`);
     }
   };
 
   const handleEditOption = (optionId: string) => {
     if (attributeId) {
-      navigate(`/admin/attributes/${attributeId}/options/${optionId}/edit`);
+      navigate(`/admin/products/attributes/${attributeId}/options/${optionId}/edit`);
     }
   };
 
@@ -400,7 +410,7 @@ const AttributeOptionList: React.FC<AttributeOptionListProps> = ({
                   <td>{new Date(option.createdAt).toLocaleDateString()}</td>
                   <td>
                     <TableActionButton
-                      onClick={() => onEditAttributeOption(option.id)}
+                      onClick={ () => handleEditOption(option.id)}
                       title="Edit Option"
                     >
                       <FaEdit />

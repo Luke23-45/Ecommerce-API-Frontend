@@ -64,8 +64,7 @@ export const FormStickyActionBar = styled.div`
     left: 0; 
     right: 0;
     width: auto; 
-    margin-left: ${(props) => (props.theme.sidebar?.isCollapsed ? props.theme.sidebar.widthCollapsed : props.theme.sidebar.widthExpanded) || (props.theme.sidebar?.isCollapsed ? '80px' : '260px')}; /* Dynamic based on theme */
-    
+    margin-left: ${(props) => (props.theme.sidebar?.isCollapsed ) || (props.theme.sidebar?.isCollapsed ? '80px' : '260px')}; 
     background-color: ${(props) => rgba(getTheme(props).colors.adminPrimaryBg || '#FAFAFB', 0.97)};
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);

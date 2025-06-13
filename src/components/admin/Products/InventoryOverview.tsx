@@ -112,8 +112,114 @@ interface InventoryOverviewProps {
     // onBulkImport?: () => void;
 }
 
-const InventoryOverview: React.FC<InventoryOverviewProps> = ({ allProductsData, globalLowStockThreshold = 10 }) => {
+const mockId = (prefix: string) =>
+  `${prefix}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+const getGenericImage = (
+  seed: string,
+  width: number = 800,
+  height: number = 450,
+  tags: string = ""
+) =>
+  `https://picsum.photos/seed/${seed.replace(/\s/g, "-")}/${width}/${height}/?${tags}`;
+
+const allProductsData1: Product[] = [
+  {
+    _id: mockId("PRD"),
+    name: "Élan Solid Oak Console",
+    sku: "ELOAK001",
+    category: "Living Room",
+    price: 580,
+    currency: "USD",
+    inventory: 15,
+    stockStatus: "in_stock",
+    status: "active",
+    sellerType: "vendor",
+    mainImageUrl: getGenericImage("consoledesk", 100, 100),
+    vendorName: "Artisan Wood Co.",
+    createdAt: "2023-01-15T10:00:00Z",
+  },
+  {
+    _id: mockId("PRD"),
+    name: "Ceramic Glaze Vase Set",
+    sku: "ELVASE002",
+    category: "Decor",
+    price: 95,
+    currency: "USD",
+    inventory: 0,
+    stockStatus: "out_of_stock",
+    status: "active",
+    sellerType: "individual_seller",
+    mainImageUrl: getGenericImage("vaseset", 100, 100),
+    sellerName: "Studio Potter",
+    createdAt: "2023-02-20T11:30:00Z",
+  },
+  {
+    _id: mockId("PRD"),
+    name: "Nordic Wool Rug - Azure",
+    sku: "ELRUG003",
+    category: "Living Room",
+    price: 320,
+    currency: "USD",
+    inventory: 5,
+    stockStatus: "in_stock",
+    status: "active",
+    sellerType: "vendor",
+    mainImageUrl: getGenericImage("woolrug", 100, 100),
+    vendorName: "Scandinavian Weaves",
+    createdAt: "2023-03-01T14:00:00Z",
+    salePrice: 280,
+  },
+  {
+    _id: mockId("PRD"),
+    name: "Smart LED Floor Lamp",
+    sku: "ELLAMP004",
+    category: "Lighting",
+    price: 180,
+    currency: "USD",
+    inventory: 10,
+    stockStatus: "in_stock",
+    status: "pending_review",
+    sellerType: "vendor",
+    mainImageUrl: getGenericImage("ledlamp", 100, 100),
+    vendorName: "Bright Home",
+    createdAt: "2023-03-10T09:15:00Z",
+  },
+  {
+    _id: mockId("PRD"),
+    name: "Handcrafted Ceramic Bowl",
+    sku: "ELBOWL005",
+    category: "Kitchen",
+    price: 45,
+    currency: "USD",
+    inventory: 30,
+    stockStatus: "in_stock",
+    status: "draft",
+    sellerType: "individual_seller",
+    mainImageUrl: getGenericImage("ceramicbowl", 100, 100),
+    sellerName: "Pottery Studio",
+    createdAt: "2023-03-25T16:45:00Z",
+  },
+  {
+    _id: mockId("PRD"),
+    name: "Velvet Dining Chairs",
+    sku: "ELDIN006",
+    category: "Dining Room",
+    price: 300,
+    currency: "USD",
+    inventory: 8,
+    stockStatus: "in_stock",
+    status: "active",
+    sellerType: "vendor",
+    mainImageUrl: getGenericImage("diningchair", 100, 100),
+    vendorName: "Comfort Living",
+    createdAt: "2023-04-01T11:00:00Z",
+  },
+];
+
+const InventoryOverview: React.FC<InventoryOverviewProps> = ({  globalLowStockThreshold = 10 }) => {
   // All products data is transformed into flattened inventory items here.
+
+  const allProductsData = allProductsData1
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(
     () => flattenProductsToInventoryItems(allProductsData, globalLowStockThreshold)
   );

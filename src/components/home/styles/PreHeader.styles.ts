@@ -53,7 +53,6 @@ export const NavLink = styled.a`
     letter-spacing: 0.5px;
 
     &:hover {
-        color: ${(props) => props.theme.colors.lightGray};
         transform: scale(1.01); /* Subtle effect */
 
         svg {

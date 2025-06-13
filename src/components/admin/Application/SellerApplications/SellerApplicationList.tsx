@@ -28,6 +28,7 @@ import type { IIndividualSellerProfile, PaginatedSellerApplicationsResponse } fr
 // It's crucial that useFilterIndividualSellerApplication hook expects its first argument
 // to be an object of query parameters that it will then use to construct the URL.
 import { useFilterIndividualSellerApplication } from '@/hooks/admin/application/useSeller'; // Adjust path as needed
+import { useNavigate } from 'react-router-dom';
 
 type SortableFields = 'sellerName' | 'createdAt' | 'status' | 'estimatedMonthlySales' | 'legalFirstName' | 'userId';
 type SortDirection = 'asc' | 'desc';
@@ -47,7 +48,6 @@ interface SellerApplicationListProps {
 const ITEMS_PER_PAGE_DEFAULT = 10; // Default for the UI if API has its own default
 
 const SellerApplicationList: React.FC<SellerApplicationListProps> = ({
-  onViewDetails,
   onApplicationAction,
   onAddNewApplication,
 }) => {
@@ -63,6 +63,8 @@ const SellerApplicationList: React.FC<SellerApplicationListProps> = ({
     key: 'createdAt', // Default sort field
     direction: 'desc',  // Default sort direction
   });
+
+  const navigate = useNavigate();
 
   // --- Construct API Query Parameters Object ---
   // This object will be passed to the React Query hook.
@@ -98,6 +100,8 @@ const SellerApplicationList: React.FC<SellerApplicationListProps> = ({
       queryParams.filter = JSON.stringify(filterObj);
     }
 
+
+
     // Sort object construction
     if (sortConfig.key) {
       const sortObj: Record<string, 1 | -1> = {
@@ -123,7 +127,9 @@ const SellerApplicationList: React.FC<SellerApplicationListProps> = ({
     return queryParams;
   }, [currentPage, itemsPerPage, searchTerm, filterStatus, sortConfig]);
 
-
+    const onViewDetails = (applicationId:string)  =>{
+      navigate(`${applicationId}`);
+    }
   // --- Data Fetching with React Query using the constructed parameters ---
   const {
     data: apiResponse, // This should be the PaginatedSellerApplicationsResponse from your type

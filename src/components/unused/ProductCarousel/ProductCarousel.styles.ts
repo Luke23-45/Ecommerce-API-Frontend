@@ -239,7 +239,7 @@ export const AddToCartButton = styled.button`
     ${ActionButtonBase}
     background: ${(props: { theme: DefaultTheme }) => props.theme.colors.gradients?.accent1Vibrant || props.theme.colors.accent1};
     color: ${(props: { theme: DefaultTheme }) => props.theme.colors.textLight};
-
+width: max-content;
     &:hover {
         background: ${(props) => {
             const currentBg = props.theme.colors.gradients?.accent1Vibrant || props.theme.colors.accent1;

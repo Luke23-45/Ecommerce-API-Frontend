@@ -1,20 +1,23 @@
+// src/components/common/LoadingSpinner/LoadingSpinner.tsx
+
 import React from 'react';
-import { useTheme, type DefaultTheme } from 'styled-components'; // Import useTheme if needed for default props
 import {
   SpinnerContainer,
   SpinnerWithMessageContainer,
-  SpinnerText
+  SpinnerText,
+  FullscreenSpinnerWrapper, // <-- Import the new wrapper
 } from './LoadingSpinner.styles';
 
 interface LoadingSpinnerProps {
-  size?: string;      // e.g., '30px', '1.5em'. Default will be from styles.
-  color?: string;     // Override theme accent color for spinner.
-  thickness?: string; // e.g., '4px'. Default will be from styles.
-  message?: string;   // Optional message to display.
-  className?: string; // For additional styling via styled-components or CSS.
-  inline?: boolean;   // If true, spinner (without message) is display: inline-block.
-  centerMessage?: boolean; // If true and message is present, centers the spinner and message.
-  style?: React.CSSProperties; // Allow passing standard style object
+  size?: string;
+  color?: string;
+  thickness?: string;
+  message?: string;
+  className?: string;
+  inline?: boolean;
+  centerMessage?: boolean; // This is now used by the fullscreen wrapper
+  fullscreen?: boolean; // <-- Add the new fullscreen prop
+  style?: React.CSSProperties;
 }
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
@@ -23,27 +26,23 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   thickness,
   message,
   className,
-  inline = false, // Default to false
-  centerMessage = false, // Default to false
+  inline = false,
+  centerMessage = true, // Default to true for better visuals with a message
+  fullscreen = false, // Default to false
   style,
 }) => {
-  // const theme = useTheme() as DefaultTheme; // Uncomment if you need theme for default prop values not handled by styled-component defaults
-
-  if (message) {
-    return (
-      <SpinnerWithMessageContainer className={className} $center={centerMessage} style={style}>
-        <SpinnerContainer
-          $size={size}
-          $color={color}
-          $thickness={thickness}
-          // $inline prop is not directly applicable when a message is present and container is flex-column
-        />
-        <SpinnerText>{message}</SpinnerText>
-      </SpinnerWithMessageContainer>
-    );
-  }
-
-  return (
+  const spinnerContent = message ? (
+    // When there's a message, we always use the container
+    <SpinnerWithMessageContainer className={className} $center={centerMessage} style={style}>
+      <SpinnerContainer
+        $size={size}
+        $color={color}
+        $thickness={thickness}
+      />
+      <SpinnerText>{message}</SpinnerText>
+    </SpinnerWithMessageContainer>
+  ) : (
+    // When there's no message, it's just the spinner itself
     <SpinnerContainer
       className={className}
       $size={size}
@@ -51,11 +50,24 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       $thickness={thickness}
       $inline={inline}
       style={style}
-      role="status" // Accessibility: indicates a status update region
-      aria-live="polite" // Or "assertive" if the update is critical
-      aria-label={message || "Loading"} // Provide a label for screen readers
+      role="status"
+      aria-live="polite"
+      aria-label={message || "Loading"}
     />
   );
+
+  // --- ** THE FIX ** ---
+  // If the fullscreen prop is true, wrap our content in the new fullscreen wrapper.
+  if (fullscreen) {
+    return (
+      <FullscreenSpinnerWrapper>
+        {spinnerContent}
+      </FullscreenSpinnerWrapper>
+    );
+  }
+
+  // Otherwise, just return the content as is.
+  return spinnerContent;
 };
 
 export default LoadingSpinner;
