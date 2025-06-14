@@ -1,10 +1,12 @@
-// src/pages/CheckoutPage/components/ShippingMethodSection.tsx
-
-import React, { useState } from 'react';
+// src/components/checkout/ShippingMethodSection/ShippingMethodSection.tsx
+import React from 'react'; // Removed useState as it's not used locally
 import { FaTruck } from 'react-icons/fa';
+import { useTheme } from 'styled-components'; // For potential theme access
 
-// Import local styles
+// Import local styles (updated)
 import {
+  ShippingMethodSectionWrapper,
+  ShippingSectionTitle,
   ShippingOptionsList,
   ShippingOptionCard,
   OptionDetails,
@@ -13,105 +15,91 @@ import {
   OptionCost,
 } from './ShippingMethodSection.styles';
 
-// Import shared styles & components
-import {
-  CheckoutSection,
-  SectionHeader,
-  SectionContent,
-  EditLink,
-  SectionSummary,
-} from '@/pages/CheckoutPage/CheckoutPage.styles';
-// import { StepActions } from './AddressSection.styles'; // Re-use from AddressStep
-// import { PrimaryCtaButton, SecondaryButton } from '@/components/common/Button/Button.styles';
-// import { RadioCircle } from './AddressSection.styles'; // Re-use or create a common RadioCircle
+// Import the beautifully styled RadioCircle
+// Assuming it's in PaymentMethodSection.styles.ts or a common components area
+import { RadioCircle } from '../PaymentMethodSection/PaymentMethodSection.styles'; // ADJUST PATH if moved
 
-import { PrimaryCtaButton } from '@/pages/BecomeAPartnerPage/BecomeAPartnerPage.styles';
-import { SecondaryButton } from '@/components/auth/AuthForms';
-import { RadioCircle } from '../PaymentMethodSection/PaymentMethodSection.styles';
-// Define the shape of a shipping option object
-import { StepActions } from './ShippingMethodSection.styles';
-interface ShippingOption {
+// Type definition (ensure this is consistent with CheckoutPage and mockData)
+export interface ShippingOption { // Make sure this is exported or defined in a shared types file
   id: string;
   name: string;
   description: string;
   cost: number;
   estimatedDelivery?: string;
-  isDefault?: boolean;
+  isDefault?: boolean; // Though default selection might be handled by parent state
 }
 
 interface ShippingMethodSectionProps {
+  // titleText: string; // Title is now static within this component as "Delivery Method"
   shippingOptions: ShippingOption[];
   selectedMethod: ShippingOption | null;
   onSelectMethod: (method: ShippingOption | null) => void;
-  isOpen: boolean;
-  onToggle: () => void;
-  onComplete: () => void;
+  // onSetValidity?: (isValid: boolean) => void; // Optional: To inform parent about step validity
 }
 
 const ShippingMethodSection: React.FC<ShippingMethodSectionProps> = ({
   shippingOptions,
   selectedMethod,
   onSelectMethod,
-  isOpen,
-  onToggle,
-  onComplete,
+  // onSetValidity,
 }) => {
-  const handleContinue = () => {
-    if (selectedMethod) {
-      onComplete();
-    }
-  };
+  const theme = useTheme(); // For direct theme access if needed
 
-  const summaryText = selectedMethod
-    ? `${selectedMethod.name} (${selectedMethod.cost === 0 ? 'FREE' : '$' + selectedMethod.cost.toFixed(2)})`
-    : 'Select Delivery Method';
+  // useEffect(() => { // Example of how validity could be communicated
+  //   if (onSetValidity) {
+  //     onSetValidity(!!selectedMethod);
+  //   }
+  // }, [selectedMethod, onSetValidity]);
 
   return (
-    <CheckoutSection className={isOpen ? 'is-active' : ''}>
-      <SectionHeader onClick={onToggle} $isClickable={true}>
-        <h2><FaTruck className="icon" /> Delivery Method</h2>
-        {!isOpen && selectedMethod ? (
-          <SectionSummary>{summaryText}</SectionSummary>
-        ) : !isOpen ? (
-            <SectionSummary style={{color: 'red'}}>Required</SectionSummary>
-        ) : null}
-        {!isOpen && <EditLink onClick={(e) => { e.stopPropagation(); onToggle(); }}>Edit</EditLink>}
-      </SectionHeader>
+    <ShippingMethodSectionWrapper>
+      <ShippingSectionTitle>
+        <FaTruck className="icon" /> Delivery Method
+      </ShippingSectionTitle>
 
-      <SectionContent isOpen={isOpen}>
-        <ShippingOptionsList>
-          {shippingOptions.map(option => (
-            <ShippingOptionCard
-              key={option.id}
-              $isSelected={selectedMethod?.id === option.id}
-              onClick={() => onSelectMethod(option)}
-            >
-              <RadioCircle $isSelected={selectedMethod?.id === option.id} />
-              <OptionDetails>
-                <OptionName>{option.name}</OptionName>
-                <OptionDescription>{option.description}</OptionDescription>
-                {option.estimatedDelivery && <OptionDescription style={{ fontStyle: 'italic' }}>Est: {option.estimatedDelivery}</OptionDescription>}
-              </OptionDetails>
-              <OptionCost>
-                {option.cost === 0 ? 'FREE' : `$${option.cost.toFixed(2)}`}
-              </OptionCost>
-            </ShippingOptionCard>
-          ))}
-        </ShippingOptionsList>
-        
-        <StepActions>
-           <SecondaryButton onClick={() => { /* TODO: Back to previous step handler */ onToggle(); /* For now just toggle */}}>
-            Back
-          </SecondaryButton>
-          <PrimaryCtaButton
-            onClick={handleContinue}
-            disabled={!selectedMethod}
+      <ShippingOptionsList role="radiogroup" aria-labelledby="shipping-method-title">
+        {/* The h2 above acts as the label for this radiogroup via aria-labelledby */}
+        {/* Or we could have an invisible h2 with id="shipping-method-title" for screen readers */}
+
+        {shippingOptions.map(option => (
+          <ShippingOptionCard
+            key={option.id}
+            $isSelected={selectedMethod?.id === option.id}
+            onClick={() => onSelectMethod(option)}
+            role="radio"
+            aria-checked={selectedMethod?.id === option.id}
+            tabIndex={0} // Make cards focusable
+            onKeyPress={(e) => { // Accessibility: select with Enter/Space
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectMethod(option);
+                }
+            }}
           >
-            Continue to Payment
-          </PrimaryCtaButton>
-        </StepActions>
-      </SectionContent>
-    </CheckoutSection>
+            <RadioCircle
+              $isSelected={selectedMethod?.id === option.id}
+              aria-hidden="true" // Decorative if card itself is the control
+            />
+            <OptionDetails>
+              <OptionName>{option.name}</OptionName>
+              <OptionDescription>{option.description}</OptionDescription>
+              {option.estimatedDelivery && (
+                <OptionDescription className="estimated-delivery">
+                  Est. Delivery: {option.estimatedDelivery}
+                </OptionDescription>
+              )}
+            </OptionDetails>
+            <OptionCost>
+              {option.cost === 0 ? 'FREE' : `$${option.cost.toFixed(2)}`}
+            </OptionCost>
+          </ShippingOptionCard>
+        ))}
+      </ShippingOptionsList>
+      
+      {/* StepActions (Back/Continue buttons) are removed from here.
+          Progression is handled by the global "Continue" button in CheckoutPage.tsx. */}
+
+    </ShippingMethodSectionWrapper>
   );
 };
 
