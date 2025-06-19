@@ -1,25 +1,30 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Outlet,
   useNavigate,
   useSearchParams,
   useLocation,
 } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import GrandMarquee from "@/components/home/GrandMarquee";
 import PreHeader from "@/components/home/PreHeader";
 import SecondaryNav from "@/components/home/SecondaryNav/SecondaryNav";
 import { useGetCart } from "@/hooks/cart/useCart";
+import { setCartCount } from "@/store/slices/cartSlice";
+import type { AppDispatch, RootState } from "@/store";
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
 
-  const { data: cartData, isLoading: isCartLoading } = useGetCart();
-
-  console.log(cartData);
-
-  const cartItemCount = cartData?.itemCount || 0;
+  // useEffect(() => {
+  //   if (cartData) {
+  //     dispatch(setCartCount(cartData.itemCount));
+  //   } else {
+  //     dispatch(setCartCount(0));
+  //   }
+  // }, [cartData, dispatch]);
 
   const currentSearchQuery = searchParams.get("q") || "";
   const isHomePage = location.pathname === "/";
@@ -50,14 +55,11 @@ const Layout: React.FC = () => {
   return (
     <div>
       {isHomePage && <PreHeader wishlistCount={3} />}
-
       <GrandMarquee
         onSearch={handleSearchFromLayout}
         onViewCart={handleViewCart}
         onViewWishlist={handleViewWishlist}
         onSignInRegister={handleSignInRegister}
-        cartItemCount={cartItemCount}
-        isCartLoading={isCartLoading}
         initialSearchTerm={currentSearchQuery}
       />
       {isHomePage && <SecondaryNav />}

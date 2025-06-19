@@ -17,6 +17,7 @@ export const CartPageWrapper = styled.div`
   padding-top: ${({ theme }) => theme.spacing(10)}; // e.g., 40px
   padding-bottom: ${({ theme }) => theme.spacing(16)}; // e.g., 64px
   animation: ${fadeInSmooth} 0.5s ease-out;
+    padding: ${(props) => props.theme.spacing(10)} 0;
 `;
 
 // --- Content Limiter (to constrain main content width) ---

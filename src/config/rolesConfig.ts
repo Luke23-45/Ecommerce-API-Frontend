@@ -46,7 +46,11 @@ export interface RoleConfig {
   defaultDashboardPath: string;
 }
 
-export const USER_ROLES_LIST = ["admin", "vendor", "individual_seller"] as const;
+export const USER_ROLES_LIST = [
+  "admin",
+  "vendor",
+  "individual_seller",
+] as const;
 export type UserRole = (typeof USER_ROLES_LIST)[number];
 
 export const ALL_NAV_ITEMS: NavItem[] = [
@@ -186,6 +190,30 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     sectionId: "vendorProducts",
     icon: FaStoreAlt,
   },
+
+  {
+    path: "/admin/checkoutsession",
+    label: "CheckoutSession",
+    sectionId: "platformCheckoutMain",
+    icon: FaClipboardList,
+    children: [
+      {
+        path: "/admin/checkoutsession/discount",
+        label: "Discount",
+        sectionId: "platformDiscountOverview",
+      },
+      {
+        path: "/admin/checkoutsession/tax",
+        label: "Tax",
+        sectionId: "platformTaxOverview",
+      },
+      {
+        path: "/admin/checkoutsession/shippingzones",
+        label: "Shipping Zones",
+        sectionId: "platformshippingzonesOverview",
+      },
+    ],
+  },
   {
     path: "/admin/orders",
     label: "My Orders ",
@@ -250,11 +278,16 @@ export const ROLES_CONFIG: Record<UserRole, RoleConfig> = {
       "dashboard",
       "profileSettings",
       "platformOverview",
+      "platformCheckoutMain",
+      "platformshippingzonesOverview",
+      "platformDiscountOverview",
+      "platformTaxOverview",
       "platformProductsMain",
       "platformProductList",
       "platformCategories",
       "platformAttributes",
       "platformInventory",
+
       "platformOrders",
       "platformCustomers",
       "platformApplicationsMain",

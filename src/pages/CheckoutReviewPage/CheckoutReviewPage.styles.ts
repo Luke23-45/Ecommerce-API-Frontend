@@ -450,3 +450,32 @@ export const SecurityNotice = styled.p`
     color: ${colors.success}; // Green lock icon
   }
 `;
+
+// Example additions to CheckoutReviewPage.styles.ts
+export const BreakdownCard = styled(ReviewCard)`
+  margin-top: 1.5rem; // Space above these new cards
+`;
+
+export const BreakdownItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: ${({ theme }) => theme.spacing(2)} 0;
+  font-size: ${({ theme }) => theme.typography.body.sizes.small};
+  color: ${({ theme }) => theme.colors.textMedium};
+
+  &:not(:last-child) {
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border}; // Softer separator
+  }
+`;
+
+export const BreakdownLabel = styled.span`
+  color: ${({ theme }) => theme.colors.textSecondary}; // Muted label
+  margin-right: ${({ theme }) => theme.spacing(4)};
+`;
+
+export const BreakdownValue = styled.span`
+  color: ${({ theme }) => theme.colors.textPrimary};
+  font-weight: ${({ theme }) => theme.typography.body.weights.medium};
+  text-align: right;
+`;

@@ -38,14 +38,14 @@ const QuantityInput: React.FC<QuantityInputProps> = ({
     // No need to check disabled here, button's disabled attribute handles it
     const newQuantity = Math.max(minQuantity, currentQuantity - 1);
     if (newQuantity !== currentQuantity) { // Only call if quantity actually changes
-        onQuantityChange(newQuantity);
+        onQuantityChange(newQuantity,0);
     }
   }, [currentQuantity, minQuantity, onQuantityChange]);
 
   const handleIncrement = useCallback(() => {
     const newQuantity = Math.min(maxQuantity, currentQuantity + 1);
      if (newQuantity !== currentQuantity) { // Only call if quantity actually changes
-        onQuantityChange(newQuantity);
+        onQuantityChange(newQuantity,1);
     }
   }, [currentQuantity, maxQuantity, onQuantityChange]);
 

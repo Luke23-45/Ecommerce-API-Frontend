@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { checkoutApi } from "@/api/checkoutApi";
+import { checkoutApi } from "@/api/general/checkoutsessionApi";
 import {
   type CheckoutSession,
   type ShippingOption,
@@ -17,7 +17,7 @@ import {
   type AddressUpdateDto,
   type SavedPaymentMethod,
   type CreateSavedPaymentMethodDTO,
-} from "@/interfaces/Checkout/checkout.interfaces";
+} from "@/types/checkout.types";
 import { useNotification } from "@/contexts/NotificationContext";
 import { v4 as uuidv4 } from "uuid";
 
@@ -177,7 +177,7 @@ export const usePlaceOrder = () => {
       checkoutApi.placeOrder({ ...payload, idempotencyKey: uuidv4() }),
     onSuccess: (data) => {
       showNotification(
-        `Order #${data.orderNumber} placed successfully!`,
+        `Order #${data.order.orderNumber} placed successfully!`,
         "success"
       );
 

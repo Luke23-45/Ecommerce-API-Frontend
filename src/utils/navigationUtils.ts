@@ -67,6 +67,40 @@ export const findNavItemByPath = (
   return bestMatch;
 };
 
+
+export const getNavItemsForRole = (role: UserRole): NavItem[] => {
+  const config = ROLES_CONFIG[role];
+  if (!config) {
+    // If no config exists for the role, return no nav items.
+    return [];
+  }
+
+  const allowedSections = new Set(config.allowedNavSections);
+
+  // This recursive function will build the new, filtered navigation tree.
+  const filterItems = (items: NavItem[]): NavItem[] => {
+    return items.reduce<NavItem[]>((acc, item) => {
+      // Recursively filter the children first.
+      const allowedChildren = item.children ? filterItems(item.children) : undefined;
+
+      // An item should be included in the final tree if:
+      // 1. Its own sectionId is in the role's allowed list.
+      // OR
+      // 2. It has children that are allowed (making it a container for accessible links).
+      if (allowedSections.has(item.sectionId) || (allowedChildren && allowedChildren.length > 0)) {
+        acc.push({
+          ...item,
+          // Assign the filtered children to the new item.
+          children: allowedChildren,
+        });
+      }
+      return acc;
+    }, []);
+  };
+
+  return filterItems(ALL_NAV_ITEMS);
+};
+
 /**
  * Checks if a given path is accessible to a specific user role.
  * It now uses the updated findNavItemByPath which can handle dynamic routes.

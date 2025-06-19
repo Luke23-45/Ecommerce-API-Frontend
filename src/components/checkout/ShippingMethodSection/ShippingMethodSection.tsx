@@ -1,9 +1,12 @@
 // src/components/checkout/ShippingMethodSection/ShippingMethodSection.tsx
-import React from 'react'; // Removed useState as it's not used locally
-import { FaTruck } from 'react-icons/fa';
-import { useTheme } from 'styled-components'; // For potential theme access
+import React from "react";
+import { FaTruck } from "react-icons/fa";
+import { useTheme } from "styled-components";
 
-// Import local styles (updated)
+// Import YOUR LoadingSpinner component
+import LoadingSpinner from "@/components/common/LoadingSpinner/LoadingSpinner"; // ADJUST PATH AS NEEDED
+
+// Import local styles
 import {
   ShippingMethodSectionWrapper,
   ShippingSectionTitle,
@@ -13,92 +16,179 @@ import {
   OptionName,
   OptionDescription,
   OptionCost,
-} from './ShippingMethodSection.styles';
+} from "./ShippingMethodSection.styles";
 
 // Import the beautifully styled RadioCircle
-// Assuming it's in PaymentMethodSection.styles.ts or a common components area
-import { RadioCircle } from '../PaymentMethodSection/PaymentMethodSection.styles'; // ADJUST PATH if moved
+import { RadioCircle } from "../PaymentMethodSection/PaymentMethodSection.styles"; // ADJUST PATH IF MOVED
 
-// Type definition (ensure this is consistent with CheckoutPage and mockData)
-export interface ShippingOption { // Make sure this is exported or defined in a shared types file
+export interface ShippingOption {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   cost: number;
-  estimatedDelivery?: string;
-  isDefault?: boolean; // Though default selection might be handled by parent state
+  estimatedDeliveryTime?: string;
 }
 
 interface ShippingMethodSectionProps {
-  // titleText: string; // Title is now static within this component as "Delivery Method"
   shippingOptions: ShippingOption[];
-  selectedMethod: ShippingOption | null;
-  onSelectMethod: (method: ShippingOption | null) => void;
-  // onSetValidity?: (isValid: boolean) => void; // Optional: To inform parent about step validity
+  selectedMethod: ShippingOption | null; // This is the currently selected method object
+  onSelectMethod: (method: ShippingOption) => void; // Changed to never pass null if an option is clicked
+
+  isLoadingOptions?: boolean;
+  optionsError?: Error | null;
 }
 
 const ShippingMethodSection: React.FC<ShippingMethodSectionProps> = ({
   shippingOptions,
   selectedMethod,
   onSelectMethod,
-  // onSetValidity,
+  isLoadingOptions,
+  optionsError,
 }) => {
-  const theme = useTheme(); // For direct theme access if needed
+  const theme = useTheme();
 
-  // useEffect(() => { // Example of how validity could be communicated
-  //   if (onSetValidity) {
-  //     onSetValidity(!!selectedMethod);
-  //   }
-  // }, [selectedMethod, onSetValidity]);
+  console.log(selectedMethod,"selectedMethod",shippingOptions,"shippingOptions")
 
+  // --- Handle Selection ---
+  const handleSelect = (option: ShippingOption) => {
+    console.log(option,'option.id');
+    onSelectMethod(option); // Pass the full option object
+  };
+
+  // --- Render Loading State ---
+  if (isLoadingOptions) {
+    return (
+      <ShippingMethodSectionWrapper>
+        <ShippingSectionTitle id="shipping-method-section-title-loading">
+          <FaTruck className="icon" /> Delivery Method
+        </ShippingSectionTitle>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: theme.spacing(10),
+          }}
+        >
+          {/* Using your custom LoadingSpinner */}
+          <LoadingSpinner
+            size="2.5rem" // Example size
+            message="Loading delivery options..."
+            // color={theme.colors.accent1} // Pass if your spinner supports color prop
+            // thickness="3px" // Example
+          />
+          {/* TODO: For "utmost beauty", replace with 2-3 skeleton loader cards for ShippingOptionCard */}
+        </div>
+      </ShippingMethodSectionWrapper>
+    );
+  }
+
+  // --- Render Error State ---
+  if (optionsError) {
+    return (
+      <ShippingMethodSectionWrapper>
+        <ShippingSectionTitle id="shipping-method-section-title-error">
+          <FaTruck className="icon" /> Delivery Method
+        </ShippingSectionTitle>
+        <div
+          style={{
+            padding: theme.spacing(4),
+            textAlign: "center",
+            color: theme.colors.error,
+          }}
+        >
+          <p>Could not load delivery options: {optionsError.message}</p>
+          <p
+            style={{
+              marginTop: theme.spacing(2),
+              fontSize: theme.typography.body.sizes.small,
+              color: theme.colors.textMuted,
+            }}
+          >
+            Please ensure your shipping address is complete, or try again.
+          </p>
+        </div>
+      </ShippingMethodSectionWrapper>
+    );
+  }
+
+  // --- Render No Options Available State ---
+  if (!shippingOptions || shippingOptions.length === 0) {
+    return (
+      <ShippingMethodSectionWrapper>
+        <ShippingSectionTitle id="shipping-method-section-title-empty">
+          <FaTruck className="icon" /> Delivery Method
+        </ShippingSectionTitle>
+        <p
+          style={{
+            color: theme.colors.textMedium,
+            textAlign: "center",
+            padding: theme.spacing(5),
+          }}
+        >
+          No delivery options are currently available for your selected shipping
+          address.
+        </p>
+      </ShippingMethodSectionWrapper>
+    );
+  }
+
+  
+
+  // --- Main Render (Options Available) ---
   return (
     <ShippingMethodSectionWrapper>
-      <ShippingSectionTitle>
+      <ShippingSectionTitle id="shipping-method-section-title">
         <FaTruck className="icon" /> Delivery Method
       </ShippingSectionTitle>
 
-      <ShippingOptionsList role="radiogroup" aria-labelledby="shipping-method-title">
-        {/* The h2 above acts as the label for this radiogroup via aria-labelledby */}
-        {/* Or we could have an invisible h2 with id="shipping-method-title" for screen readers */}
+      <ShippingOptionsList
+        role="radiogroup"
+        aria-labelledby="shipping-method-section-title"
+      >
+        {shippingOptions.map((option) => {
+          // Determine if this option is the currently selected one
+          const isSelected = selectedMethod?.id === option.id;
 
-        {shippingOptions.map(option => (
-          <ShippingOptionCard
-            key={option.id}
-            $isSelected={selectedMethod?.id === option.id}
-            onClick={() => onSelectMethod(option)}
-            role="radio"
-            aria-checked={selectedMethod?.id === option.id}
-            tabIndex={0} // Make cards focusable
-            onKeyPress={(e) => { // Accessibility: select with Enter/Space
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onSelectMethod(option);
+
+          return (
+            <ShippingOptionCard
+              key={option.id}
+              $isSelected={isSelected} // Pass boolean to styled component
+              onClick={() => handleSelect(option)}
+              role="radio"
+              aria-checked={isSelected}
+              tabIndex={0}
+              onKeyPress={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleSelect(option);
                 }
-            }}
-          >
-            <RadioCircle
-              $isSelected={selectedMethod?.id === option.id}
-              aria-hidden="true" // Decorative if card itself is the control
-            />
-            <OptionDetails>
-              <OptionName>{option.name}</OptionName>
-              <OptionDescription>{option.description}</OptionDescription>
-              {option.estimatedDelivery && (
-                <OptionDescription className="estimated-delivery">
-                  Est. Delivery: {option.estimatedDelivery}
-                </OptionDescription>
-              )}
-            </OptionDetails>
-            <OptionCost>
-              {option.cost === 0 ? 'FREE' : `$${option.cost.toFixed(2)}`}
-            </OptionCost>
-          </ShippingOptionCard>
-        ))}
+              }}
+            >
+              <RadioCircle
+                $isSelected={isSelected} // Pass boolean to styled component
+                aria-hidden="true"
+              />
+              <OptionDetails>
+                <OptionName>{option.name || "N/A"}</OptionName>
+                {option.description && (
+                  <OptionDescription>{option.description}</OptionDescription>
+                )}
+                {option.estimatedDeliveryTime && (
+                  <OptionDescription className="estimated-delivery">
+                    Est. Delivery: {option.estimatedDeliveryTime}
+                  </OptionDescription>
+                )}
+              </OptionDetails>
+              <OptionCost>
+                {option.cost === 0 ? "FREE" : `$${option.cost.toFixed(2)}`}
+              </OptionCost>
+            </ShippingOptionCard>
+          );
+        })}
       </ShippingOptionsList>
-      
-      {/* StepActions (Back/Continue buttons) are removed from here.
-          Progression is handled by the global "Continue" button in CheckoutPage.tsx. */}
-
     </ShippingMethodSectionWrapper>
   );
 };

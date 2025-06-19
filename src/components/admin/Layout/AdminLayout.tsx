@@ -100,7 +100,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         // userDisplayName and userAvatarSrc would typically come from Redux state
         // and be selected here or in AdminRouter and passed down if needed.
         // For now, AdminHeader uses defaults if these are not provided.
-      />
+    />
       <AdminMainContent>
         <AdminSidebar
           activePath={activePath} // For highlighting the current page link

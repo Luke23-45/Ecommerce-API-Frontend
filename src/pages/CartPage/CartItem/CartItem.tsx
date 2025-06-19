@@ -45,10 +45,12 @@ const CartItem: React.FC<CartItemProps> = ({
     return item.price * item.quantity;
   }, [item.price, item.quantity]);
 
-  const handleQuantityUpdate = (newQuantity: number) => {
+  const handleQuantityUpdate = (newQuantity: number,num:number) => {
     
-    onQuantityChange(item._id, newQuantity);
+    onQuantityChange(item._id, newQuantity,num);
   };
+
+  console.log(item.attributes)
 
   return (
     <CartItemWrapper $animationDelay={animationDelay}>
@@ -75,7 +77,7 @@ const CartItem: React.FC<CartItemProps> = ({
           {/* Render attributes if they exist */}
           {item.attributes && item.attributes.length > 0 && (
             <ItemVariant>
-              {item.attributes.map(attr => `${attr.name}: ${attr.value}`).join(' / ')}
+              {item.attributes.map(attr => `${attr.attributeName}: ${attr.optionValue}`).join(' / ')}
             </ItemVariant>
           )}
           <ItemUnitPrice>${item.price.toFixed(2)}</ItemUnitPrice>

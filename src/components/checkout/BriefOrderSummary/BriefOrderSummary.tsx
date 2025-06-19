@@ -1,8 +1,8 @@
 // src/components/checkout/BriefOrderSummary/BriefOrderSummary.tsx
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTheme } from 'styled-components';
-import { FaShoppingCart, FaGift, FaSpinner } from 'react-icons/fa'; // Added FaSpinner for loading
+import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTheme } from "styled-components";
+import { FaShoppingCart, FaGift, FaSpinner } from "react-icons/fa"; // Added FaSpinner for loading
 
 // Import local styles (updated)
 import {
@@ -15,18 +15,18 @@ import {
   ViewAllItemsLink,
   DiscountInputWrapper,
   DiscountMessage,
-  SubtotalRow,         // For the first subtotal
-  CostLineItemRow,     // For shipping, discount, tax
-  GrandTotalRow,       // For the final total
-  SubtotalLabel,       // Reusable label
-  SubtotalValue,       // Reusable value
+  SubtotalRow, // For the first subtotal
+  CostLineItemRow, // For shipping, discount, tax
+  GrandTotalRow, // For the final total
+  SubtotalLabel, // Reusable label
+  SubtotalValue, // Reusable value
   ProceedButtonWrapper,
-} from './BriefOrderSummary.styles';
+} from "./BriefOrderSummary.styles";
 
 // Assuming PrimaryCtaButton is beautifully styled and imported
 // Ensure it supports an isLoading prop for the spinner
 
-import { PrimaryCtaButton } from '@/pages/BecomeAPartnerPage/BecomeAPartnerPage.styles';
+import { PrimaryCtaButton } from "@/pages/BecomeAPartnerPage/BecomeAPartnerPage.styles";
 // Type definitions
 // Ensure these types are consistent or imported from a shared location
 export interface BriefCartItemPreview {
@@ -48,7 +48,7 @@ export interface OrderSummaryData {
   itemCount: number;
   currency: string; // e.g., "USD"
   itemsPreview: BriefCartItemPreview[];
-  
+
   // These will be calculated and passed down from CheckoutPage or a global cart/checkout state
   subtotal: number; // Subtotal before discount, shipping, tax
   shippingCost?: number | null; // Null if not yet calculated/selected
@@ -60,13 +60,13 @@ export interface OrderSummaryData {
 interface BriefOrderSummaryProps {
   summary: OrderSummaryData;
   // Renamed for clarity as its function changes
-  onPrimaryAction: () => void; 
+  onPrimaryAction: () => void;
   primaryActionText: string; // e.g., "Proceed to Review", "Place Your Order"
   isPrimaryActionDisabled: boolean;
   isPrimaryActionLoading?: boolean; // For showing spinner on the button
 
   onApplyDiscount: (discountCode: string) => Promise<boolean>; // Returns true on success, false on failure
-  discountFeedback: { type: 'success' | 'error'; text: string } | null;
+  discountFeedback: { type: "success" | "error"; text: string } | null;
   isApplyingDiscount: boolean; // True while onApplyDiscount is in progress
   onClearDiscountFeedback?: () => void; // Optional: to clear feedback message
 }
@@ -86,29 +86,33 @@ const BriefOrderSummary: React.FC<BriefOrderSummaryProps> = ({
 }) => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const [discountCodeInput, setDiscountCodeInput] = useState('');
+  const [discountCodeInput, setDiscountCodeInput] = useState("");
 
   const handleApplyDiscountClick = async () => {
     if (discountCodeInput.trim() && !isApplyingDiscount) {
       const success = await onApplyDiscount(discountCodeInput.trim());
       if (success) {
         // Optionally clear input on successful application, or keep it if codes can stack (unlikely)
-        // setDiscountCodeInput(''); 
+        // setDiscountCodeInput('');
       }
     }
   };
-  
-  const handleDiscountInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleDiscountInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setDiscountCodeInput(e.target.value);
     if (discountFeedback && onClearDiscountFeedback) {
       onClearDiscountFeedback(); // Clear previous feedback when user types
     }
-  }
+  };
 
   const itemsToShow = summary.itemsPreview.slice(0, MAX_ITEMS_TO_DISPLAY);
   const hasMoreItems = summary.itemsPreview.length > MAX_ITEMS_TO_DISPLAY;
 
   // No longer need to calculate displaySubtotal here, parent passes comprehensive summary.grandTotal
+
+  console.log("itemsToShowL:::::::::;,",itemsToShow)
 
   return (
     <SummaryCardWrapper>
@@ -117,23 +121,36 @@ const BriefOrderSummary: React.FC<BriefOrderSummaryProps> = ({
       </SummaryTitle>
 
       <ItemPreviewList>
-        {itemsToShow.map(item => (
+        {itemsToShow.map((item) => (
           <ItemPreview key={item.id}>
             <ItemPreviewThumbnail>
-              <img src={item.image || `https://via.placeholder.com/64x64/${theme.colors.primaryNeutral.slice(1)}/${theme.colors.accent1.slice(1)}?text=${item.name.substring(0,1)}`} alt={item.name} />
+              <img
+                src={
+                item.image
+                }
+                alt={item.name}
+              />
             </ItemPreviewThumbnail>
             <ItemPreviewDetails>
               <span className="name">{item.name}</span>
               <span className="quantity">Qty: {item.quantity}</span>
               {/* Optional: Display individual item price if available */}
-              {/* {item.price && <span className="price">{summary.currencySymbol || '$'}{item.price.toFixed(2)}</span>} */}
+              {item.price != null && (
+                <span className="price">
+                  {summary.currencySymbol || "$"}
+                  {item.price.toFixed(2)}
+                </span>
+              )}
             </ItemPreviewDetails>
           </ItemPreview>
         ))}
       </ItemPreviewList>
 
       {hasMoreItems && (
-        <ViewAllItemsLink onClick={() => navigate('/cart')} aria-label={`View all ${summary.itemCount} items in your cart and make edits.`}>
+        <ViewAllItemsLink
+          onClick={() => navigate("/cart")}
+          aria-label={`View all ${summary.itemCount} items in your cart and make edits.`}
+        >
           View all {summary.itemCount} items & edit cart
         </ViewAllItemsLink>
       )}
@@ -149,16 +166,19 @@ const BriefOrderSummary: React.FC<BriefOrderSummaryProps> = ({
           aria-label="Gift card or discount code"
           disabled={isApplyingDiscount}
         />
-        <button 
-          type="button" 
-          onClick={handleApplyDiscountClick} 
+        <button
+          type="button"
+          onClick={handleApplyDiscountClick}
           disabled={isApplyingDiscount || !discountCodeInput.trim()}
           aria-live="polite" // Announces changes for screen readers
         >
           {isApplyingDiscount ? (
-            <FaSpinner aria-hidden="true" style={{ animation: 'spin 1s linear infinite' }} /> 
+            <FaSpinner
+              aria-hidden="true"
+              style={{ animation: "spin 1s linear infinite" }}
+            />
           ) : (
-            'Apply'
+            "Apply"
           )}
         </button>
       </DiscountInputWrapper>
@@ -168,44 +188,71 @@ const BriefOrderSummary: React.FC<BriefOrderSummaryProps> = ({
           {discountFeedback.text}
         </DiscountMessage>
       )}
-      
+
       {/* --- DETAILED COST BREAKDOWN --- */}
-      <SubtotalRow> {/* Initial Subtotal (before discount) */}
+      <SubtotalRow>
+        {" "}
+        {/* Initial Subtotal (before discount) */}
         <SubtotalLabel>Subtotal</SubtotalLabel>
-        <SubtotalValue>{summary.currency === 'USD' ? '$':''}{summary.subtotal.toFixed(2)}</SubtotalValue>
+        <SubtotalValue>
+          {summary.currency === "USD" ? "$" : ""}
+          {summary?.subtotal != null ? summary.subtotal.toFixed(2) : "0.00"}
+        </SubtotalValue>
       </SubtotalRow>
 
       {summary.appliedDiscount && (
         <CostLineItemRow $isDiscount={true}>
           <SubtotalLabel>
             Discount ({summary.appliedDiscount.code})
-            {summary.appliedDiscount.description && `: ${summary.appliedDiscount.description}`}
+            {summary.appliedDiscount.description &&
+              `: ${summary.appliedDiscount.description}`}
           </SubtotalLabel>
-          <SubtotalValue>- {summary.currency === 'USD' ? '$':''}{summary.appliedDiscount.amount.toFixed(2)}</SubtotalValue>
+          <SubtotalValue>
+            - {summary.currency === "USD" ? "$" : ""}
+            {summary.appliedDiscount?.amount != null
+              ? summary.appliedDiscount.amount.toFixed(2)
+              : "0.00"}
+          </SubtotalValue>
         </CostLineItemRow>
       )}
 
       {/* Shipping Cost - show only if defined and not free (or always show if free) */}
-      {(summary.shippingCost !== undefined && summary.shippingCost !== null) && (
+      {summary.shippingCost !== undefined && summary.shippingCost !== null && (
         <CostLineItemRow>
           <SubtotalLabel>Shipping</SubtotalLabel>
           <SubtotalValue>
-            {summary.shippingCost === 0 ? 'FREE' : `${summary.currency === 'USD' ? '$':''}${summary.shippingCost.toFixed(2)}`}
+            {summary?.shippingCost === 0
+              ? "FREE"
+              : summary?.shippingCost != null
+              ? `${
+                  summary.currency === "USD" ? "$" : ""
+                }${summary.shippingCost.toFixed(2)}`
+              : "—"}
           </SubtotalValue>
         </CostLineItemRow>
       )}
-      
+
       {/* Estimated Taxes - show only if defined */}
-      {(summary.estimatedTaxes !== undefined && summary.estimatedTaxes !== null && summary.estimatedTaxes > 0) && (
-        <CostLineItemRow>
-          <SubtotalLabel>Estimated Taxes</SubtotalLabel>
-          <SubtotalValue>{summary.currency === 'USD' ? '$':''}{summary.estimatedTaxes.toFixed(2)}</SubtotalValue>
-        </CostLineItemRow>
-      )}
+      {summary.estimatedTaxes !== undefined &&
+        summary.estimatedTaxes !== null &&
+        summary.estimatedTaxes > 0 && (
+          <CostLineItemRow>
+            <SubtotalLabel>Estimated Taxes</SubtotalLabel>
+            <SubtotalValue>
+              {summary?.currency === "USD" ? "$" : ""}
+              {summary?.estimatedTaxes != null
+                ? summary.estimatedTaxes.toFixed(2)
+                : "0.00"}
+            </SubtotalValue>
+          </CostLineItemRow>
+        )}
 
       <GrandTotalRow>
         <SubtotalLabel>Grand Total</SubtotalLabel>
-        <SubtotalValue>{summary.currency === 'USD' ? '$':''}{summary.grandTotal.toFixed(2)}</SubtotalValue>
+        <SubtotalValue>
+          {summary?.currency === "USD" ? "$" : ""}
+          {summary?.grandTotal != null ? summary.grandTotal.toFixed(2) : "0.00"}
+        </SubtotalValue>
       </GrandTotalRow>
       {/* --- END DETAILED COST BREAKDOWN --- */}
 
@@ -219,7 +266,13 @@ const BriefOrderSummary: React.FC<BriefOrderSummaryProps> = ({
         >
           {isPrimaryActionLoading ? (
             <>
-              <FaSpinner aria-hidden="true" style={{ animation: 'spin 1s linear infinite', marginRight: theme.spacing(2) }} /> 
+              <FaSpinner
+                aria-hidden="true"
+                style={{
+                  animation: "spin 1s linear infinite",
+                  marginRight: theme.spacing(2),
+                }}
+              />
               Processing...
             </>
           ) : (

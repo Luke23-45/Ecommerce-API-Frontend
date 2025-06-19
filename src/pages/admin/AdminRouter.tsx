@@ -4,41 +4,40 @@ import {
   useRoutes,
   useLocation,
   useNavigate,
-  // Navigate, // Only if directly used for declarative redirect, typically navigate() hook is used
-  Outlet, // Import Outlet if any top-level routes in adminRoutes are parent-only
+  Outlet,
 } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useTheme, type DefaultTheme } from 'styled-components';
 import { FaSpinner } from 'react-icons/fa';
 
 import AdminLayout from '@/components/admin/Layout/AdminLayout';
-import { PageContainer } from '@/components/seller/ViewSellerApplication.styles'; // Or your generic loading container
-// ---- Global Modals: Import types if not already globally available in AdminRouter scope ----
-// import type { PromotionBanner } from "@/types/marketing"; // Example type for editingBanner
+import { PageContainer } from '@/components/seller/ViewSellerApplication.styles';
 import BannerEditModal from '@/components/admin/Marketing/BannerEditModal';
 import ConfirmationModal from '@/components/admin/common/ConfirmationModal/ConfirmationModal';
 
-import { adminRoutes, type AdminRouteObject } from '@/routes/AdminRoutes'; // Your route definitions
-import { type RootState } from '@/store/types'; // Your Redux RootState
-import { type UserRole, ROLES_CONFIG, type NavItem } from '@/config/rolesConfig'; // Core config
+// --- UPDATED IMPORT ---
+// We now import the named 'adminRoutesConfig' array for logic, and the 'AdminRouteObject' type.
+import { adminRoutesConfig, type AdminRouteObject } from '@/routes/AdminRoutes';
+
+import { type RootState } from '@/store/types';
+import { type UserRole, ROLES_CONFIG, type NavItem } from '@/config/rolesConfig';
 import { useNotification } from '@/contexts/NotificationContext';
-import { isPathAccessibleForRole, findNavItemByPath } from '@/utils/navigationUtils'; // Your utility functions
+import { isPathAccessibleForRole, findNavItemByPath } from '@/utils/navigationUtils';
 
 const AdminRouterComponent: React.FC = () => {
   const { user, loading: authLoading } = useSelector((state: RootState) => state.auth);
-  const themeContext = useTheme(); // from styled-components ThemeProvider
+  const themeContext = useTheme();
   const theme = (themeContext && Object.keys(themeContext).length > 0 ? themeContext : undefined) as DefaultTheme | undefined;
 
-  const location = useLocation(); // Current URL details
-  const navigate = useNavigate(); // For programmatic navigation
-  const { showNotification } = useNotification(); // For displaying messages
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { showNotification } = useNotification();
 
   const [currentUserRole, setCurrentUserRole] = useState<UserRole | null>(null);
-  const [pageTitle, setPageTitle] = useState<string>('Admin Panel'); // Default page title
+  const [pageTitle, setPageTitle] = useState<string>('Admin Panel');
 
-  // --- Global Modals State (Consider moving to a dedicated ModalContext) ---
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
-  const [editingBanner, setEditingBanner] = useState<any | null>(null); // Replace 'any' with 'PromotionBanner' type
+  const [editingBanner, setEditingBanner] = useState<any | null>(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [confirmModalData, setConfirmModalData] = useState<{
     title: string;
@@ -48,60 +47,49 @@ const AdminRouterComponent: React.FC = () => {
     confirmVariant?: "primary" | "danger";
   } | null>(null);
 
-  // Effect 1: Determine User Role and Handle Authentication
   useEffect(() => {
     if (user?.roles) {
       const newRole = user.roles[1] as UserRole;
-      if (newRole !== currentUserRole) { // Update only if role actually changes
+      if (newRole !== currentUserRole) {
         setCurrentUserRole(newRole);
       }
     } else if (!authLoading && !user) {
-      // User is not authenticated, and auth loading is complete
       console.warn("[AdminRouter] User not authenticated. Implement redirection to login.");
-      // Example: navigate('/login', { state: { from: location }, replace: true });
-      // For now, let's assume a public admin page or auth is handled before reaching here
-      // or that some routes are public within admin (unlikely for most admin panels).
-      // If no public admin routes, this should ideally redirect.
     }
   }, [user, authLoading, currentUserRole, navigate, location]);
 
-  // Effect 2: Determine Page Title based on current path and role
+  console.log("-----------++++++++++++++++++++++)))___________")
+
   useEffect(() => {
-    if (!currentUserRole) return; // Wait for role
+    if (!currentUserRole) return;
 
-    const currentFullPath = location.pathname; // e.g., /admin/products or /products if basename="/admin"
-
-    // Try to find NavItem for the most specific title (role-aware label)
+    const currentFullPath = location.pathname;
     const activeNavItem = findNavItemByPath(currentFullPath, currentUserRole);
 
     if (activeNavItem?.label) {
       setPageTitle(activeNavItem.label);
     } else {
-      // Fallback: Try to get title from the matched route config in adminRoutes.tsx
-      // This helps for pages without direct NavItems (e.g., dynamic edit pages)
-      const adminRelativePath = currentFullPath.startsWith('/admin/') // Assuming paths in adminRoutes are relative to /admin
+      const adminRelativePath = currentFullPath.startsWith('/admin/')
         ? currentFullPath.substring('/admin'.length).replace(/^\/+/, '')
         : currentFullPath.replace(/^\/+/, '');
 
-      // Simple match for demonstration; use useMatches() from RR v6.4+ for robust matching
-      const matchedRoute = adminRoutes.find(r => {
-          const routePath = r.path?.replace(/:\w+/g, '[^/]+'); // basic regex for params
+      // --- USE RENAMED VARIABLE ---
+      const matchedRoute = adminRoutesConfig.find(r => {
+          const routePath = r.path?.replace(/:\w+/g, '[^/]+');
           return new RegExp(`^${routePath}(\\/.*|$)`).test(adminRelativePath);
       });
 
       if (matchedRoute?.handle?.title) {
         setPageTitle(matchedRoute.handle.title);
       } else {
-        // Ultimate fallback: role's default dashboard title or a generic admin title
         const defaultDashboardNavItem = findNavItemByPath(ROLES_CONFIG[currentUserRole]?.defaultDashboardPath, currentUserRole);
         setPageTitle(defaultDashboardNavItem?.label || ROLES_CONFIG[currentUserRole]?.defaultDashboardPath || 'Admin Panel');
       }
     }
-  }, [location.pathname, currentUserRole]); // Removed adminRoutes from deps, title logic is self-contained with utils
+  }, [location.pathname, currentUserRole]);
 
-  // Effect 3: Check Path Accessibility and Redirect if Necessary
   useEffect(() => {
-    if (!currentUserRole) return; // Wait for role
+    if (!currentUserRole) return;
 
     const currentFullPath = location.pathname;
     if (!isPathAccessibleForRole(currentFullPath, currentUserRole)) {
@@ -113,45 +101,29 @@ const AdminRouterComponent: React.FC = () => {
       navigate(destination, { replace: true });
     }
   }, [location.pathname, currentUserRole, navigate, showNotification]);
-useEffect(() => {
-  if (!currentUserRole) return;
-  const currentFullPath = location.pathname;
-  const accessible = isPathAccessibleForRole(currentFullPath, currentUserRole);
-  console.log(`Checking path: ${currentFullPath}, Role: ${currentUserRole}, Accessible: ${accessible}`);
-  if (!accessible) {
-    // ... redirection logic
-  }
-}, [location.pathname, currentUserRole, navigate, showNotification]);
-  // Memoize routes, adapting them if necessary (e.g., passing userRole to specific route elements)
-  const routesToRender = useMemo(() => {
-    if (!currentUserRole) return []; // No routes if role isn't determined yet
 
-    return adminRoutes.map(route => {
-      // Example: Pass currentUserRole to AdminDashboardRouter if it needs it as a prop
+  const routesToRender = useMemo(() => {
+    if (!currentUserRole) return [];
+
+    // --- USE RENAMED VARIABLE ---
+    return adminRoutesConfig.map(route => {
       if (route.path === 'dashboard' && React.isValidElement(route.element)) {
-        return { ...route, element: React.cloneElement(route.element, { userRole: currentUserRole }) };
+        return { ...route, element: React.cloneElement(route.element as React.ReactElement, { userRole: currentUserRole }) };
       }
-      // Add more conditions here if other specific route elements need dynamic props from AdminRouter
       return route;
     });
-  }, [currentUserRole]); // adminRoutes is stable, so not in deps
+  }, [currentUserRole]);
 
-  const routeElements = useRoutes(routesToRender); // `useRoutes` hook renders the matched route
+  const routeElements = useRoutes(routesToRender);
 
-  // Callback for AdminLayout or other child components to trigger navigation
   const handleNavigate = useCallback((path: string) => {
-    // Paths should be relative to the /admin base if BrowserRouter uses basename="/admin"
-    // or full paths if not.
     navigate(path);
   }, [navigate]);
 
-
-  // --- Handlers for Global Modals (Consider moving to ModalContext) ---
-  const handleSaveBanner = (/*bannerData: PromotionBanner, isNew: boolean*/) => { // Use correct types
+  const handleSaveBanner = () => {
     setIsBannerModalOpen(false);
-    setEditingBanner(null); // Clear editing state
+    setEditingBanner(null);
     showNotification('Banner saved successfully! (Demo)', 'success');
-    // Potentially refetch banner list or update Redux store
   };
   const handleCancelBannerEdit = () => {
     setIsBannerModalOpen(false);
@@ -160,18 +132,16 @@ useEffect(() => {
 
   const handleConfirmModalConfirm = () => {
     if (confirmModalData?.onConfirm) {
-      confirmModalData.onConfirm(); // Execute the specific confirmation action
+      confirmModalData.onConfirm();
     }
     setIsConfirmModalOpen(false);
-    setConfirmModalData(null); // Reset modal data
+    setConfirmModalData(null);
   };
   const handleConfirmModalCancel = () => {
     setIsConfirmModalOpen(false);
     setConfirmModalData(null);
   };
-  // --- End Global Modal Handlers ---
 
-  // Loading state: Wait for authentication, theme, and user role
   if (authLoading || !theme || !currentUserRole) {
     return (
       <PageContainer style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", backgroundColor: theme?.colors?.adminPrimaryBg || '#f4f6f8' }}>
@@ -192,16 +162,15 @@ useEffect(() => {
     );
   }
 
-  // Main Render: AdminLayout with Suspense for lazy-loaded route elements
   return (
     <AdminLayout
       pageTitle={pageTitle}
-      activePath={location.pathname} // Sidebar uses this to highlight current item
-      userRole={currentUserRole}       // For role-specific UI in Layout/Header/Sidebar
-      onNavLinkClick={handleNavigate}  // For any layout-triggered navigation
+      activePath={location.pathname}
+      userRole={currentUserRole}
+      onNavLinkClick={handleNavigate}
     >
       <Suspense fallback={
-        <PageContainer style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexGrow: 1, padding: "20px", minHeight: "calc(100vh - 150px)" /* Adjust based on header/footer height */ }}>
+        <PageContainer style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexGrow: 1, padding: "20px", minHeight: "calc(100vh - 150px)" }}>
            <div style={{ textAlign: "center", color: theme?.colors?.adminText || '#333' }}>
             <FaSpinner className="fa-spin" style={{ fontSize: "2.5rem", marginBottom: "15px", color: theme?.colors?.accent1 || "#007bff" }} />
             <p style={{ fontSize: theme?.typography?.admin?.sizes?.bodyBase || "1rem" }}>Loading page content...</p>
@@ -211,21 +180,17 @@ useEffect(() => {
         {routeElements ? routeElements : <Outlet />}
       </Suspense>
 
-      {/* Render Global Modals: These could be moved into a ModalProvider/Context */}
       <BannerEditModal
         isOpen={isBannerModalOpen}
         onClose={handleCancelBannerEdit}
         onSave={handleSaveBanner}
         editingBanner={editingBanner}
-        // You'll need to pass any other required props to BannerEditModal
-        // promotionsData={[]} // Example: data it might need
-        // onUploadImage={async (file) => { console.log(file); return 'url'; }} // Example: uploader
       />
       {isConfirmModalOpen && confirmModalData && (
         <ConfirmationModal
           isOpen={isConfirmModalOpen}
           title={confirmModalData.title}
-          message={confirmModalData.message} // Can be string or ReactNode
+          message={confirmModalData.message}
           onConfirm={handleConfirmModalConfirm}
           onCancel={handleConfirmModalCancel}
           confirmButtonText={confirmModalData.confirmButtonText}

@@ -1,13 +1,10 @@
-
-
 import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useTheme } from "styled-components";
 import { FaShoppingCart, FaArrowLeft, FaLock, FaGift } from "react-icons/fa";
 
-
 import {
-  CartPageWrapper, 
+  CartPageWrapper,
   CartContentLimiter,
   CartHeader,
   HeaderActions,
@@ -39,17 +36,21 @@ import {
   useRemoveItemFromCart,
 } from "@/hooks/cart/useCart";
 import { type DisplayCartItem } from "@/types/cart.types";
+import { useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/store/types";
+import { useDispatch } from "react-redux";
+import { setCartCount } from "@/store/slices/cartSlice";
 
 const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
 
-  
+  const dispatch = useDispatch<AppDispatch>();
+
   const { data: cartData, isLoading, isError, error } = useGetCart();
   const { mutate: updateQuantity } = useUpdateItemQuantity();
   const { mutate: removeItem } = useRemoveItemFromCart();
 
-  
   const [mutatingItemId, setMutatingItemId] = useState<string | null>(null);
   const [discountCodeInput, setDiscountCodeInput] = useState<string>("");
   const [discountFeedback, setDiscountFeedback] = useState<{
@@ -57,14 +58,31 @@ const CartPage: React.FC = () => {
     text: string;
   } | null>(null);
 
-  
+  const cartItemCount = useSelector((state: RootState) => state.cart.count);
+
+  function getTotalQuantity(cart) {
+    if (!cart?.items || !Array.isArray(cart.items)) {
+      return 0;
+    }
+
+    return cart.items.reduce((total, item) => total + (item.quantity || 0), 0);
+  }
+
   const handleQuantityChange = useCallback(
-    (itemId: string, newQuantity: number) => {
+    (itemId: string, newQuantity: number, num) => {
       if (newQuantity < 1) return;
       setMutatingItemId(itemId);
       updateQuantity(
         { cartItemId: itemId, quantityData: { newQuantity } },
-        { onSettled: () => setMutatingItemId(null) }
+        {
+          onSuccess: (data) => {
+            const dat1 = parseInt(getTotalQuantity(data));
+            if (dat1 > 0 && typeof dat1 === "number") {
+              dispatch(setCartCount(dat1));
+            }
+          },
+          onSettled: () => setMutatingItemId(null),
+        }
       );
     },
     [updateQuantity]
@@ -73,7 +91,15 @@ const CartPage: React.FC = () => {
   const handleRemoveItem = useCallback(
     (itemId: string) => {
       setMutatingItemId(itemId);
-      removeItem(itemId, { onSettled: () => setMutatingItemId(null) });
+      removeItem(itemId, {
+        onSuccess: (data) => {
+          const dat1 = parseInt(getTotalQuantity(data));
+          if (dat1 > 0 && typeof dat1 === "number") {
+            dispatch(setCartCount(dat1));
+          }
+        },
+        onSettled: () => setMutatingItemId(null),
+      });
     },
     [removeItem]
   );
@@ -86,7 +112,6 @@ const CartPage: React.FC = () => {
     navigate("/checkout");
   };
 
-  
   if (isLoading) {
     return (
       <CartPageWrapper>
@@ -135,7 +160,6 @@ const CartPage: React.FC = () => {
     );
   }
 
-  
   const { items, totalUniqueItems, subtotal } = cartData;
   const totalQuantity = subtotal;
 
@@ -151,8 +175,7 @@ const CartPage: React.FC = () => {
           <HeaderActions>
             <ItemCountDisplay>
               {totalUniqueItems} Item{totalUniqueItems !== 1 ? "s" : ""}
-              {/* ** CORRECTED: Use totalQuantity, not subtotal ** */}
-              {` (${totalQuantity} Total)`}
+              {` (${totalQuantity.toFixed(2)} Total)`}
             </ItemCountDisplay>
             <ContinueShoppingLink as={RouterLink} to="/collections">
               <FaArrowLeft style={{ marginRight: theme.spacing(1.5) }} />{" "}

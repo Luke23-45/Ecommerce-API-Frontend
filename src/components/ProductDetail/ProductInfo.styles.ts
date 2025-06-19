@@ -345,3 +345,64 @@ export const OtherInfo = styled.div`
     line-height: 1.2;
   }
 `;
+
+
+// Add this to: src/components/ProductDetail/ProductInfo/ProductInfo.styles.ts
+// ... other styles ...
+
+export const ProductSpecifications = styled.div`
+  margin-top: ${({ theme }) => theme.spacing(6)};
+  padding-top: ${({ theme }) => theme.spacing(4)};
+  border-top: 1px solid ${({ theme }) => lighten(0.05, theme.colors.lightGray || '#e0e0e0')};
+
+  .spec-title { // Changed from h4 to allow more flexibility if used elsewhere
+    font-family: ${({ theme }) => theme.typography.body.fontFamily};
+    font-size: ${({ theme }) => theme.typography.body.sizes.base || '1rem'};
+    font-weight: ${({ theme }) => theme.typography.body.weights.semiBold || 600};
+    color: ${({ theme }) => theme.colors.textDark || '#333'};
+    margin: 0 0 ${({ theme }) => theme.spacing(3)} 0;
+    display: block; // Ensure it takes full width if needed
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: ${({ theme }) => theme.spacing(1.5)}; // Space between spec items
+  }
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; // For potentially multi-line values
+    font-size: ${({ theme }) => theme.typography.body.sizes.small || '0.9rem'};
+    line-height: 1.6;
+
+    .spec-label {
+      color: ${({ theme }) => theme.colors.textMedium || '#555'};
+      margin-right: ${({ theme }) => theme.spacing(2)};
+      white-space: nowrap;
+    }
+    .spec-value {
+      color: ${({ theme }) => theme.colors.textDark || '#333'};
+      font-weight: ${({ theme }) => theme.typography.body.weights.medium || 500};
+      text-align: right;
+    }
+  }
+  
+  .view-all-specs-link {
+    display: inline-block;
+    margin-top: ${({theme}) => theme.spacing(3)};
+    color: ${({theme}) => theme.colors.accent1 || '#A46E4A'};
+    font-size: ${({ theme }) => theme.typography.body.sizes.small || '0.9rem'};
+    font-weight: ${({ theme }) => theme.typography.body.weights.medium || 500};
+    text-decoration: none;
+    cursor: pointer;
+    &:hover {
+        color: ${({theme}) => theme.colors.accent1Hover || '#8C5D3E'};
+        text-decoration: underline;
+    }
+  }
+`;

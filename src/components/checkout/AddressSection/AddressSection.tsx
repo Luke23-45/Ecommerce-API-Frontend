@@ -1,9 +1,15 @@
 // src/components/checkout/AddressSection/AddressSection.tsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { FaMapMarkerAlt, FaCheck, FaPlus } from 'react-icons/fa';
-import { useTheme } from 'styled-components'; // If needed for dynamic styles beyond theme object
+import React, { useState, useEffect } from "react";
+import { FaMapMarkerAlt, FaCheck, FaPlus, FaSpinner } from "react-icons/fa";
+import { useTheme } from "styled-components";
 
-// Import local styles (updated)
+// --- React Query Hooks ---
+import {
+  useGetAddresses,
+  useCreateAddress,
+} from "@/hooks/general/useCheckout"; // VERIFY PATH (e.g., @/hooks/checkout/useCheckout)
+
+// --- Styled Components ---
 import {
   AddressSectionWrapper,
   AddressSectionTitle,
@@ -12,90 +18,132 @@ import {
   AddressContent,
   DefaultBadge,
   SelectionIndicator,
-  AddNewAddressToggleWrapper, // Renamed in styles, let's keep it descriptive if wrapper is distinct
-  ToggleAddressFormButton,   // New specific button
+  AddNewAddressToggleWrapper,
+  ToggleAddressFormButton,
   AddressFormWrapper,
   FormActions,
   SameAsShippingWrapper,
-  StyledFormLabel,          // Assuming these are now preferred
-  StyledInput,              // Assuming these are now preferred
-} from './AddressSection.styles';
+  StyledFormLabel,
+  StyledInput,
+} from "./AddressSection.styles";
 
-// Imported button components - ensure these are styled for Élan's premium feel
-import { PrimaryCtaButton } from '@/pages/BecomeAPartnerPage/BecomeAPartnerPage.styles'; // Or a common premium button
-import { SecondaryButton } from '@/components/auth/AuthForms'; // Or a common premium secondary button
+// --- Common UI Components ---
+// CRITICAL: Replace with your actual common, themed button components
+// import {
+//   PrimaryButton as PrimaryCtaButton,
+//   SecondaryButton,
+// } from "@/components/common/Button/Button"; // EXAMPLE COMMON PATH
+import { FieldGroup } from "@/components/admin/common/FormSectionWrapper/FormSectionWrapper.styles"; // VERIFY PATH
+// import AdminCheckbox from "@/components/common/AdminCheckbox/AdminCheckbox"; // VERIFY PATH & STYLING
+import AdminCheckbox from "@/components/admin/common/AdminCheckbox/AdminCheckbox";
+import { PrimaryCtaButton } from "@/pages/BecomeAPartnerPage/BecomeAPartnerPage.styles";
 
-// Assuming FieldGroup is styled elegantly or we style a local version
-import { FieldGroup } from '@/components/admin/common/FormSectionWrapper/FormSectionWrapper.styles';
-// Assuming AdminCheckbox is beautifully styled for frontend
-import AdminCheckbox from '@/components/admin/common/AdminCheckbox/AdminCheckbox';
-
-// Type definitions (ensure this is consistent with CheckoutPage and mockData)
+import { SecondaryButton } from "@/components/auth/AuthForms";
+import { useNotification } from "@/contexts/NotificationContext";
+// --- Type Definitions ---
+// This interface should match the structure of an address object returned by useGetAddresses
+// and expected by onSelectAddress. Uses _id from backend.
 export interface Address {
-  id: string;
-  firstName?: string; // Common to have first/last name
+  _id: string;
+  userId?: string;
+  name?: string; // Address label/nickname, e.g., "Home", "Work"
+  firstName?: string;
   lastName?: string;
-  name?: string; // Could be computed from firstName + lastName, or a company name
   street: string;
-  street2?: string; // Optional second address line
+  apartment?: string; // Was street2, renamed to match validator
   city: string;
-  state: string;
-  zip: string;
-  country: string;
-  phone?: string; // Often needed for shipping
+  state: string; // Backend validator requires if present
+  zipCode: string; // Matched to validator (was zip)
+  country: string; // Backend validator requires
+  phone?: string; // Backend validator requires
+  email?: string; // Optional, allowed by validator
+  isDefault?: boolean; // For setting default address, allowed by validator
+  // These are typically for display if the backend differentiates default types
   isDefaultShipping?: boolean;
   isDefaultBilling?: boolean;
 }
 
+// State for the new address form, aligns with AddressCreationDto and backend validator
+interface AddressCreationFormState {
+  name: string; // Address label/nickname
+  firstName: string;
+  lastName: string;
+  street: string;
+  apartment: string; // Optional
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  phone: string;
+  email: string; // Optional, but part of form
+  isDefault: boolean; // Option to set as default
+}
+
 interface AddressSectionProps {
-  titleText: string; // Renamed from 'title' to avoid conflict if 'title' HTML attribute is used
-  addresses: Address[];
+  titleText: string;
   selectedAddress: Address | null;
   onSelectAddress: (address: Address | null) => void;
-  // onSetValidity?: (isValid: boolean) => void; // Optional: To inform parent about step validity for global continue button
-
-  // For Billing Address specific logic
   isBillingSection: boolean;
   canUseShippingAsBilling?: boolean;
   shippingAddressForBilling?: Address | null;
-  // onNewAddressSaved?: (newAddress: Address) => void; // Callback if parent needs to update its address list
 }
 
 const AddressSection: React.FC<AddressSectionProps> = ({
   titleText,
-  addresses,
   selectedAddress,
   onSelectAddress,
-  // onSetValidity,
   isBillingSection,
   canUseShippingAsBilling,
   shippingAddressForBilling,
-  // onNewAddressSaved,
 }) => {
-  const theme = useTheme(); // Available if needed
+  const theme = useTheme();
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
-  
-  // State for "Use Shipping for Billing" checkbox - only relevant if isBillingSection is true
+
   const [useShippingForBillingLocal, setUseShippingForBillingLocal] = useState(
-    isBillingSection && canUseShippingAsBilling && selectedAddress?.id === shippingAddressForBilling?.id && !!shippingAddressForBilling
+    isBillingSection &&
+      canUseShippingAsBilling &&
+      !!shippingAddressForBilling &&
+      selectedAddress?._id === shippingAddressForBilling?._id
   );
 
-  // New address form state
-  const initialFormState = {
-    firstName: '', lastName: '', street: '', street2: '',
-    city: '', state: '', zip: '', country: 'USA', phone: '',
+  const initialFormState: AddressCreationFormState = {
+    name: "",
+    firstName: "",
+    lastName: "",
+    street: "",
+    apartment: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "US", // Default country to US
+    phone: "",
+    email: "",
+    isDefault: false,
   };
-  const [newAddressForm, setNewAddressForm] = useState(initialFormState);
+  const [newAddressForm, setNewAddressForm] =
+    useState<AddressCreationFormState>(initialFormState);
 
-  // Effect to handle "Use Shipping for Billing" behavior
+  const {
+    data: fetchedAddresses,
+    isLoading: isLoadingAddresses,
+    error: addressesError,
+  } = useGetAddresses();
+  const addressesToDisplay = fetchedAddresses || [];
+  const { mutate: createAddress, isLoading: isCreatingAddress } =
+    useCreateAddress();
+
+
+    const { showNotification } = useNotification(); 
+
   useEffect(() => {
     if (isBillingSection && canUseShippingAsBilling) {
       if (useShippingForBillingLocal && shippingAddressForBilling) {
         onSelectAddress(shippingAddressForBilling);
-        setShowNewAddressForm(false); // Close new address form if open
-      } else if (!useShippingForBillingLocal && selectedAddress?.id === shippingAddressForBilling?.id) {
-        // If "use shipping" was unchecked and current selected billing IS the shipping address,
-        // clear the selection to force user to choose or add a new one.
+        if (showNewAddressForm) setShowNewAddressForm(false);
+      } else if (
+        !useShippingForBillingLocal &&
+        selectedAddress?._id === shippingAddressForBilling?._id
+      ) {
         onSelectAddress(null);
       }
     }
@@ -105,192 +153,560 @@ const AddressSection: React.FC<AddressSectionProps> = ({
     shippingAddressForBilling,
     onSelectAddress,
     canUseShippingAsBilling,
-    selectedAddress?.id // Dependency added
+    selectedAddress?._id,
+    showNewAddressForm,
   ]);
 
-  // Update validity to parent (basic example, can be more complex)
-  // useEffect(() => {
-  //   if (onSetValidity) {
-  //     if (isBillingSection && useShippingForBillingLocal && shippingAddressForBilling) {
-  //       onSetValidity(true);
-  //     } else {
-  //       onSetValidity(!!selectedAddress);
-  //     }
-  //   }
-  // }, [selectedAddress, onSetValidity, isBillingSection, useShippingForBillingLocal, shippingAddressForBilling]);
-
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewAddressForm(prev => ({ ...prev, [name]: value }));
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
+    setNewAddressForm((prev) => ({
+      ...prev,
+      [name]:
+        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+    }));
   };
 
   const handleSaveNewAddress = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Add form validation here (e.g., using Zod or Yup)
-    // In a real app, this would call a useMutation hook to save to backend.
-    const newMockAddress: Address = {
-      id: `new_${Date.now()}`, // Backend would provide ID
-      name: `${newAddressForm.firstName} ${newAddressForm.lastName}`.trim(), // Example: compute name
-      ...newAddressForm,
-    };
+    setOperationError(null); // Clear previous errors
 
-    // Simulate saving and getting back the new address
-    // if (onNewAddressSaved) {
-    //   onNewAddressSaved(newMockAddress); // Parent can add to its 'addresses' list
-    // }
-    onSelectAddress(newMockAddress); // Select the newly "saved" address
-    setShowNewAddressForm(false);
-    setNewAddressForm(initialFormState); // Clear form
-  };
+    // Client-side validation based on backend validator
+    const errors: string[] = [];
+    const requiredFields: (keyof Pick<
+      AddressCreationFormState,
+      | "firstName"
+      | "lastName"
+      | "street"
+      | "city"
+      | "zipCode"
+      | "country"
+      | "phone"
+    >)[] = [
+      "firstName",
+      "lastName",
+      "street",
+      "city",
+      "zipCode",
+      "country",
+      "phone",
+    ];
 
-  const handleCardClick = (address: Address) => {
-    onSelectAddress(address);
-    if (isBillingSection) {
-      // If user manually selects an address, uncheck "use shipping for billing"
-      // unless the selected address *is* the shipping address.
-      if (address.id !== shippingAddressForBilling?.id) {
-        setUseShippingForBillingLocal(false);
-      } else {
-        setUseShippingForBillingLocal(true);
+    for (const field of requiredFields) {
+      if (
+        !newAddressForm[field] ||
+        String(newAddressForm[field]).trim() === ""
+      ) {
+        errors.push(
+          `'${field.replace(/([A-Z])/g, " $1").toLowerCase()}' is required.`
+        );
       }
     }
+    if (
+      newAddressForm.email &&
+      !/\S+@\S+\.\S+/.test(newAddressForm.email.trim())
+    ) {
+      errors.push("Please provide a valid email address.");
+    }
+    if (newAddressForm.state && newAddressForm.state.length > 100) {
+      errors.push("'State / Province' must be at most 100 characters.");
+    }
+    if (newAddressForm.apartment && newAddressForm.apartment.length > 100) {
+      errors.push("'Apartment, suite, etc.' must be at most 100 characters.");
+    }
+    if (newAddressForm.name && newAddressForm.name.length > 50) {
+      errors.push("'Address Label' must be at most 50 characters.");
+    }
+    // Add more specific validations for phone, zipCode format if needed
+
+    if (errors.length > 0) {
+      // TODO: Replace with a more user-friendly notification system that displays all errors
+      // For now, using a local state for form-specific error
+      setOperationError("Validation Errors:\n- " + errors.join("\n- "));
+      // alert("Validation Errors:\n- " + errors.join("\n- "));
+      return;
+    }
+
+    // DTO to send to backend, must match AddressCreationDto
+    const addressCreationDtoPayload: any = {
+      // Cast to any for flexibility, but DTO type should be precise
+      firstName: newAddressForm.firstName.trim(),
+      lastName: newAddressForm.lastName.trim(),
+      street: newAddressForm.street.trim(),
+      city: newAddressForm.city.trim(),
+      zipCode: newAddressForm.zipCode.trim(), // Use zipCode
+      country: newAddressForm.country.trim(), // Should be a country code like 'US'
+      phone: newAddressForm.phone.trim(),
+    };
+    if (newAddressForm.apartment.trim())
+      addressCreationDtoPayload.apartment = newAddressForm.apartment.trim();
+    if (newAddressForm.state.trim())
+      addressCreationDtoPayload.state = newAddressForm.state.trim();
+    if (newAddressForm.name.trim())
+      addressCreationDtoPayload.name = newAddressForm.name.trim();
+    if (newAddressForm.email.trim())
+      addressCreationDtoPayload.email = newAddressForm.email.trim();
+    if (typeof newAddressForm.isDefault === "boolean")
+      addressCreationDtoPayload.isDefault = newAddressForm.isDefault;
+
+    createAddress(addressCreationDtoPayload, {
+      onSuccess: (savedAddressData: Address) => {
+        onSelectAddress(savedAddressData);
+        setShowNewAddressForm(false);
+        setNewAddressForm(initialFormState);
+        setOperationError(null); // Clear any previous form errors
+      },
+      onError: (error: any) => {
+        // Notification already handled by useCreateAddress hook's onError
+        // Set local error for form display if needed
+        setOperationError(
+          error?.response?.data?.message ||
+            error.message ||
+            "Failed to save address."
+        );
+      },
+    });
   };
-  
-  const handleToggleNewAddressForm = () => {
-    setShowNewAddressForm(prev => !prev);
-    if (!showNewAddressForm && isBillingSection) { // If opening the form for billing
-        setUseShippingForBillingLocal(false); // Uncheck "use shipping as billing"
-        if(selectedAddress?.id === shippingAddressForBilling?.id){
-          onSelectAddress(null); // Clear selection if it was "same as shipping"
-        }
+  const [operationError, setOperationError] = useState<string | null>(null);
+
+  const handleCardClick = (address: Address) => {
+    setOperationError(null); // Clear errors when user makes a selection
+    onSelectAddress(address);
+    if (isBillingSection && canUseShippingAsBilling) {
+      setUseShippingForBillingLocal(
+        address._id === shippingAddressForBilling?._id
+      );
     }
   };
 
+  const handleToggleNewAddressForm = () => {
+    setOperationError(null); // Clear errors when toggling form
+    setShowNewAddressForm((prev) => {
+      const willOpenForm = !prev;
+      if (willOpenForm) {
+        setNewAddressForm(initialFormState); // Reset form when opening
+        if (isBillingSection) {
+          setUseShippingForBillingLocal(false);
+          if (selectedAddress?._id === shippingAddressForBilling?._id) {
+            onSelectAddress(null);
+          }
+        }
+      }
+      return willOpenForm;
+    });
+  };
 
+  // --- Render Loading State ---
+  if (isLoadingAddresses) {
+    return (
+      <AddressSectionWrapper>
+        {" "}
+        <AddressSectionTitle>
+          <FaMapMarkerAlt className="icon" /> {titleText}
+        </AddressSectionTitle>{" "}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: theme.spacing(10),
+          }}
+        >
+          <FaSpinner
+            style={{
+              fontSize: "2rem",
+              animation: "spin 1s linear infinite",
+              color: theme.colors.accent1,
+            }}
+          />
+        </div>{" "}
+      </AddressSectionWrapper>
+    );
+  }
+
+  // --- Render Error State for Fetching Addresses ---
+  if (addressesError) {
+    return (
+      <AddressSectionWrapper>
+        {" "}
+        <AddressSectionTitle>
+          <FaMapMarkerAlt className="icon" /> {titleText}
+        </AddressSectionTitle>{" "}
+        <p style={{ color: theme.colors.error, textAlign: "center" }}>
+          Could not load addresses: {addressesError.message}. Please try again.
+        </p>{" "}
+      </AddressSectionWrapper>
+    );
+  }
+
+  // --- Main Render ---
   return (
     <AddressSectionWrapper>
       <AddressSectionTitle>
         <FaMapMarkerAlt className="icon" /> {titleText}
       </AddressSectionTitle>
-
-      {/* "Use Shipping Address for Billing" Checkbox */}
       {isBillingSection && canUseShippingAsBilling && (
         <SameAsShippingWrapper>
           <AdminCheckbox
-            id={`useShippingForBilling-${titleText.replace(/\s+/g, '')}`} // Unique ID
+            id={`useShippingForBilling-${
+              isBillingSection ? "Billing" : "Shipping"
+            }`}
             label="My billing address is the same as my shipping address"
             checked={useShippingForBillingLocal}
-            onChange={(e) => setUseShippingForBillingLocal(e.target.checked)}
-            disabled={!shippingAddressForBilling} // Disable if no shipping address to use
+            onChange={(e) => {
+              setUseShippingForBillingLocal(e.target.checked);
+              setOperationError(null);
+            }}
+            disabled={!shippingAddressForBilling || isCreatingAddress}
           />
           {useShippingForBillingLocal && !shippingAddressForBilling && (
-            <p style={{color: theme.colors.error, fontSize: '0.8rem', marginTop: theme.spacing(1)}}>
-                Please select a shipping address first.
+            <p
+              style={{
+                color: theme.colors.error,
+                fontSize: "0.8rem",
+                marginTop: theme.spacing(1),
+              }}
+            >
+              Please select or add a shipping address first.
             </p>
           )}
         </SameAsShippingWrapper>
       )}
 
-      {/* Address List and "Add New" button - Hidden if "Use Shipping for Billing" is checked and active */}
-      {!(isBillingSection && useShippingForBillingLocal && shippingAddressForBilling) && (
+      {!(
+        isBillingSection &&
+        useShippingForBillingLocal &&
+        shippingAddressForBilling
+      ) && (
         <>
-          <AddressList>
-            {addresses.map(address => (
-              <AddressCard
-                key={address.id}
-                $isSelected={selectedAddress?.id === address.id && !(isBillingSection && useShippingForBillingLocal)}
-                $isSelectable={true} // All existing addresses are selectable by default
-                onClick={() => handleCardClick(address)}
-                role="radio"
-                aria-checked={selectedAddress?.id === address.id}
-                tabIndex={0} // Make cards focusable
-                onKeyPress={(e) => { // Accessibility: select with Enter/Space
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleCardClick(address);
+          {addressesToDisplay.length > 0 ? (
+            <AddressList>
+              {addressesToDisplay.map((address) => (
+                <AddressCard
+                  key={address._id}
+                  $isSelected={selectedAddress?._id === address._id}
+                  $isSelectable={!isCreatingAddress}
+                  onClick={() => !isCreatingAddress && handleCardClick(address)}
+                  role="radio"
+                  aria-checked={selectedAddress?._id === address._id}
+                  tabIndex={isCreatingAddress ? -1 : 0}
+                  onKeyPress={(e) => {
+                    if (
+                      !isCreatingAddress &&
+                      (e.key === "Enter" || e.key === " ")
+                    ) {
+                      e.preventDefault();
+                      handleCardClick(address);
                     }
+                  }}
+                >
+                  {selectedAddress?._id === address._id && (
+                    <SelectionIndicator>
+                      <FaCheck />
+                    </SelectionIndicator>
+                  )}
+                  <AddressContent>
+                    <strong>
+                      {address.name ||
+                        `${address.firstName || ""} ${
+                          address.lastName || ""
+                        }`.trim() ||
+                        "N/A"}
+                    </strong>
+                    <span>{address.street || "N/A"}</span>
+                    {address.apartment && <span>{address.apartment}</span>}
+                    <span>{`${address.city || "N/A"}, ${
+                      address.state || "N/A"
+                    } ${address.zipCode || "N/A"}`}</span>
+                    <span>{address.country || "N/A"}</span>
+                    {address.phone && <span>{address.phone}</span>}
+                    {address.email && (
+                      <span
+                        style={{
+                          fontSize: theme.typography.body.sizes.xsmall,
+                          color: theme.colors.textMuted,
+                        }}
+                      >
+                        Email: {address.email}
+                      </span>
+                    )}
+                  </AddressContent>
+                  {address.isDefaultShipping && !isBillingSection && (
+                    <DefaultBadge>Default Shipping</DefaultBadge>
+                  )}
+                  {address.isDefaultBilling && isBillingSection && (
+                    <DefaultBadge>Default Billing</DefaultBadge>
+                  )}
+                  {address.isDefault && (
+                    <DefaultBadge>
+                      {isBillingSection
+                        ? "Default Billing"
+                        : "Default Shipping"}
+                    </DefaultBadge>
+                  )}
+                </AddressCard>
+              ))}
+            </AddressList>
+          ) : (
+            !showNewAddressForm && (
+              <p
+                style={{
+                  marginBottom: theme.spacing(3),
+                  color: theme.colors.textMedium,
+                  textAlign: "center",
                 }}
               >
-                {selectedAddress?.id === address.id && !(isBillingSection && useShippingForBillingLocal) && (
-                  <SelectionIndicator><FaCheck /></SelectionIndicator>
-                )}
-                <AddressContent>
-                  <strong>{address.name || `${address.firstName} ${address.lastName}`}</strong>
-                  <span>{address.street}</span>
-                  {address.street2 && <span>{address.street2}</span>}
-                  <span>{address.city}, {address.state} {address.zip}</span>
-                  <span>{address.country}</span>
-                  {address.phone && <span>{address.phone}</span>}
-                </AddressContent>
-                {/* Differentiate default badges more clearly */}
-                {address.isDefaultShipping && !isBillingSection && <DefaultBadge>Default Shipping</DefaultBadge>}
-                {address.isDefaultBilling && isBillingSection && <DefaultBadge>Default Billing</DefaultBadge>}
-              </AddressCard>
-            ))}
-          </AddressList>
+                You have no saved addresses. Feel free to add one!
+              </p>
+            )
+          )}
 
           <AddNewAddressToggleWrapper>
-            <ToggleAddressFormButton type="button" onClick={handleToggleNewAddressForm}>
-              <FaPlus style={{ marginRight: theme.spacing(1.5) }} />
-              {showNewAddressForm ? 'Cancel Adding Address' : 'Add New Address'}
+            <ToggleAddressFormButton
+              type="button"
+              onClick={handleToggleNewAddressForm}
+              disabled={isCreatingAddress}
+            >
+              <FaPlus style={{ marginRight: theme.spacing(1.5) }} />{" "}
+              {showNewAddressForm ? "Cancel" : "Add New Address"}
             </ToggleAddressFormButton>
           </AddNewAddressToggleWrapper>
 
           <AddressFormWrapper $isOpen={showNewAddressForm}>
             <form onSubmit={handleSaveNewAddress}>
-              {/* Using FieldGroup and StyledInput/StyledFormLabel */}
-              <FieldGroup style={{ gridColumn: '1 / -1' }}> {/* Example: Full Name spans both columns */}
-                <StyledFormLabel htmlFor={`firstName-${isBillingSection}`}>First Name</StyledFormLabel>
-                <StyledInput id={`firstName-${isBillingSection}`} name="firstName" type="text" value={newAddressForm.firstName} onChange={handleInputChange} placeholder="Recipient's First Name" required />
+              <FieldGroup style={{ gridColumn: "1 / span 2" }}>
+                <StyledFormLabel htmlFor={`addressName-${isBillingSection}`}>
+                  Address Label{" "}
+                  <span
+                    style={{
+                      fontWeight: "normal",
+                      color: theme.colors.textMuted,
+                    }}
+                  >
+                    (e.g., Home, Work)
+                  </span>
+                </StyledFormLabel>
+                <StyledInput
+                  id={`addressName-${isBillingSection}`}
+                  name="name"
+                  type="text"
+                  value={newAddressForm.name}
+                  onChange={handleInputChange}
+                  placeholder="Optional nickname for this address"
+                  disabled={isCreatingAddress}
+                  maxLength={50}
+                />
               </FieldGroup>
-              <FieldGroup style={{ gridColumn: '1 / -1' }}>
-                <StyledFormLabel htmlFor={`lastName-${isBillingSection}`}>Last Name</StyledFormLabel>
-                <StyledInput id={`lastName-${isBillingSection}`} name="lastName" type="text" value={newAddressForm.lastName} onChange={handleInputChange} placeholder="Recipient's Last Name" required />
+              <FieldGroup>
+                <StyledFormLabel htmlFor={`firstName-${isBillingSection}`}>
+                  First Name *
+                </StyledFormLabel>
+                <StyledInput
+                  id={`firstName-${isBillingSection}`}
+                  name="firstName"
+                  type="text"
+                  value={newAddressForm.firstName}
+                  onChange={handleInputChange}
+                  placeholder="Enter first name"
+                  required
+                  disabled={isCreatingAddress}
+                />
+              </FieldGroup>
+              <FieldGroup>
+                <StyledFormLabel htmlFor={`lastName-${isBillingSection}`}>
+                  Last Name *
+                </StyledFormLabel>
+                <StyledInput
+                  id={`lastName-${isBillingSection}`}
+                  name="lastName"
+                  type="text"
+                  value={newAddressForm.lastName}
+                  onChange={handleInputChange}
+                  placeholder="Enter last name"
+                  required
+                  disabled={isCreatingAddress}
+                />
+              </FieldGroup>
+              <FieldGroup style={{ gridColumn: "1 / span 2" }}>
+                <StyledFormLabel htmlFor={`street-${isBillingSection}`}>
+                  Street Address *
+                </StyledFormLabel>
+                <StyledInput
+                  id={`street-${isBillingSection}`}
+                  name="street"
+                  type="text"
+                  value={newAddressForm.street}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 123 Élan Avenue"
+                  required
+                  disabled={isCreatingAddress}
+                />
+              </FieldGroup>
+              <FieldGroup style={{ gridColumn: "1 / span 2" }}>
+                <StyledFormLabel htmlFor={`apartment-${isBillingSection}`}>
+                  Apartment, suite, etc. (Optional)
+                </StyledFormLabel>
+                <StyledInput
+                  id={`apartment-${isBillingSection}`}
+                  name="apartment"
+                  type="text"
+                  value={newAddressForm.apartment}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Apt. 101"
+                  disabled={isCreatingAddress}
+                  maxLength={100}
+                />
+              </FieldGroup>
+              <FieldGroup>
+                <StyledFormLabel htmlFor={`city-${isBillingSection}`}>
+                  City *
+                </StyledFormLabel>
+                <StyledInput
+                  id={`city-${isBillingSection}`}
+                  name="city"
+                  type="text"
+                  value={newAddressForm.city}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Willow Creek"
+                  required
+                  disabled={isCreatingAddress}
+                />
+              </FieldGroup>
+              <FieldGroup>
+                <StyledFormLabel htmlFor={`state-${isBillingSection}`}>
+                  State / Province *
+                </StyledFormLabel>
+                <StyledInput
+                  id={`state-${isBillingSection}`}
+                  name="state"
+                  type="text"
+                  value={newAddressForm.state}
+                  onChange={handleInputChange}
+                  placeholder="e.g., CA or California"
+                  required
+                  disabled={isCreatingAddress}
+                  maxLength={100}
+                />
+              </FieldGroup>
+              <FieldGroup>
+                <StyledFormLabel htmlFor={`zipCode-${isBillingSection}`}>
+                  ZIP / Postal Code *
+                </StyledFormLabel>
+                <StyledInput
+                  id={`zipCode-${isBillingSection}`}
+                  name="zipCode"
+                  type="text"
+                  value={newAddressForm.zipCode}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 90210"
+                  required
+                  disabled={isCreatingAddress}
+                />
+              </FieldGroup>
+              <FieldGroup>
+                <StyledFormLabel htmlFor={`country-${isBillingSection}`}>
+                  Country *
+                </StyledFormLabel>
+                {/* TODO: Convert to a Select component for countries. For now, 'US' is default and fixed for simplicity. */}
+                <StyledInput
+                  id={`country-${isBillingSection}`}
+                  name="country"
+                  type="text"
+                  value={newAddressForm.country}
+                  readOnly
+                  disabled={isCreatingAddress}
+                  style={{ backgroundColor: theme.colors.lightGray }}
+                />
+              </FieldGroup>
+              <FieldGroup style={{ gridColumn: "1 / span 2" }}>
+                <StyledFormLabel htmlFor={`phone-${isBillingSection}`}>
+                  Phone *{" "}
+                  <span
+                    style={{
+                      fontWeight: "normal",
+                      color: theme.colors.textMuted,
+                    }}
+                  >
+                    (For delivery updates)
+                  </span>
+                </StyledFormLabel>
+                <StyledInput
+                  id={`phone-${isBillingSection}`}
+                  name="phone"
+                  type="tel"
+                  value={newAddressForm.phone}
+                  onChange={handleInputChange}
+                  placeholder="(555) 123-4567"
+                  required
+                  disabled={isCreatingAddress}
+                />
+              </FieldGroup>
+              <FieldGroup style={{ gridColumn: "1 / span 2" }}>
+                <StyledFormLabel htmlFor={`email-${isBillingSection}`}>
+                  Email (Optional)
+                </StyledFormLabel>
+                <StyledInput
+                  id={`email-${isBillingSection}`}
+                  name="email"
+                  type="email"
+                  value={newAddressForm.email}
+                  onChange={handleInputChange}
+                  placeholder="your.email@example.com"
+                  disabled={isCreatingAddress}
+                />
+              </FieldGroup>
+              <FieldGroup
+                style={{ gridColumn: "1 / span 2", alignItems: "center" }}
+              >
+                <AdminCheckbox
+                  id={`isDefaultAddress-${isBillingSection}`}
+                  name="isDefault"
+                  label={`Set as default ${
+                    isBillingSection ? "billing" : "shipping"
+                  } address`}
+                  checked={newAddressForm.isDefault}
+                  onChange={handleInputChange}
+                  disabled={isCreatingAddress}
+                />
               </FieldGroup>
 
-              <FieldGroup style={{ gridColumn: '1 / -1' }}>
-                <StyledFormLabel htmlFor={`street-${isBillingSection}`}>Street Address</StyledFormLabel>
-                <StyledInput id={`street-${isBillingSection}`} name="street" type="text" value={newAddressForm.street} onChange={handleInputChange} placeholder="123 Élan Avenue" required />
-              </FieldGroup>
-              <FieldGroup style={{ gridColumn: '1 / -1' }}>
-                <StyledFormLabel htmlFor={`street2-${isBillingSection}`}>Apartment, suite, etc. (Optional)</StyledFormLabel>
-                <StyledInput id={`street2-${isBillingSection}`} name="street2" type="text" value={newAddressForm.street2} onChange={handleInputChange} placeholder="Apt. 101" />
-              </FieldGroup>
-
-              <FieldGroup>
-                <StyledFormLabel htmlFor={`city-${isBillingSection}`}>City</StyledFormLabel>
-                <StyledInput id={`city-${isBillingSection}`} name="city" type="text" value={newAddressForm.city} onChange={handleInputChange} placeholder="Willow Creek" required />
-              </FieldGroup>
-              <FieldGroup> {/* Consider a Select component for State/Country for better UX */}
-                <StyledFormLabel htmlFor={`state-${isBillingSection}`}>State / Province</StyledFormLabel>
-                <StyledInput id={`state-${isBillingSection}`} name="state" type="text" value={newAddressForm.state} onChange={handleInputChange} placeholder="California" required />
-              </FieldGroup>
-              <FieldGroup>
-                <StyledFormLabel htmlFor={`zip-${isBillingSection}`}>ZIP / Postal Code</StyledFormLabel>
-                <StyledInput id={`zip-${isBillingSection}`} name="zip" type="text" value={newAddressForm.zip} onChange={handleInputChange} placeholder="90210" required />
-              </FieldGroup>
-              <FieldGroup>
-                <StyledFormLabel htmlFor={`country-${isBillingSection}`}>Country</StyledFormLabel>
-                <StyledInput id={`country-${isBillingSection}`} name="country" type="text" value={newAddressForm.country} onChange={handleInputChange} placeholder="United States" required readOnly/> {/* Usually selected, not typed freely */}
-              </FieldGroup>
-               <FieldGroup style={{ gridColumn: '1 / -1' }}>
-                <StyledFormLabel htmlFor={`phone-${isBillingSection}`}>Phone (For delivery updates)</StyledFormLabel>
-                <StyledInput id={`phone-${isBillingSection}`} name="phone" type="tel" value={newAddressForm.phone} onChange={handleInputChange} placeholder="(555) 123-4567" />
-              </FieldGroup>
+              {operationError && ( // Display form-specific errors here
+                <p
+                  style={{
+                    gridColumn: "1 / span 2",
+                    color: theme.colors.error,
+                    textAlign: "center",
+                    fontSize: theme.typography.body.sizes.small,
+                  }}
+                >
+                  {operationError}
+                </p>
+              )}
 
               <FormActions>
-                {/* Ensure SecondaryButton and PrimaryCtaButton are beautifully styled */}
-                <SecondaryButton type="button" onClick={() => { setShowNewAddressForm(false); setNewAddressForm(initialFormState);}}>Cancel</SecondaryButton>
-                <PrimaryCtaButton type="submit">Save Address</PrimaryCtaButton>
+                <SecondaryButton
+                  type="button"
+                  onClick={() => {
+                    setShowNewAddressForm(false);
+                    setNewAddressForm(initialFormState);
+                    setOperationError(null);
+                  }}
+                  disabled={isCreatingAddress}
+                >
+                  Cancel
+                </SecondaryButton>
+                <PrimaryCtaButton
+                  type="submit"
+                  isLoading={isCreatingAddress}
+                  disabled={isCreatingAddress}
+                >
+                  {isCreatingAddress ? "Saving..." : "Save Address"}
+                </PrimaryCtaButton>
               </FormActions>
             </form>
           </AddressFormWrapper>
         </>
       )}
-      
-      {/* The old "Continue" button div is removed from here */}
-
     </AddressSectionWrapper>
   );
 };

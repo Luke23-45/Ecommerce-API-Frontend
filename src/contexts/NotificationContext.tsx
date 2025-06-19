@@ -26,7 +26,7 @@ interface NotificationDisplayProps {
 
 const NotificationDisplay: React.FC<NotificationDisplayProps> = ({ notifications, onDismiss }) => {
     return (
-        <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ position: 'fixed', top: '40px', right: '20px', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {notifications.map(notification => (
                 <StyledAdminNotification
                     key={notification.id}
@@ -100,6 +100,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
 
 // --- 4. CUSTOM HOOK ---
+
 export const useNotification = () => {
     const context = useContext(NotificationContext);
     if (context === undefined) {

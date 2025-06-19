@@ -1,10 +1,25 @@
 // src/interfaces/Checkout/checkout.interfaces.ts
 
 // Assuming you have these types defined elsewhere and can import them
-import { type IAddress, type AddressCreationDto, type AddressUpdateDto } from '../User/user.interfaces'; // Path to your user/address types
-import { type DisplayCartItem } from '../Cart/cart.interfaces'; // Path to your cart types
-
+// import { type IAddress, type AddressCreationDto, type AddressUpdateDto } from '../User/user.interfaces'; // Path to your user/address types
+import {type IAddress } from './seller';
+// import { type DisplayCartItem } from '../Cart/cart.interfaces'; // Path to your cart types
+import {type DisplayCartItem } from './cart.types';
 export type ObjectId = string;
+
+// Example: src/types/checkout.types.ts
+export interface SetPaymentDetailsRequestDTO {
+  sessionId: string;
+  billingAddressId?: string; // Optional: if your backend uses it during payment method association
+
+  // Fields to align with your backend's UpdatePaymentDto
+  type: 'SAVED_METHOD' | 'ONE_TIME_TOKEN';
+  methodId?: string;     // For 'SAVED_METHOD': Your backend's internal ID of the SavedPaymentMethod record
+  token?: string;        // For 'ONE_TIME_TOKEN': The Stripe PaymentMethod ID (pm_...) or legacy Token ID (tok_...)
+  cardLast4?: string;    // Optional: For 'ONE_TIME_TOKEN'
+  cardBrand?: string;    // Optional: For 'ONE_TIME_TOKEN'
+  saveCard?: boolean;    // For 'ONE_TIME_TOKEN': User's preference to save the card
+}
 
 // ==========================================================================
 // === DTOs (Data Transfer Objects) - Payloads Sent TO the Backend ===

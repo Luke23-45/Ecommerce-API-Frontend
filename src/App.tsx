@@ -8,12 +8,12 @@ import { initializeAuth } from "@/store/thunks/authThunks";
 import "./App.css";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { NotificationProvider } from "./contexts/NotificationContext";
-// Import your modular route components
+
 import AuthenticatedRoutes from "@/routes/AuthenticatedInedexRoutes";
 import { ThemeProvider } from "styled-components";
 import { theme } from "./components/home/styles/Theme";
 import GlobalStyles from "./components/home/styles/GlobalStyles";
-//public Routes
+
 const HomePage = lazy(() => import("@/pages/Home/Home"));
 const AuthPage = lazy(() => import("@/pages/AuthPage/AuthPage"));
 import ProductDetailPage from "@/pages/ProductDetail/ProductDetailPage";
@@ -30,6 +30,9 @@ import Layout from "./components/layout/navlayout";
 import SearchResultsPage from "./pages/ProductListingPage/SearchResultsPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CheckoutReviewPage from "./pages/CheckoutReviewPage";
+import { setCartCount } from "./store/slices/cartSlice";
+import { useGetCart } from "./hooks/cart/useCart";
+
 const AppLoadingScreen = () => (
   <div
     style={{
@@ -69,7 +72,6 @@ const AppLoadingScreen = () => (
 function App() {
   const dispatch: AppDispatch = useDispatch();
   const [isAuthCheckComplete, setIsAuthCheckComplete] = useState(false);
-  // Get authentication state from Redux store
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
@@ -84,11 +86,30 @@ function App() {
 
     performAuthCheck();
   }, [dispatch]);
+  const {
+    data: cartData,
+    isLoading: isCartLoadingFromHook,
+    refetch,
+  } = useGetCart();
 
-  // Show a loading screen until the initial authentication check is complete
+  useEffect(() => {
+    if (cartData && cartData.itemCount) {
+      const countFromApi = cartData.itemCount ?? 0;
+      console.log("App.tsx: Setting cart count from API:", countFromApi);
+      dispatch(setCartCount(countFromApi));
+    } else {
+    }
+  }, [cartData, dispatch]);
+
+  useEffect(() => {
+    console.log("App.tsx: Triggering initial cart refetch.");
+    refetch();
+  }, [refetch]);
   if (!isAuthCheckComplete) {
     return <AppLoadingScreen />;
   }
+
+
 
   return (
     <ThemeProvider theme={theme}>
@@ -120,17 +141,17 @@ function App() {
 
                 <Route path="search" element={<SearchResultsPage />} />
                 <Route path="category" element={<ProductListingPage />} />
+                <Route
+                  path="/productid/:productId"
+                  element={<ProductDetailInfo />}
+                />
+                <Route path="/cart" element={<CartPage />} />
               </Route>
               <Route path="/auth/*" element={<AuthPage />} />
               <Route
                 path="/product/:productId"
                 element={<ProductDetailPage />}
               />
-              <Route
-                path="/productid/:productId"
-                element={<ProductDetailInfo />}
-              />
-              <Route path="/cart" element={<CartPage />} />
               <Route path="/becomeseller" element={<BecomeAPartnerPage />} />
 
               {/* Protected Routes (require authentication) */}

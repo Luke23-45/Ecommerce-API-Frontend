@@ -6,6 +6,9 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import type { AppDispatch } from "@/store";
+import { useGetCart } from "@/hooks/cart/useCart";
+import { setCartCount } from "@/store/slices/cartSlice";
 import { useTheme, type DefaultTheme } from "styled-components";
 import {
   FaRegUser,
@@ -51,6 +54,7 @@ import {
 import { useLogout } from "@/hooks/useAuth";
 import type { RootState } from "@/store/types";
 import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 interface SearchCategory {
   value: string;
@@ -78,13 +82,12 @@ interface GrandMarqueeProps {
   onSearch?: (query: string, category: string) => void;
   onViewCart?: () => void;
   cartItemCount?: number;
+  isCartLoading: boolean;
 }
 
 const GrandMarquee: React.FC<GrandMarqueeProps> = ({
   onSearch,
   onViewCart,
-  cartItemCount = 0,
-  isCartLoading,
 }) => {
   const { isAuthenticated, user } = useSelector(
     (state: RootState) => state.auth
@@ -93,6 +96,7 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
   const logoutMutation = useLogout();
   const navigate = useNavigate();
   const theme = useTheme() as DefaultTheme;
+  const dispatch = useDispatch<AppDispatch>();
 
   const { data: topLevelCategories, isLoading: isLoadingCategories } =
     useGetTopLevelCategories(
@@ -100,6 +104,33 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
       { staleTime: 60 * 60 * 1000 }
     );
 
+  // const {
+  //   data: cartData,
+  //   isLoading: isCartLoadingFromHook,
+  //   refetch,
+  // } = useGetCart();
+
+  // const cartCount = useSelector((state: RootState) => state.cart.count);
+
+  // useEffect(() => {
+  //   if (cartData) {
+  //     const countFromApi = cartData.itemCount ?? 0;
+  //     dispatch(setCartCount(countFromApi));
+  //   }
+  // }, [cartData, dispatch]);
+
+  // useEffect(() => {
+  //   refetch();
+  // }, [refetch, isAuthenticated]);
+
+  // const isCartLoading = isCartLoadingFromHook;
+
+
+  // --- START: Cart Count Display Logic ---
+  // Read the cart count directly from your Redux store.
+  // This is the source of truth for the nav bar.
+  const cartCount = useSelector((state: RootState) => state.cart.count);
+  const isCartLoading = false;
   const searchCategories = useMemo((): SearchCategory[] => {
     const defaultCategory = { value: "all", label: "All Categories" };
     if (!topLevelCategories) {
@@ -481,7 +512,7 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
             )}
           </UtilityIconWrapper> */}
 
-          <UtilityIconWrapper
+          {/* <UtilityIconWrapper
             type="button"
             onClick={onViewCart}
             aria-label="View shopping cart"
@@ -496,6 +527,21 @@ const GrandMarquee: React.FC<GrandMarqueeProps> = ({
               cartItemCount > 0 && (
                 <CartCountBadge>{cartItemCount}</CartCountBadge>
               )
+            )}
+          </UtilityIconWrapper> */}
+
+          <UtilityIconWrapper
+            type="button"
+            onClick={onViewCart}
+            aria-label="View shopping cart"
+          >
+            <FaShoppingCart />
+            {isCartLoading ? (
+              <CartCountBadge isLoading={true}>
+                <SpinnerIcon />
+              </CartCountBadge>
+            ) : (
+              cartCount > 0 && <CartCountBadge>{cartCount}</CartCountBadge>
             )}
           </UtilityIconWrapper>
         </HeaderRightUtility>

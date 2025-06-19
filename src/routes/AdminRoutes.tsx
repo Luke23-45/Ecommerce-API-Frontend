@@ -1,5 +1,11 @@
-import React from "react";
-import type { RouteObject } from "react-router-dom";
+import ShippingRateForm from "@/components/admin/checkoutsession/ShippingZoneList/ShippingRates/form/ShippingRateForm";
+import ShippingRateList from "@/components/admin/checkoutsession/ShippingZoneList/ShippingRates/ShippingRateList";
+import ShippingZoneForm from "@/components/admin/checkoutsession/ShippingZoneList/ShippingZoneDetail/ShippingZoneForm";
+import ShippingZoneList from "@/components/admin/checkoutsession/ShippingZoneList/ShippingZoneList";
+import TaxRateForm from "@/components/admin/checkoutsession/Tax/TaxDetail/TaxRateForm";
+import TaxRateList from "@/components/admin/checkoutsession/Tax/TaxRateList";
+import React, { Suspense } from "react";
+import { type RouteObject, useRoutes, Navigate } from "react-router-dom";
 
 export interface AdminRouteHandle {
   title?: string;
@@ -16,13 +22,24 @@ export interface AdminRouteObject
 const AdminDashboardRouter = React.lazy(
   () => import("@/components/admin/Dashboard/DashboardRouter")
 );
-
-import MyProfileComponent from "@/pages/Others/ProfilePage";
-import CategoryForm from "@/components/Categories/CategoryForm";
+const MyProfileComponent = React.lazy(
+  () => import("@/pages/Others/ProfilePage")
+);
+const CategoryForm = React.lazy(
+  () => import("@/components/Categories/CategoryForm")
+);
+const DiscountList = React.lazy(
+  () => import("@/components/admin/checkoutsession/Discounts/DiscountList")
+);
+const DiscountForm = React.lazy(
+  () =>
+    import(
+      "@/components/admin/checkoutsession/Discounts/DiscountForm/DiscountForm"
+    )
+);
 const PlatformOverviewComponent = React.lazy(
   () => import("@/components/admin/placeholders/PlatformOverviewComponent")
 );
-
 const ProductList = React.lazy(
   () => import("@/components/admin/Products/ProductList")
 );
@@ -32,9 +49,6 @@ const ProductDetail_ = React.lazy(
 const ProductEditForm = React.lazy(
   () =>
     import("@/components/admin/Products/product/productForm/ProductEditForm")
-);
-const AttributesOverview = React.lazy(
-  () => import("@/components/admin/Products/AttributesOverview")
 );
 const InventoryOverview = React.lazy(
   () => import("@/components/admin/Products/InventoryOverview")
@@ -75,7 +89,6 @@ const MarketingList = React.lazy(
 const SettingsOverview = React.lazy(
   () => import("@/components/admin/settings/SettingsOverview")
 );
-
 const ApplicationOverviewActual = React.lazy(
   () => import("@/components/admin/placeholders/ApplicationOverviewActual")
 );
@@ -103,7 +116,6 @@ const VendorApplicationDetail = React.lazy(
       "@/components/admin/Application/VendorApplications/VendorApplicationDetail"
     )
 );
-
 const GeneralSettingsComponent = React.lazy(
   () => import("@/components/admin/placeholders/GeneralSettingsComponent")
 );
@@ -120,7 +132,11 @@ const BrandingThemeComponent = React.lazy(
   () => import("@/components/admin/placeholders/BrandingThemeComponent")
 );
 
-export const adminRoutes: any[] = [
+export const adminRoutesConfig: any[] = [
+  {
+    index: true,
+    element: <Navigate to="dashboard" replace />,
+  },
   {
     path: "dashboard",
     element: <AdminDashboardRouter />,
@@ -131,13 +147,11 @@ export const adminRoutes: any[] = [
     element: <MyProfileComponent />,
     handle: { title: "My Profile", sectionId: "profileSettingsddd" },
   },
-
   {
     path: "platform-overview",
     element: <PlatformOverviewComponent />,
     handle: { title: "Platform Overview", sectionId: "platformOverview" },
   },
-
   {
     path: "products",
     element: <ProductList />,
@@ -160,22 +174,22 @@ export const adminRoutes: any[] = [
       {
         index: true,
         element: <CategoryList />,
-        handle: { title: "Manage Attributes", sectionId: "platformCategory" },
+        handle: { title: "Manage Categories", sectionId: "platformCategory" },
       },
       {
         path: "new",
         element: <CategoryForm />,
-        handle: { title: "Manage Attributes", sectionId: "platformCategory" },
+        handle: { title: "New Category", sectionId: "platformCategory" },
       },
       {
         path: ":categoryId/edit",
         element: <CategoryForm />,
-        handle: { title: "Manage Attributes", sectionId: "platformCategory" },
+        handle: { title: "Edit Category", sectionId: "platformCategory" },
       },
-            {
+      {
         path: ":parentId/new-child",
         element: <CategoryForm />,
-        handle: { title: "Manage Attributes", sectionId: "platformCategory" },
+        handle: { title: "New Sub-category", sectionId: "platformCategory" },
       },
     ],
   },
@@ -197,7 +211,6 @@ export const adminRoutes: any[] = [
           sectionId: "platformAttributes",
         },
       },
-
       {
         path: "edit/:attributeId",
         element: <AttributeForm />,
@@ -234,6 +247,89 @@ export const adminRoutes: any[] = [
     element: <InventoryOverview />,
     handle: { title: "Product Inventory", sectionId: "platformInventory" },
   },
+  {
+    path: "checkoutsession/discount",
+
+    handle: { title: "Checkout Session", sectionId: "checkoutsession" },
+    children: [
+      {
+        path: "list",
+        element: <DiscountList />,
+        handle: { title: "Discount", sectionId: "DiscountList" },
+      },
+      {
+        path: "edit/:discountId",
+        element: <DiscountForm />,
+        handle: { title: "Discount", sectionId: "DiscountUpdateForm" },
+      },
+      {
+        path: "new",
+        element: <DiscountForm />,
+        handle: { title: "Discount", sectionId: "DiscountNewForm" },
+      },
+    ],
+  },
+
+  {
+    path: "checkoutsession/tax",
+    handle: { title: "Checkout Session", sectionId: "checkoutsession" },
+    children: [
+      {
+        index: true,
+        path: "list",
+        element: <TaxRateList />,
+        handle: { title: "Tax", sectionId: "TaxList" },
+      },
+      {
+        path: "edit/:taxRateId",
+        element: <TaxRateForm />,
+        handle: { title: "Tax", sectionId: "TaxUpdateForm" },
+      },
+      {
+        path: "new",
+        element: <TaxRateForm />,
+        handle: { title: "Tax", sectionId: "TaxNewForm" },
+      },
+    ],
+  },
+
+  {
+    path: "checkoutsession/shippingzones",
+    handle: { title: "Checkout Session", sectionId: "checkoutsession" },
+    children: [
+      {
+        index: true,
+        path: "list",
+        element: <ShippingZoneList />,
+        handle: { title: "Shipping Zones", sectionId: "ShippingZoneList" },
+      },
+      {
+        path: "edit/:zoneId",
+        element: <ShippingZoneForm />,
+        handle: { title: "Edit", sectionId: "ShippingZoneUpdateForm" },
+      },
+      {
+        path: "new",
+        element: <ShippingZoneForm />,
+        handle: { title: "New", sectionId: "ShippinZoneNewForm" },
+      },
+      {
+        path: "shippingrates/:zoneId",
+        element: <ShippingRateList />,
+        handle: { title: "Shipping Rate", sectionId: "ShippingRateList" },
+      },
+      {
+        path: "shippingrate/edit/:zoneId/:rateId",
+        element: <ShippingRateForm />,
+        handle: { title: "Edit", sectionId: "ShippingRateForm" },
+      },
+      {
+        path: "shippingrate/new/:zoneId",
+        element: <ShippingRateForm />,
+        handle: { title: "New", sectionId: "ShippingRateNewForm" },
+      },
+    ],
+  },
 
   {
     path: "orders",
@@ -245,7 +341,6 @@ export const adminRoutes: any[] = [
     element: <OrderDetail />,
     handle: { title: "Order Details", sectionId: "platformOrders" },
   },
-
   {
     path: "customers",
     element: <CustomerList />,
@@ -256,7 +351,6 @@ export const adminRoutes: any[] = [
     element: <CustomerDetail />,
     handle: { title: "Customer Details", sectionId: "platformCustomers" },
   },
-
   {
     path: "applications",
     handle: { title: "Applications", sectionId: "platformApplicationsMain" },
@@ -269,7 +363,6 @@ export const adminRoutes: any[] = [
           sectionId: "platformApplicationsOverview",
         },
       },
-
       {
         path: "overview",
         element: <ApplicationOverviewActual />,
@@ -312,29 +405,23 @@ export const adminRoutes: any[] = [
       },
     ],
   },
-
   {
     path: "marketing",
     element: <MarketingList />,
     handle: { title: "Marketing & Banners", sectionId: "platformMarketing" },
   },
-
   {
     path: "reports",
     element: <ReportsOverview />,
     handle: { title: "Reports", sectionId: "platformReports" },
   },
-
   {
     path: "settings",
-
     handle: { title: "Platform Settings", sectionId: "platformSettingsRoot" },
-
     children: [
       {
         index: true,
         element: <SettingsOverview />,
-
         handle: {
           title: "Platform Settings",
           sectionId: "platformSettingsRoot",
@@ -382,10 +469,9 @@ export const adminRoutes: any[] = [
       },
     ],
   },
-
   {
     path: "vendor/staff",
-    element: <UserManagementComponent scope="vendor" />,
+    element: <UserManagementComponent />,
     handle: { title: "Manage Staff", sectionId: "vendorStaffManagement" },
   },
   {
@@ -395,10 +481,9 @@ export const adminRoutes: any[] = [
   },
   {
     path: "vendor/store-settings",
-    element: <SettingsOverview scope="vendor" />,
+    element: <SettingsOverview />,
     handle: { title: "Store Settings", sectionId: "vendorStoreSettings" },
   },
-
   {
     path: "seller/payouts",
     element: <div>Seller Payouts Page</div>,
@@ -410,3 +495,11 @@ export const adminRoutes: any[] = [
     handle: { title: "Shop Performance", sectionId: "sellerShopPerformance" },
   },
 ];
+
+const AdminRoutesComponent = () => {
+  const routeElements = useRoutes(adminRoutesConfig);
+
+  return <Suspense fallback={<div>Loading...</div>}>{routeElements}</Suspense>;
+};
+
+export default AdminRoutesComponent;

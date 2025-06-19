@@ -1,3 +1,6 @@
+this is my old code can you please update this old version. Please write the finla version of the code since i do not know how to update the code. therefore write the final version of the code therefore i could replace the code that you would provided me with the old version of code that i have. 
+
+
 
 Yes, absolutely! It's a good practice to review and potentially update the plan, especially after a detailed discussion or when new insights emerge.
 
